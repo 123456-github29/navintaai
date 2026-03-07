@@ -1,0 +1,59 @@
+[supabase] Initializing client...
+index-FQxJbua7.js:99 [supabase] URL: https://iqfrjomoggddxwteuigk.s...
+index-FQxJbua7.js:99 [supabase] Key: set (eyJhbGciOiJIUzI1NiIs...)
+index-FQxJbua7.js:364 [useAuth] Init: Object
+index-FQxJbua7.js:364 [useAuth] Processing OAuth callback tokens
+2index-FQxJbua7.js:364 [useAuth] Auth state changed: SIGNED_IN has session
+index-FQxJbua7.js:364 [useAuth] Session set successfully: rushilbhavinshah@gmail.com
+index-FQxJbua7.js:364 [useAuth] Creating user record in database...
+index-FQxJbua7.js:364 [useAuth] Auth state changed: INITIAL_SESSION has session
+index-FQxJbua7.js:364 [useAuth] User record created/updated
+index-FQxJbua7.js:364 [useAuth] Init: Object
+index-FQxJbua7.js:432 [Pricing] Auth check - isAuthenticated: false hasToken: false checked: false
+index-FQxJbua7.js:364 [useAuth] Existing session: rushilbhavinshah@gmail.com
+index-FQxJbua7.js:432 [Pricing] Auth check - isAuthenticated: true hasToken: true checked: false
+index-FQxJbua7.js:432 [Pricing] Pending checkout: pro monthly
+index-FQxJbua7.js:432 [Pricing] Triggering checkout for pending plan: pro
+index-FQxJbua7.js:364 [useAuth] Auth state changed: INITIAL_SESSION has session
+index-FQxJbua7.js:432 [Checkout] SUBSCRIBE CLICKED pro monthly
+index-FQxJbua7.js:432 [Checkout] Creating checkout session via Supabase Edge Function...
+iqfrjomoggddxwteuigk.supabase.co/functions/v1/stripe-checkout:1  Failed to load resource: the server responded with a status of 401 ()
+index-FQxJbua7.js:432 [Checkout] Response: Object
+index-FQxJbua7.js:432 [Checkout] No checkout URL received: Object
+w @ index-FQxJbua7.js:432
+index-FQxJbua7.js:432 PLAN BUTTON CLICKED: pro
+index-FQxJbua7.js:432 [Checkout] SUBSCRIBE CLICKED pro monthly
+index-FQxJbua7.js:432 [Checkout] Creating checkout session via Supabase Edge Function...
+iqfrjomoggddxwteuigk.supabase.co/functions/v1/stripe-checkout:1  Failed to load resource: the server responded with a status of 401 ()
+index-FQxJbua7.js:432 [Checkout] Response: Object
+index-FQxJbua7.js:432 [Checkout] No checkout URL received: Object
+w @ index-FQxJbua7.js:432
+index-FQxJbua7.js:432 PLAN BUTTON CLICKED: pro
+index-FQxJbua7.js:432 [Checkout] SUBSCRIBE CLICKED pro monthly
+index-FQxJbua7.js:432 [Checkout] Creating checkout session via Supabase Edge Function...
+iqfrjomoggddxwteuigk.supabase.co/functions/v1/stripe-checkout:1  Failed to load resource: the server responded with a status of 401 ()
+index-FQxJbua7.js:432 [Checkout] Response: Object
+index-FQxJbua7.js:432 [Checkout] No checkout URL received: Object
+w @ index-FQxJbua7.js:432
+index-FQxJbua7.js:432 PLAN BUTTON CLICKED: starter
+index-FQxJbua7.js:432 [Checkout] SUBSCRIBE CLICKED starter monthly
+index-FQxJbua7.js:432 [Checkout] Creating checkout session via Supabase Edge Function...
+iqfrjomoggddxwteuigk.supabase.co/functions/v1/stripe-checkout:1  Failed to load resource: the server responded with a status of 401 ()
+index-FQxJbua7.js:432 [Checkout] Response: Object
+index-FQxJbua7.js:432 [Checkout] No checkout URL received: Object
+w @ index-FQxJbua7.js:432
+index-FQxJbua7.js:432 PLAN BUTTON CLICKED: starter
+index-FQxJbua7.js:432 [Checkout] SUBSCRIBE CLICKED starter monthly
+index-FQxJbua7.js:432 [Checkout] Creating checkout session via Supabase Edge Function...
+iqfrjomoggddxwteuigk.supabase.co/functions/v1/stripe-checkout:1  Failed to load resource: the server responded with a status of 401 ()
+index-FQxJbua7.js:432 [Checkout] Response: Object
+index-FQxJbua7.js:432 [Checkout] No checkout URL received: Object
+w @ index-FQxJbua7.js:432
+index-FQxJbua7.js:432 PLAN BUTTON CLICKED: starter
+index-FQxJbua7.js:432 [Checkout] SUBSCRIBE CLICKED starter monthly
+index-FQxJbua7.js:432 [Checkout] Creating checkout session via Supabase Edge Function...
+iqfrjomoggddxwteuigk.supabase.co/functions/v1/stripe-checkout:1  Failed to load resource: the server responded with a status of 401 ()
+index-FQxJbua7.js:432 [Checkout] Response: Object
+index-FQxJbua7.js:432 [Checkout] No checkout URL received: Object
+w @ index-FQxJbua7.js:432
+4index-FQxJbua7.js:364 [useAuth] Auth state changed: SIGNED_IN has session

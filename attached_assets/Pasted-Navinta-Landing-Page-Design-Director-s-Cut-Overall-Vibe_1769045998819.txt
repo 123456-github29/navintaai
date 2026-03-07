@@ -1,0 +1,293 @@
+Navinta – Landing Page Design (Director’s Cut)
+
+Overall Vibe
+
+Navinta should feel like:
+	•	A film studio
+	•	A director’s control room
+	•	A creative machine waking up
+	•	A premium instrument, not a tool
+	•	Calm, confident, cinematic, intentional
+
+When users land:
+
+“Oh… this is serious.”
+
+Not flashy.
+Not loud.
+Not startupy.
+Just inevitable.
+
+⸻
+
+1. HERO SECTION — “THE MOMENT BEFORE ACTION”
+
+Above the fold experience
+
+Black screen.
+Silence.
+Then motion.
+
+Visual
+	•	A 3D phone frame floats in the center
+	•	Inside the phone:
+	•	a recording dot pulses slowly
+	•	waveform subtly animates
+	•	Behind the phone:
+	•	faint blue + purple cinematic light bloom
+	•	almost like stage lighting
+	•	Very subtle film grain overlay
+
+The clapperboard (your idea — used correctly)
+
+As page loads:
+	•	A clapperboard swings in
+	•	Snaps shut once
+	•	The snap triggers:
+	•	the phone screen to light up
+	•	the recording UI to activate
+	•	text fades in
+
+This is important:
+The clapperboard makes Navinta feel like a director, not an editor.
+
+⸻
+
+Text (minimal, confident)
+
+Big headline:
+
+“Direct your content.”
+
+Subheadline:
+Record once. Navinta handles the rest.
+
+Tiny line under:
+AI-powered director for creators who want quality without chaos.
+
+⸻
+
+CTA (only one primary)
+
+[ Start directing → ]
+
+Secondary (ghost):
+[ Watch how it works ]
+
+⸻
+
+Scroll cue
+
+Subtle arrow
+“Scroll to see the process”
+
+⸻
+
+2. SCROLL SECTION — “THE PROCESS COMES ALIVE”
+
+As user scrolls, the phone stays centered, and the process happens inside it.
+
+Each scroll step is one phase:
+
+⸻
+
+Step 1 – Onboarding
+
+Phone shows:
+	•	7 questions flowing in
+	•	User taps answers
+	•	Brand colors being selected
+	•	Tone choices
+	•	Length selection
+
+Text on left:
+Your director gets to know you.
+
+⸻
+
+Step 2 – Script
+
+Phone shows:
+	•	Script being written
+	•	Sentences animating in
+	•	One line highlighted
+	•	“Director approved ✓”
+
+Text:
+Every word has purpose. No AI fluff.
+
+⸻
+
+Step 3 – Recording
+
+Phone shows:
+	•	Shot list
+	•	Timer
+	•	Pause detection
+	•	AI removing silence in real-time
+	•	Shot complete checkmarks
+
+Text:
+Record naturally. Navinta fixes the awkward parts.
+
+⸻
+
+Step 4 – Editing
+
+Phone morphs slightly wider (cinematic feel)
+Shows:
+	•	cuts snapping cleanly
+	•	captions appearing
+	•	B-roll sliding in
+	•	color grading applied
+	•	music waveform aligning
+
+Text:
+Cuts like a film editor. Thinks like a director.
+
+⸻
+
+Step 5 – Export
+
+Phone splits into:
+	•	TikTok
+	•	Reels
+	•	Shorts
+	•	YouTube
+
+Text:
+Ready everywhere. One click.
+
+⸻
+
+3. “WHY NAVINTA IS DIFFERENT” (TRUST SECTION)
+
+This is where your site stops feeling beginner.
+
+3 large cards with subtle glow:
+
+Card 1
+🎬 Director-first AI
+Not tools. Decisions. Navinta thinks like a director, not a plugin.
+
+Card 2
+🧠 Context-aware editing
+It knows when to cut, pause, emphasize, or breathe.
+
+Card 3
+⚡ From thought to finished video
+No timelines. No presets. No learning curve.
+
+⸻
+
+4. REAL EXAMPLES (THIS IS CRITICAL FOR TRUST)
+
+Horizontal scrolling gallery
+
+Using Pexels API videos styled as if they were user content:
+	•	Fitness creator
+	•	Founder
+	•	Podcaster
+	•	Educator
+	•	Real estate agent
+	•	Coach
+
+Each video:
+	•	has captions
+	•	has navinta watermark
+	•	shows the before → after toggle on hover
+
+Text:
+Created with Navinta. No editing skills required.
+
+This alone will multiply trust by 5x.
+
+⸻
+
+5. “BUILT FOR PEOPLE WHO CARE”
+
+Short, emotional section.
+
+Text:
+
+“Good content isn’t loud.
+It’s intentional.”
+
+Then 3 columns:
+	•	Calm creators
+	•	Serious founders
+	•	Professionals who value quality
+
+This tells users:
+
+“This is for me.”
+
+⸻
+
+6. PRICING (SIMPLE, CONFIDENT, NO JUNK)
+
+Three cards:
+
+Starter
+
+For trying it once
+$19 / month
+
+Creator
+
+For daily content
+$49 / month (highlighted)
+
+Studio
+
+For teams
+$99 / month
+
+No feature lists.
+Only outcomes:
+	•	“Videos per month”
+	•	“AI director access”
+	•	“Export quality”
+
+⸻
+
+7. FINAL CTA — “ACTION”
+
+Dark. Quiet. Powerful.
+
+Text:
+Your next video starts here.
+
+Button:
+[ Start directing ]
+
+Subtext:
+No editing skills. No stress. Just results.
+
+⸻
+
+8. FOOTER (CLEAN, QUIET)
+
+Navinta logo
+Small links
+Legal
+Socials
+
+Nothing else.
+
+⸻
+
+WHY THIS FEELS PROFESSIONAL
+
+Because:
+	•	It tells a story
+	•	It shows the process
+	•	It builds trust visually
+	•	It uses motion, not text
+	•	It has depth, layers, light
+	•	It avoids clutter
+	•	It feels intentional
+	•	It respects attention
+	•	It doesn’t scream “startup”
+	•	It doesn’t explain too much
+	•	It shows instead of telling

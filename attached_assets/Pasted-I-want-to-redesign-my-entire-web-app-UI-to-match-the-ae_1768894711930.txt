@@ -1,0 +1,88 @@
+I want to redesign my entire web app UI to match the aesthetic, quality, layout, and interaction feel of https://www.reformhq.com/ 1:1, but adapted for my own app’s data and screens.
+
+Follow these requirements exactly:
+
+1) Visual design must match ReformHQ’s visual language:
+   - Elegant minimal whitespace
+   - Thoughtful hierarchy
+   - Consistent spacing
+   - High readability and clean typography
+   - Soft depth and layering
+   - Subtle, meaningful motion
+   - Focused, quiet, confident design
+   - Avoid heavy gradients, avoid loud colors
+
+2) Model the layout patterns:
+   - A bold, clear top nav
+   - Intentional use of whitespace
+   - Modular card systems with subtle shadow
+   - Attention to alignment and grid
+   - Component spacing consistent across screens
+   - Strong typography hierarchy (title, subtitle, body, meta)
+
+3) Match motion and interaction philosophy:
+   - Elements fade in with elegant timing
+   - Subtle scale on hover for cards, buttons
+   - Smooth page transitions
+   - UI that feels responsive and “alive” but calm
+   - Navigation state transitions
+   - Meaningful animation sequencing
+
+4) Use my app’s existing screens and map them to the same layout language:
+   - Dashboard → ReformHQ-style data card layout
+   - Editor / Director Mode → minimalist canvas with layered controls
+   - Video Library → grid similar to product list
+   - Onboarding → step-by-step card flow
+   - Billing / Upgrade → premium SaaS billing layout
+   - Settings → clean form interface
+
+5) Maintain mobile responsive adaptation using the same design language.
+
+6) Create a DESIGN SYSTEM based on ReformHQ:
+   - typography tokens
+   - spacing tokens
+   - color tokens (adapted to my palette)
+   - breakpoints
+   - button styles
+   - input styles
+   - card styles
+   - modal styles
+   - interactive animation rules
+
+7) Add MICRO-INTERACTION DESIGN specifications:
+   - hover easing and duration
+   - pressed state easing and duration
+   - focus state
+   - page transitions
+   - stagger timing
+
+8) Annotate every component with expected behavior and states (idle, hover, active, disabled).
+
+9) Output a full Figma / design description that:
+   - Lists exact CSS/Tokens
+   - Shows the final layout for each screen
+   - Includes motion & timing details
+   - Has responsive rules
+
+10) Do NOT generate plain boring UI — the UI must feel like a **premium design system built by top UX designers**, not a standard template.
+
+=== SCREENS TO PRODUCE ===
+• Landing / Home
+• Dashboard
+• Director Mode (video recording)
+• Video Library
+• Onboarding
+• Billing / Upgrade
+• Settings
+• Auth (Sign In / Sign Up)
+• Empty + error states
+• Mobile variants for each
+
+=== DELIVERABLE ===
+• Full Figma design (structure + token system + layouts)
+• Exact implementation rules (CSS classes, animation timing)
+• Screens responsive
+• No placeholder text — use realistic wording
+• All icons, interactions, spacing, and motion specs included
+
+Treat ReformHQ.com as the single source of truth for design style. 

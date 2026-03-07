@@ -1,0 +1,155 @@
+REPLIT PROMPT (COPY–PASTE)
+
+You are now a product storyteller + motion designer, not just a frontend engineer.
+Your task is to redesign the hero process animation so it visually communicates the entire Navinta journey, not just recording.
+
+The goal is that a user understands the product without reading a single word.
+
+⸻
+
+CORE IDEA
+
+This section should feel like:
+
+“I sign in → Navinta directs me → I record → AI edits → I export a real video”
+
+It should feel like a mini movie about making a movie.
+
+⸻
+
+REPLACE THE STATIC PHONE WITH A STORY ANIMATION
+
+Instead of showing only a phone recording UI, build a timeline animation inside the phone frame that progresses as the user scrolls.
+
+The phone becomes a stage where scenes change.
+
+⸻
+
+SCENE 1 — ONBOARDING (FIRST VIEW)
+
+When the hero loads:
+
+Inside the phone:
+	•	Show 2–3 onboarding cards sliding in
+	•	Example cards:
+	•	“What do you want people to feel?”
+	•	“What’s your brand about?”
+	•	“How long should videos be?”
+	•	Cards animate in with intention (slow, weighted motion)
+	•	A subtle cursor / highlight selects answers
+	•	Cards collapse into a single “Plan Created” moment
+
+This immediately tells users: Navinta thinks before you record.
+
+⸻
+
+SCENE 2 — DIRECTOR MODE (SCROLL 1)
+
+As user scrolls slightly:
+
+The phone UI transforms:
+	•	The onboarding UI morphs into “Director Mode”
+	•	Shot cards slide in from the side
+	•	Each shot card shows:
+	•	Shot 1: Look at camera
+	•	Shot 2: Walk & gesture
+	•	Shot 3: Close-up reaction
+
+Add:
+	•	subtle timeline at bottom
+	•	shots light up one by one
+	•	the phone now feels like a control panel, not a camera
+
+⸻
+
+SCENE 3 — RECORDING (SCROLL 2)
+
+As user scrolls more:
+	•	Recording UI fades in
+	•	Red record dot pulses
+	•	Progress bar fills
+	•	One shot completes → next shot auto-selects
+	•	Small micro-animation: cut happens automatically
+	•	Pauses are visually removed (clip tightens)
+
+This visually communicates auto cutting without text.
+
+⸻
+
+SCENE 4 — AI EDITING (SCROLL 3)
+
+Now show the magic:
+	•	Captions auto-type on screen
+	•	B-roll slides in from edges
+	•	Color grade applies with a smooth fade
+	•	Music waveform appears
+	•	Timeline snaps cleanly into place
+
+This should feel like:
+
+“Editing is happening for me”
+
+⸻
+
+SCENE 5 — EXPORT (FINAL SCROLL)
+
+Final scroll moment:
+	•	Phone UI zooms out
+	•	Video card floats out of phone
+	•	“Exported” badge appears
+	•	Card slides into a clean grid (content library)
+	•	Everything settles into calm stillness
+
+End with confidence.
+
+⸻
+
+MOTION & STYLE RULES
+	•	Use GSAP timelines for each scene
+	•	Use ScrollTrigger to control transitions
+	•	Animate transforms, opacity, masks, not position jumps
+	•	No flashy colors
+	•	No gradients
+	•	No glow
+	•	Use light, shadow, scale, and timing
+	•	Each scene should take ~1 scroll length
+	•	Motion should feel directed, not playful
+
+⸻
+
+TECH IMPLEMENTATION
+	•	Keep one phone frame
+	•	Swap content inside using GSAP timelines
+	•	Use absolute-positioned layers
+	•	Do NOT mount/unmount components
+	•	Animate visibility & transforms only
+	•	Ensure mobile fallback (static but clean)
+
+⸻
+
+QUALITY BAR
+
+This animation should feel like:
+	•	Apple product launch
+	•	Stripe checkout flow
+	•	Linear onboarding
+	•	A24 opening sequence
+
+If it feels like:
+	•	demo animation
+	•	marketing fluff
+	•	template animation
+
+→ redo it.
+
+⸻
+
+FINAL GOAL
+
+A user should finish this animation and think:
+
+“Oh… this thing actually directs me.”
+
+Not:
+
+“This records video.”

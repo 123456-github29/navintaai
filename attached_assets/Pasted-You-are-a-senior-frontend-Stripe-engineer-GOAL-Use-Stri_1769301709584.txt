@@ -1,0 +1,153 @@
+You are a senior frontend + Stripe engineer.
+
+GOAL:
+Use Stripe’s Pricing Table embed, but make it look 100% native to Navinta AI’s UI.
+Users must never feel like they are leaving the app or seeing a raw embed.
+
+DO NOT redirect users to Stripe.
+DO NOT show default embed styling.
+DO NOT add new colors or fonts.
+Everything must match the existing UI.
+
+--------------------------------------------------
+WHAT TO IMPLEMENT
+--------------------------------------------------
+
+1. Create a reusable component:
+   <StripePricingModal />
+
+This modal will be used ANYWHERE pricing cards appear (landing page, /pricing, upgrade buttons, feature locks).
+
+--------------------------------------------------
+2. Modal behavior
+--------------------------------------------------
+- Full-screen overlay
+- Background blur (backdrop-filter)
+- Darkened backdrop
+- Centered container
+- Rounded corners
+- Max-width: 900px
+- Padding consistent with rest of site
+- Disable page scroll when open
+- Close on:
+  - X button
+  - ESC
+  - clicking outside
+- Animate in/out with GSAP:
+  - Fade backdrop
+  - Slide modal up 20px
+  - 0.4s ease-out
+
+--------------------------------------------------
+3. Inside the modal, mount Stripe embed
+--------------------------------------------------
+Inside the modal container, inject this EXACT embed:
+
+<script async src="https://js.stripe.com/v3/pricing-table.js"></script>
+<stripe-pricing-table 
+  pricing-table-id="prctbl_1SsukiGHLqcki8CvURjateRM"
+  publishable-key="pk_live_51RWrSfGHLqcki8Cv7uMVnbT0s4EnCvssFMeivOyiBiUjbDQA5k6SOkuq8hPh5YldoEfhybheQt2UdHo56xiQwLcn00bM7sbspB">
+</stripe-pricing-table>
+
+BUT wrap it in:
+- A styled container
+- Rounded border
+- Subtle outline or glow
+- Same font scale as UI
+- Same spacing rhythm
+- Same background color as cards
+
+--------------------------------------------------
+4. Hide Stripe’s ugly defaults
+--------------------------------------------------
+Override styling so:
+- No harsh borders
+- No white background mismatch
+- No default spacing
+- No weird font jumps
+- Embed feels like part of the app
+
+Use CSS to:
+- Wrap iframe
+- Control width
+- Match background
+- Add smooth padding
+- Add subtle shadow
+
+--------------------------------------------------
+5. Trigger behavior
+--------------------------------------------------
+ALL pricing cards should do this:
+
+When user clicks:
+- Subscribe
+- Upgrade
+- Unlock
+- Export with watermark
+- Pro feature button
+
+→ Open StripePricingModal()
+
+DO NOT navigate
+DO NOT redirect
+DO NOT reload page
+
+--------------------------------------------------
+6. Plan awareness
+--------------------------------------------------
+Pass plan type into modal:
+
+openStripeModal(plan)
+- starter
+- pro
+- studio
+
+Highlight correct plan visually:
+- Slight scale
+- Glow
+- Outline
+- “Selected” badge
+
+--------------------------------------------------
+7. Success flow
+--------------------------------------------------
+When Stripe checkout completes:
+- Modal auto closes
+- Show success toast
+- Refetch user entitlements
+- Unlock features instantly
+- Remove watermark
+- Redirect to dashboard if needed
+
+--------------------------------------------------
+8. Cancel flow
+--------------------------------------------------
+If user closes modal or cancels:
+- Nothing breaks
+- User stays on current page
+- No reload
+- No console errors
+
+--------------------------------------------------
+9. Use everywhere
+--------------------------------------------------
+Replace ALL pricing cards with:
+<Button onClick={() => openStripeModal(plan)} />
+
+The embed must never appear inline in the page.
+Only inside modal.
+
+--------------------------------------------------
+10. Security (critical)
+--------------------------------------------------
+- Publishable key only in frontend
+- No secret keys in client
+- Backend webhook still controls entitlements
+- UI is cosmetic; backend is source of truth
+
+--------------------------------------------------
+RESULT
+--------------------------------------------------
+Stripe should feel invisible.
+Checkout should feel like part of Navinta AI.
+User should think “wow this feels premium” — not “I was sent to Stripe”.

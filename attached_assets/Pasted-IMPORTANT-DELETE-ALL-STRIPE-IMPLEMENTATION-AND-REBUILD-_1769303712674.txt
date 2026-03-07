@@ -1,0 +1,152 @@
+IMPORTANT: DELETE ALL STRIPE IMPLEMENTATION AND REBUILD FROM SCRATCH THE CORRECT WAY
+
+We are removing ALL existing Stripe code and rebuilding payments using the ONLY correct SaaS approach:
+Stripe Checkout Sessions (redirect-based, not embedded).
+
+====================================
+STEP 1: DELETE EVERYTHING STRIPE-RELATED
+====================================
+Remove:
+- stripe-pricing-table.js
+- <stripe-pricing-table> embeds
+- iframe usage
+- any popup-based checkout
+- any partial Stripe logic
+- any frontend Stripe handling besides redirect
+
+The app should NEVER render Stripe UI.
+
+====================================
+STEP 2: BACKEND-ONLY STRIPE SETUP (MANDATORY)
+====================================
+Stripe must exist ONLY in backend.
+
+Create backend endpoint:
+
+POST /api/stripe/create-checkout-session
+
+Input:
+{
+  priceId: string,
+  plan: "starter" | "pro" | "studio"
+}
+
+Logic:
+- Require authenticated user
+- Create Stripe customer if missing
+- Attach userId in metadata
+- Create checkout session
+- Mode: subscription
+- Success URL: /billing/success
+- Cancel URL: /pricing
+- Return session.url ONLY
+
+====================================
+STEP 3: FRONTEND FLOW (CUSTOM UI ONLY)
+====================================
+On pricing page:
+
+When user clicks Subscribe:
+- Call /api/stripe/create-checkout-session
+- Immediately redirect browser to session.url
+- NO modal
+- NO embed
+- NO iframe
+- NO stripe UI inside app
+
+Use window.location.href = session.url
+
+====================================
+STEP 4: PRICE IDS (USE THESE EXACTLY)
+====================================
+starter: prod_TqbocE9ndCZYKw
+pro: prod_TqbpksJcbCRgnF
+studio: prod_Tqbp7YpPhMZcZK
+
+Map these to:
+Starter → limited features
+Pro → full features
+Studio → everything + priority
+
+====================================
+STEP 5: WEBHOOK (REQUIRED)
+====================================
+Create /api/stripe/webhook
+
+Handle:
+- checkout.session.completed
+- customer.subscription.created
+- customer.subscription.updated
+- customer.subscription.deleted
+- invoice.paid
+- invoice.payment_failed
+
+On success:
+- Set user.plan = plan
+- Set user.subscription_status = active
+
+On failure:
+- Downgrade to free
+- Lock exports
+
+====================================
+STEP 6: FEATURE GATING (CRITICAL)
+====================================
+Before ANY paid action:
+- export
+- download
+- b-roll
+- captions
+- ai voice
+- publishing
+- content plan generation
+
+Check user.plan
+If not allowed → return 402
+
+Frontend:
+- Show upgrade modal
+- DO NOT crash
+
+====================================
+STEP 7: EXISTING USERS
+====================================
+All existing users default to:
+plan = free
+
+Do NOT auto-upgrade anyone.
+
+====================================
+STEP 8: BILLING PORTAL
+====================================
+Create endpoint:
+GET /api/stripe/portal
+
+- Create Stripe billing portal session
+- Redirect user to portal
+- Return to /settings on exit
+
+====================================
+STEP 9: UI REQUIREMENTS
+====================================
+Pricing page:
+- Custom cards
+- Custom buttons
+- Custom layout
+- No Stripe UI visible
+- Clicking Subscribe ALWAYS redirects
+
+====================================
+STEP 10: LOG EVERYTHING
+====================================
+Log:
+- checkout started
+- checkout redirected
+- webhook received
+- subscription updated
+- access granted
+
+This must be fully working end-to-end.
+DO NOT leave partial logic.
+DO NOT keep old code.
+DELETE and REBUILD cleanly.

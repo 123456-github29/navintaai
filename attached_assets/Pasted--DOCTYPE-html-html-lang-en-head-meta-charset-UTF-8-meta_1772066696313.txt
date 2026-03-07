@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navinta - Premium UI Redesign</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { primary: '#6366f1', 'primary-hover': '#4f46e5', background: '#F8F9FC' }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #F8F9FC; color: #111827; }
+        /* Smooth scrolling for the single-page demo */
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col gap-12 p-8">
+
+    <div class="max-w-6xl mx-auto w-full">
+        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Screen 1: Loading / Render</h2>
+        
+        <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 h-[600px] flex items-center justify-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 p-4 border-b border-gray-100 flex justify-between items-center text-sm text-gray-500">
+                <div class="flex items-center gap-2">
+                    <span class="font-medium text-gray-900">navinta.org</span> <span class="text-gray-300">/</span> Navinta - Professional Video Production
+                </div>
+                <button class="bg-gray-50 hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-full font-medium transition-colors flex items-center gap-2">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full"></div> Chat
+                </button>
+            </div>
+
+            <div class="bg-white p-10 rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 max-w-md w-full text-center">
+                <div class="w-16 h-16 bg-indigo-50 text-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-2">Rendering Your Video</h2>
+                <p class="text-gray-500 text-sm mb-8 leading-relaxed">Applying cinematic effects, captions, and transitions. This may take 1-3 minutes.</p>
+                
+                <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden relative">
+                    <div class="absolute top-0 left-0 h-full bg-primary w-1/3 rounded-full animate-pulse transition-all duration-1000"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto w-full mt-12">
+        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Screen 2: Video Editor (AI Processing)</h2>
+        
+        <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden flex flex-col h-[700px]">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <button class="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    </button>
+                    <div>
+                        <h1 class="text-lg font-semibold text-gray-900 leading-tight">Power Isn't Punch – It's Purpose!</h1>
+                        <p class="text-xs text-gray-400 font-medium uppercase tracking-wider">Video Editor</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">Back to Shots</button>
+                    <button class="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Export Video
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 grid grid-cols-[1fr_400px] gap-8 p-8 bg-gray-50/50">
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm flex flex-col items-center justify-center p-6 relative">
+                    <div class="w-[280px] aspect-[9/16] bg-gray-900 rounded-xl shadow-lg relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent z-10 opacity-60"></div>
+                        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover" alt="Video subject placeholder">
+                    </div>
+                    <div class="w-full max-w-md mt-6 flex items-center gap-4 text-sm text-gray-500 font-medium">
+                        <button class="text-gray-900 hover:text-primary transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                        <span>0:04.8</span>
+                        <div class="flex-1 h-1.5 bg-gray-200 rounded-full relative cursor-pointer">
+                            <div class="absolute top-0 left-0 h-full bg-primary w-1/4 rounded-full"></div>
+                            <div class="absolute top-1/2 left-1/4 -mt-2 -ml-2 w-4 h-4 bg-white border-2 border-primary rounded-full shadow-sm"></div>
+                        </div>
+                        <span>0:25.2</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-6 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-purple-400"></div>
+                        
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="p-2 bg-indigo-100 text-primary rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900">Edit with AI</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed mb-6">AI analyzes your video and automatically removes dead air, adds smart cuts, zoom targets, and generates captions.</p>
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="font-medium text-primary flex items-center gap-2">
+                                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Transcribing audio...
+                                </span>
+                                <button class="text-gray-400 hover:text-red-500 transition-colors">Cancel</button>
+                            </div>
+                            <div class="h-2 w-full bg-indigo-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-primary w-[45%] rounded-full transition-all duration-500"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto w-full mt-12 mb-20">
+        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Screen 3: Director Mode</h2>
+        
+        <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden flex flex-col h-[800px]">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <button class="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <div>
+                        <h1 class="text-lg font-semibold text-gray-900 leading-tight">Little and Often Wins the M...</h1>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                            <p class="text-xs text-blue-500 font-bold uppercase tracking-wider">Live Director Mode</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+                    <span class="text-xs font-semibold text-gray-500">1 / 1 SHOTS</span>
+                    <div class="w-32 h-1.5 bg-gray-200 rounded-full">
+                        <div class="w-full h-full bg-blue-500 rounded-full"></div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 items-center">
+                    <button class="px-4 py-2 text-sm font-medium text-gray-600 flex items-center gap-2 hover:bg-gray-50 rounded-xl transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        Teleprompter
+                    </button>
+                    <button class="px-5 py-2 text-sm font-medium text-white bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors shadow-md">
+                        Finish Video
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 grid grid-cols-[80px_1fr_420px]">
+                
+                <div class="border-r border-gray-100 bg-gray-50/50 flex flex-col items-center py-6 gap-6 text-gray-400">
+                    <button class="p-3 rounded-xl hover:bg-gray-200 hover:text-gray-900 transition-colors text-gray-900 bg-gray-200 shadow-sm"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg></button>
+                    <button class="p-3 rounded-xl hover:bg-gray-200 hover:text-gray-900 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg></button>
+                    <button class="p-3 rounded-xl hover:bg-gray-200 hover:text-gray-900 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg></button>
+                    <button class="p-3 rounded-xl hover:bg-gray-200 hover:text-gray-900 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg></button>
+                </div>
+
+                <div class="bg-gray-100 flex flex-col items-center justify-center relative p-8 shadow-inner">
+                    <div class="w-[340px] aspect-[9/16] bg-gray-900 rounded-3xl shadow-2xl relative overflow-hidden border-4 border-white/50">
+                        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover" alt="Camera Feed">
+                        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                            Shot 1
+                        </div>
+                    </div>
+                    
+                    <div class="absolute bottom-8 flex items-center justify-center gap-6 bg-white/80 backdrop-blur-md px-8 py-4 rounded-full shadow-lg border border-white">
+                        <span class="text-sm font-semibold text-gray-600 w-12 text-right">38s</span>
+                        <button class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center border-4 border-white shadow-md hover:bg-red-600 hover:scale-105 transition-all">
+                            <div class="w-6 h-6 bg-white rounded-sm"></div>
+                        </button>
+                        <div class="w-12 h-1 bg-gray-300 rounded-full">
+                            <div class="h-full bg-gray-800 w-1/3 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-l border-gray-100 bg-white p-8 overflow-y-auto flex flex-col gap-8">
+                    <div>
+                        <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6 border-b border-gray-100 pb-2">Director Notes</h2>
+                        
+                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-5 mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="bg-white border border-gray-200 shadow-sm text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full">Shot 1</span>
+                                <span class="text-sm text-gray-500 font-medium">38s</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-xs text-gray-400 font-semibold uppercase mb-1">Camera</p>
+                                    <p class="text-sm font-medium text-gray-900">Eye Level</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400 font-semibold uppercase mb-1">Framing</p>
+                                    <p class="text-sm font-medium text-gray-900">Medium-close</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-8">
+                            <p class="text-xs text-gray-400 font-semibold uppercase mb-3">Instruction</p>
+                            <div class="bg-indigo-50 text-indigo-900 p-4 rounded-xl text-sm leading-relaxed font-medium border border-indigo-100">
+                                Engaging, direct eye contact. Use fingers to count or emphasize points.
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-end mb-3">
+                                <p class="text-xs text-gray-400 font-semibold uppercase">Script</p>
+                                <div class="flex gap-3 text-xs font-medium text-gray-400">
+                                    <button class="hover:text-gray-900 transition-colors">Shorten</button>
+                                    <button class="hover:text-gray-900 transition-colors">Expand</button>
+                                </div>
+                            </div>
+                            <div class="text-[15px] leading-relaxed text-gray-600 font-serif italic border-l-2 border-gray-200 pl-4">
+                                "Alright, listen up, future legends! We often think we need these massive, hours-long practice sessions to get better, right? Like, 'Oh, I'll train for three hours on Saturday!' And then... maybe you do, maybe you don't. But here's a secret: consistency *trumps* intensity, almost every time..."
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

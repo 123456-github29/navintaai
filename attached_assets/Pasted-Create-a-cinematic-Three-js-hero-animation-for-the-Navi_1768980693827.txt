@@ -1,0 +1,101 @@
+Create a cinematic Three.js hero animation for the Navinta landing page.
+
+GOAL:
+This animation must instantly communicate:
+“Record → AI understands → Edit → Finished video”
+without text, without clutter, without chaos.
+
+VIBE:
+- Calm
+- Premium
+- Confident
+- Apple / Linear / Stripe level
+- NOT futuristic
+- NOT neon
+- NOT sci-fi
+- NOT gamer
+- NOT chaotic
+
+COLOR RULES:
+- Background: pure black
+- Geometry: white
+- Accent: Navinta blue ONLY
+- No gradients
+- No glow
+- No particles
+- No random colors
+- No grey
+
+SCENE CONCEPT (IMPORTANT):
+1. Start with a simple white outline of a phone floating in space
+   - Minimal wireframe
+   - Slight parallax movement
+   - Slow rotation (very subtle)
+
+2. The phone begins to warp:
+   - Screen stretches horizontally
+   - Becomes a timeline
+   - Segments appear (shots)
+   - Lines slide into place
+   - This represents editing
+
+3. The timeline folds into a clean vertical video frame (9:16)
+   - Smooth morph animation
+   - No cuts, only transformations
+   - Feels like liquid metal but with strict geometry
+
+4. The final frame locks in place
+   - A clean rectangle
+   - With subtle pulse
+   - Represents the final video
+   - End state is calm, stable, confident
+
+ANIMATION RULES:
+- 60fps
+- Slow, elegant motion
+- Easing = easeInOut only
+- No sudden movement
+- No jitter
+- No noise
+- No shake
+- No randomness
+
+CAMERA:
+- Slight orbit
+- Very slow
+- Never disorienting
+- No zoom spam
+
+LIGHTING:
+- Soft white key light
+- One rim light
+- No colored lights
+- No dramatic contrast
+
+TECHNICAL:
+- Use Three.js only (no Babylon)
+- Use BufferGeometry
+- Use GSAP for animation timeline
+- Use requestAnimationFrame properly
+- Pause animation when tab inactive
+- Responsive for mobile (simplify geometry on small screens)
+
+INTEGRATION:
+- Animation is full-viewport hero background
+- Text overlays centered above it
+- Animation must not interfere with scrolling
+- When user scrolls, animation slowly fades out
+
+PERFORMANCE:
+- Keep draw calls minimal
+- No heavy shaders
+- No post-processing
+- Mobile must still run smoothly
+
+FINAL RESULT:
+The animation should feel like:
+“recording becoming editing becoming content”
+in one elegant motion.
+
+If this animation feels flashy, complicated, or like a demo — simplify it.
+If it feels calm, intentional, and premium — it’s correct.

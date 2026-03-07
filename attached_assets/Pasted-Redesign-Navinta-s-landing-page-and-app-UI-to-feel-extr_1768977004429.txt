@@ -1,0 +1,123 @@
+Redesign Navinta’s landing page and app UI to feel extremely premium, calm, and intentional — like Apple, Linear, or OpusClip.
+
+ABSOLUTE COLOR RULES (VERY IMPORTANT):
+- Do NOT use greys
+- Do NOT use gray shades
+- Do NOT use muted colors
+- Do NOT use gradients
+- Do NOT use random accent colors
+- Do NOT use glow effects
+- Do NOT use shadows that introduce grey
+
+ONLY ALLOWED COLORS:
+- Pure black (#000000)
+- Pure white (#FFFFFF)
+- ONE single accent color (existing blue only)
+
+If something needs separation:
+- Use spacing
+- Use borders (1px white at low opacity)
+- Use layout
+- Use scale
+NOT color
+
+ICONS:
+- Use Heroicons ONLY
+- Monochrome only
+- White or accent blue
+- No filled colorful icons
+- No icon backgrounds
+
+TYPOGRAPHY RULES:
+- Use size, weight, and spacing for hierarchy
+- Headings = bold, large, confident
+- Body text = normal weight, high line height
+- No decorative fonts
+- No playful fonts
+- No condensed fonts
+- Think “Apple keynote slides”
+
+LAYOUT RULES:
+- Everything must breathe
+- Increase padding everywhere
+- Reduce number of elements on screen
+- One primary action per screen
+- Center content
+- Use large margins
+- Use full viewport sections
+
+SCROLL BEHAVIOR:
+- Enable scroll-snap
+- Each scroll lands on a clean section
+- Smooth transitions
+- Calm animations only (opacity + translateY)
+
+LANDING PAGE STRUCTURE:
+1. Hero
+   - Logo
+   - Headline
+   - Subtext
+   - ONE button: “Get Started”
+   - Nothing else
+
+2. How it Works
+   - 4 steps
+   - Text + minimal icons
+   - No visuals overload
+
+3. Product Preview
+   - One large UI preview
+   - Centered
+   - No clutter around it
+
+4. Pricing
+   - 3 cards
+   - White border
+   - One highlighted plan using accent color border only
+   - No background shading
+   - No grey cards
+
+5. Final CTA
+   - One button
+   - Strong headline
+   - Nothing else
+
+NAVBAR:
+- Logo left
+- Pricing | How it works | Sign in (text only)
+- Get Started button on right
+- No dropdowns
+- No clutter
+
+DIRECTOR MODE UI:
+- Left sidebar for AI tools
+- Center recording canvas
+- Right panel for shot/script
+- Nothing overlapping
+- Recording button must always be visible
+- Space between panels must be increased
+
+ONBOARDING:
+- Grids must be symmetric (4 left, 4 right)
+- Center everything
+- Large text
+- No background cards
+- Use borders only for selections
+- Accent color only for selected state
+
+REMOVE:
+- Any technical info from landing page
+- Any metrics
+- Any clutter
+- Any “AI looking” UI
+- Any random design elements
+
+FINAL GOAL:
+This must look like a $100/month product.
+It must look like a human senior designer made it.
+Calm, confident, minimal, intentional.
+If something doesn’t add clarity, remove it.
+
+DO NOT break functionality.
+DO NOT change logic.
+ONLY change layout, spacing, and visuals.

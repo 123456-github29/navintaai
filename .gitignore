@@ -1,0 +1,18 @@
+node_modules
+.next
+.turbo
+.env*
+.DS_Store
+dist
+*.log
+tmp/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pythonlibs/
+python-autoedit/tmp/*
+!python-autoedit/tmp/.gitkeep
+python-autoedit/.whisper_cache/

@@ -1,0 +1,94 @@
+We are removing the Stripe pricing table embed from the UI.
+
+GOAL:
+Keep Stripe as the payment processor, but build a fully custom pricing UI that matches Navinta AI’s design.
+
+IMPLEMENT THIS FLOW:
+
+1) FRONTEND (Pricing UI)
+- Create custom pricing cards (Free / Creator / Pro / Studio)
+- Match site fonts, spacing, animations, and colors
+- Add monthly / yearly toggle
+- Animate cards on hover (scale + glow)
+- Add “Upgrade” CTA per tier
+- DO NOT use Stripe embed or iframe
+
+2) FRONTEND → BACKEND
+When user clicks upgrade:
+- Call POST /api/stripe/create-checkout-session
+- Pass:
+  - priceId
+  - billingInterval
+  - userId (from Supabase)
+  - userEmail
+- Disable button + show loading
+
+3) BACKEND (Secure)
+- Create Stripe Checkout Session using SECRET KEY
+- Attach metadata:
+    userId
+    plan
+    interval
+- Set success_url = /billing/success
+- Set cancel_url = /billing/cancel
+- Return session.url
+
+4) REDIRECT
+- Frontend redirects browser to session.url
+- Stripe handles payment securely
+- User never sees keys
+
+5) WEBHOOK (Already exists)
+On:
+- checkout.session.completed
+- invoice.paid
+- customer.subscription.updated
+- customer.subscription.deleted
+
+Update:
+- user_entitlements
+- plan tier
+- export permission
+- watermark flag
+- AI limits
+
+6) POST-CHECKOUT
+On success page:
+- Show success animation
+- Revalidate session
+- Refetch entitlements
+- Redirect to dashboard
+
+7) FEATURE GATING (IMPORTANT)
+- Export endpoint must verify entitlements
+- Director Mode buttons must check plan
+- Free users:
+   - watermark
+   - preview only
+   - no export
+- Paid users:
+   - full export
+   - higher limits
+   - no watermark
+
+8) DESIGN REQUIREMENTS
+- Pricing UI must look native, not embedded
+- Use same spacing system as landing page
+- Use GSAP for entrance animation
+- No default Stripe styling anywhere
+- No iframe visible to user
+
+9) SECURITY
+- Secret key backend only
+- Validate userId from session
+- Never trust frontend plan
+- Webhook is source of truth
+
+DO NOT re-add Stripe embed.
+DO NOT expose secret key.
+DO NOT iframe Stripe except for redirect checkout.
+
+After implementation:
+- Verify checkout works
+- Verify entitlements update
+- Verify exports are blocked for free tier

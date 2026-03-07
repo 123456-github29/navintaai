@@ -1,0 +1,174 @@
+You are a senior product designer + frontend engineer fixing and polishing an existing app.
+Do NOT change functionality, routes, data, or logic.
+Only improve layout, spacing, hierarchy, symmetry, and visual quality.
+
+Your goal: make the UI look intentional, professional, and human-designed, not AI-generated.
+
+⸻
+
+🔴 GLOBAL RULES (VERY IMPORTANT)
+	•	Use Hero Icons only (no colored icon packs, no random icons)
+	•	Remove all “vibe-coded” gradients, glowing colors, and random accent colors
+	•	Use one accent color max (blue is fine, but subtle)
+	•	Prefer monochrome UI with contrast, spacing, and typography doing the work
+	•	Increase padding, margins, and white space everywhere
+	•	Nothing should overlap or be hidden (EVER)
+	•	Everything must feel calm, breathable, and premium (Apple / Linear / Stripe style)
+
+⸻
+
+1️⃣ WELCOME SCREEN FIX
+
+Problem: Too crowded, CTA too close to headline
+
+Fix:
+	•	Add vertical spacing (min 64px) between:
+	•	Logo
+	•	Headline
+	•	Description
+	•	CTA button
+	•	Reduce button height slightly
+	•	Center everything inside a max-width container (480px)
+	•	Add subtle fade-in animation (opacity + translateY 8px)
+	•	Make the CTA feel deliberate, not urgent
+
+⸻
+
+2️⃣ ONBOARDING SCREENS (FEELING & PERSONALITY)
+
+Problem: Not symmetric, looks messy
+
+Fix:
+	•	Use 2-column grid with equal spacing
+	•	Always show 8 options (4 left / 4 right)
+	•	Buttons must:
+	•	Be same width
+	•	Same height
+	•	Same border radius
+	•	Same spacing
+	•	Selected state = subtle border + background change (no glow)
+	•	Add vertical breathing space between title and options
+
+⸻
+
+3️⃣ DASHBOARD CLEANUP (STOP VIBE CODED LOOK)
+
+Problem: Colored icons, messy hierarchy
+
+Fix:
+	•	Replace all icons with Hero Icons (outline)
+	•	Icons should be:
+	•	gray-400 default
+	•	gray-900 when active
+	•	Remove colored icon backgrounds
+	•	Make stats cards:
+	•	same height
+	•	same padding
+	•	same alignment
+	•	Add section separators (thin divider lines)
+	•	Reduce visual noise
+
+⸻
+
+4️⃣ MUSIC OVERLAP BUG
+
+Problem: Music row overlaps days
+
+Fix:
+	•	Add overflow-hidden to containers
+	•	Add consistent vertical spacing between day cards
+	•	Ensure music row wraps or scrolls horizontally
+	•	No absolute positioning for music UI
+
+⸻
+
+5️⃣ DIRECTOR / RECORDING PAGE RESTRUCTURE
+
+Problem: Everything is crowded, record button covered, impossible to scan
+
+Fix layout into 3 clear zones:
+
+LEFT (AI TOOLS PANEL)
+	•	Vertical sidebar with icons + labels
+	•	Each tool in its own row
+	•	Scrollable if needed
+	•	Tools:
+	•	Generate Captions
+	•	AI Voiceover
+	•	Generate B-roll
+	•	Apply Color Grade
+	•	Add Music
+	•	Smooth Transitions
+	•	Enhance Audio
+	•	Rewrite Script
+
+CENTER (CAMERA)
+	•	Camera preview must always be fully visible
+	•	Record button centered below preview
+	•	Nothing overlaps camera or record button
+	•	Add safe padding around camera
+
+RIGHT (DIRECTOR NOTES)
+	•	Stack:
+	•	Shot info
+	•	Instructions
+	•	Script
+	•	Performance tips
+	•	Each section separated with space + divider
+	•	Make script area scrollable if long
+
+⸻
+
+6️⃣ SPACING SYSTEM (APPLY EVERYWHERE)
+
+Create a spacing scale and apply consistently:
+	•	xs = 4px
+	•	sm = 8px
+	•	md = 16px
+	•	lg = 24px
+	•	xl = 40px
+	•	2xl = 64px
+
+Use it everywhere. No random margins.
+
+⸻
+
+7️⃣ TYPOGRAPHY HIERARCHY
+	•	Page title: bold, large, confident
+	•	Section title: medium weight
+	•	Body: calm, readable
+	•	No shouting (no all caps except small labels)
+	•	Increase line height for readability
+
+⸻
+
+8️⃣ FINAL QA PASS (MANDATORY)
+
+Before finishing:
+	•	Check every page at 100% zoom
+	•	Check mobile + desktop
+	•	Ensure no overlaps
+	•	Ensure no buttons are hidden
+	•	Ensure symmetry and alignment
+	•	Ensure nothing feels rushed or crowded
+
+⸻
+
+❗IMPORTANT
+
+You are NOT allowed to add features.
+You are NOT allowed to change backend.
+You are NOT allowed to redesign flows.
+
+You are polishing, organizing, and professionalizing.
+
+⸻
+
+Final result should feel:
+	•	calm
+	•	premium
+	•	intentional
+	•	human-designed
+	•	worth paying for
+
+Execute this carefully and step by step.

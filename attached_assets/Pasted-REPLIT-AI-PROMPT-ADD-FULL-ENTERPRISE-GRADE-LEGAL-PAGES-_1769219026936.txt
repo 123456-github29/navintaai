@@ -1,0 +1,278 @@
+REPLIT AI PROMPT — ADD FULL, ENTERPRISE-GRADE LEGAL PAGES (DO NOT SUMMARIZE, DO NOT SHORTEN)
+
+You are implementing production-grade, lawsuit-resistant legal pages for a SaaS AI video platform.  
+These must be written as if reviewed by a Silicon Valley startup law firm.  
+They must cover ALL risks: AI, content, payments, liability, moderation, uptime, data, exports, abuse, copyright, arbitration, etc.
+
+Create two new public pages:
+
+1. https://navinta.org/privacy
+2. https://navinta.org/terms
+
+These pages must:
+- Be accessible without login
+- Be linked in footer, signup, signin, onboarding, and Stripe checkout
+- Be readable, clean, professional
+- Use site fonts/colors
+- Be mobile responsive
+- Have SEO meta tags
+- Have “Last Updated” date
+- Be crawlable
+- EXACT text below must be rendered verbatim
+
+--------------------------------------------
+PRIVACY POLICY (FULL LEGAL VERSION)
+--------------------------------------------
+
+Privacy Policy  
+Last Updated: January 2026  
+
+Navinta Inc. (“Navinta”, “we”, “us”, “our”) operates the website navinta.org, mobile applications, APIs, and related services (collectively, the “Service”). This Privacy Policy describes how we collect, use, disclose, store, and protect information when you use Navinta.
+
+By accessing or using the Service, you agree to this Privacy Policy.
+
+1. INFORMATION WE COLLECT  
+
+1.1 Information You Provide  
+We collect personal information you voluntarily provide, including:
+- Name, email address, profile photo
+- Account credentials
+- Brand information, business data, preferences
+- Scripts, prompts, recordings, videos, audio, captions, metadata
+- Messages sent to support or AI chat
+- Uploaded files and generated outputs
+- Billing information (via Stripe)
+- Subscription tier and payment status
+
+1.2 Automatically Collected Information  
+We automatically collect:
+- IP address, device identifiers
+- Browser type, OS, screen resolution
+- Pages visited, actions taken, features used
+- Errors, crashes, logs, performance data
+- Referring URLs, timestamps
+- Approximate location (country/region)
+
+1.3 Cookies and Tracking  
+We use cookies and similar technologies for:
+- Authentication
+- Session persistence
+- Analytics
+- Security
+- Performance optimization
+- Fraud prevention
+
+You may disable cookies, but the Service may not function properly.
+
+1.4 Third-Party Sources  
+We receive data from:
+- Google OAuth
+- Stripe
+- Supabase
+- Cloud providers
+- AI providers used to process your content
+- Analytics services
+
+2. HOW WE USE INFORMATION  
+
+We use information to:
+- Provide, operate, and improve the Service
+- Generate content plans and videos
+- Perform AI processing you request
+- Process payments and subscriptions
+- Prevent abuse, fraud, and unauthorized access
+- Enforce terms
+- Comply with law
+- Communicate updates
+- Improve product performance
+- Monitor reliability
+
+We do NOT sell personal data.
+
+3. AI PROCESSING DISCLOSURE  
+
+Your content may be processed by AI systems (including third-party APIs) solely to deliver features you request (editing, transcription, b-roll, captions, planning).  
+We do not train public AI models on your data.
+
+AI output is probabilistic and may be inaccurate. You are responsible for reviewing all output.
+
+4. DATA SHARING  
+
+We may share information with:
+- Infrastructure providers (hosting, storage, CDN)
+- Payment processors (Stripe)
+- Authentication providers
+- AI processing providers
+- Analytics providers
+- Legal authorities when required
+
+We share only what is necessary to operate the Service.
+
+5. DATA RETENTION  
+
+We retain data while your account is active.  
+Upon deletion:
+- Content is deleted within 30 days
+- Billing records are retained as legally required
+- Logs may persist in backups temporarily
+
+6. SECURITY  
+
+We use industry best practices including:
+- Encryption in transit and at rest
+- Access controls
+- Rate limiting
+- Audit logging
+- Secret management
+- Webhook verification
+
+No system is 100% secure. Use at your own risk.
+
+7. YOUR RIGHTS  
+
+You may request access, correction, export, or deletion of your data by contacting support@navinta.org.
+
+8. INTERNATIONAL TRANSFERS  
+
+Data may be processed in the United States or other countries.
+
+9. CHILDREN  
+
+Navinta is not intended for users under 13. We do not knowingly collect data from children.
+
+10. CHANGES  
+
+We may update this policy at any time. Continued use constitutes acceptance.
+
+--------------------------------------------
+TERMS OF SERVICE (FULL LEGAL VERSION)
+--------------------------------------------
+
+Terms of Service  
+Last Updated: January 2026  
+
+These Terms govern your use of Navinta.  
+By using the Service, you agree to be bound by these Terms.
+
+1. SERVICE DESCRIPTION  
+
+Navinta provides AI-assisted video planning, recording, editing, and exporting tools.  
+The Service is provided “as is” and “as available” without warranties of any kind.
+
+We do not guarantee:
+- Performance
+- Accuracy
+- Results
+- Uptime
+- Revenue growth
+- Audience engagement
+- Platform compatibility
+
+2. ELIGIBILITY  
+
+You must be 13+ and legally able to enter contracts.
+
+3. ACCOUNT RESPONSIBILITY  
+
+You are responsible for:
+- Account security
+- All activity under your account
+- Content you upload
+- Compliance with laws
+- Accuracy of information
+
+4. SUBSCRIPTIONS & BILLING  
+
+- Paid plans auto-renew
+- Payments are non-refundable
+- Failed payments may suspend features
+- You authorize Stripe to process payments
+- Prices may change with notice
+- Taxes may apply
+
+5. CONTENT OWNERSHIP  
+
+You own your content.  
+You grant Navinta a limited license to process, modify, and display content solely to provide the Service.
+
+Navinta owns:
+- Platform
+- Software
+- Algorithms
+- UI/UX
+- Workflows
+- Branding
+
+6. ACCEPTABLE USE  
+
+You may not:
+- Upload illegal or infringing content
+- Abuse AI systems
+- Reverse engineer
+- Scrape or bypass limits
+- Attempt unauthorized access
+- Circumvent paywalls
+- Upload malware or harmful code
+
+Violation may result in termination.
+
+7. AI DISCLAIMER  
+
+AI output may be incorrect, biased, or incomplete.  
+Navinta is not responsible for decisions made using AI output.
+
+8. EXPORTS & DISTRIBUTION  
+
+You are responsible for how exported content is used, distributed, and published.
+
+9. TERMINATION  
+
+We may suspend or terminate access at any time, with or without notice.
+
+10. DISCLAIMER OF WARRANTIES  
+
+THE SERVICE IS PROVIDED “AS IS” WITHOUT WARRANTIES OF ANY KIND.
+
+11. LIMITATION OF LIABILITY  
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW:
+- We are not liable for indirect damages
+- Not liable for data loss
+- Not liable for business loss
+- Not liable for AI errors
+- Liability capped at fees paid in last 12 months
+
+12. INDEMNIFICATION  
+
+You agree to indemnify Navinta against claims arising from your content or use.
+
+13. ARBITRATION & CLASS ACTION WAIVER  
+
+All disputes resolved by binding arbitration.  
+No class actions allowed.
+
+14. GOVERNING LAW  
+
+These Terms are governed by the laws of the United States.
+
+15. CONTACT  
+
+support@navinta.org
+
+--------------------------------------------
+IMPLEMENTATION INSTRUCTIONS
+--------------------------------------------
+
+- Create routes /privacy and /terms
+- Render text EXACTLY as above
+- No shortening, no paraphrasing
+- Link from footer, auth pages, Stripe checkout
+- Add SEO meta tags
+- Add Last Updated label
+- Ensure public access
+- Ensure mobile readability
+- Confirm links work
+
+--------------------------------------------
+END PROMPT
+--------------------------------------------

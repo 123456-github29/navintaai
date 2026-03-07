@@ -1,0 +1,268 @@
+Replit AI — update the “Director Chat Studio” implementation to explicitly use:
+- Luma AI for ALL motion/camera features + motion graphics/animated overlays that Luma can generate
+- Remotion for deterministic assembly, captions, timing, crossfades, watermarking, aspect-ratio exports, and any effects Luma cannot do reliably
+
+DO NOT redesign the entire app. Keep current fonts/colors/theme. Only implement/extend what’s needed.
+
+========================================================
+GOAL (UPDATED)
+========================================================
+Inside /studio/:videoId/edit (Director Chat Studio), user edits via chat and sees a live preview.
+
+When user asks for:
+- camera motion (zoom/pan/tilt/dolly-like)
+- motion graphics (clapperboard, hearts, thumbs-up, emoji overlays)
+- animated b-roll / cinematic inserts / “make it feel like CapCut/Opus style”
+…we should prefer Luma AI to generate those assets (short video layers), then Remotion composes them into the final timeline using the EDL contract + transitions + captions.
+
+Remotion remains the “timeline engine.”
+Luma becomes the “motion generation engine.”
+
+========================================================
+CORE PRINCIPLE
+========================================================
+We DO NOT let Luma “edit the whole video” end-to-end by default.
+Instead:
+1) We use Gemini to decide *where* and *why* motion is needed.
+2) We ask Luma to generate:
+   - motion overlays (alpha/matted if possible; otherwise black background and we chroma key / mask)
+   - b-roll inserts (short clips)
+   - camera-moved versions of a segment (when needed)
+3) We then assemble those Luma results in Remotion in a controlled way.
+
+This is the only way to keep edits consistent, undoable, and production-grade.
+
+========================================================
+1) EXTEND THE EDL CONTRACT (SCHEMA) FOR LUMA-GENERATED LAYERS
+========================================================
+Update your EDL schema to support:
+- overlays (motion graphics layers)
+- cameraMotion as either “remotion” preset OR “lumaGeneratedAsset”
+- broll as either stock/user assets OR luma-generated
+
+Add fields (conceptually; keep using Zod):
+- tracks.overlays[]:
+  {
+    assetId: string,
+    startFrame: number,
+    duration: number,
+    blendMode: "normal" | "screen" | "overlay" | "multiply",
+    opacity: number (0..1),
+    position: "center" | "top" | "bottom" | {x:number,y:number},
+    scale: number,
+    mask?: { type: "none" | "circle" | "roundedRect" | "alpha" | "chromaKey", keyColor?: string },
+    tag: "clapperboard" | "emoji" | "reaction" | "lowerthird" | "accent"
+  }
+
+- tracks.video[].cameraMotion:
+  either existing presets OR:
+  { type: "luma", assetId: string, intensity: number }
+
+- tracks.broll[]:
+  add sourceType: "pexels" | "user" | "luma"
+  and optional prompt + rationale
+
+========================================================
+2) GEMINI MUST OUTPUT “LUMA-FIRST” OP PLANS
+========================================================
+Update the Gemini Intent Router contract so that for motion/camera/mograph requests it emits ops like:
+
+- op: "generate_motion_overlay"
+  overlayType: "clapperboard" | "hearts" | "thumbsup" | "emoji_burst" | "kinetic_shape" | "cinematic_swoosh"
+  style: "premium" | "minimal" | "playful" | "cinematic"
+  atFrames: [ ... ]  // insertion points
+  durationFrames: [min,max]
+  prompt: "..."  // Luma prompt
+
+- op: "generate_camera_motion"
+  target: { clipId, startFrame, endFrame }
+  motion: "dolly_in" | "dolly_out" | "pan_left" | "pan_right" | "parallax" | "handheld_subtle"
+  intensity: 0.1..1.0
+  prompt: "..."
+
+- op: "generate_broll_luma"
+  slots: [{atFrame, durationFrames, prompt, reason}]
+
+- op: "fallback_remotion_motion"
+  only if Luma is unavailable or too expensive or fails
+
+Rules:
+- Default to Luma for motion graphics and camera moves.
+- Use Remotion-only for:
+  - captions
+  - crossfades/transitions between clips
+  - watermarking
+  - deterministic text overlays
+  - final mux / aspect exports
+  - backup camera zoom if Luma fails
+
+========================================================
+3) LUMA INTEGRATION MODULE (SERVER ONLY)
+========================================================
+Implement src/services/luma.service.ts (server-side only, secrets protected)
+
+Responsibilities:
+- createGeneration({prompt, aspectRatio, durationSeconds, styleRef?, seed?})
+- pollGeneration(jobId) until done/failed
+- download result file
+- store to your storage bucket (Supabase storage or S3)
+- return assetId + signed URL for rendering
+
+Critical:
+- Never call Luma directly from the browser.
+- Enforce per-plan quotas and rate limits.
+- Add job idempotency: don’t regenerate same prompt+slot if retrying.
+
+========================================================
+4) “ASSET MANIFEST” FOR RENDERING
+========================================================
+Implement an asset registry:
+- assetId -> url, type (video), source (luma/pexels/user), metadata (duration, fps, alphaPossible)
+
+When Luma returns a result:
+- store it and register it
+- then patch EDL to reference assetId
+
+========================================================
+5) REMOTION LAYERS: IMPLEMENT OVERLAYS + LUMA CAMERA MOTION ASSETS
+========================================================
+You already have:
+- CaptionTrack
+- TransitionLayer
+- OverlayLayer (placeholder)
+
+Now implement them fully:
+
+A) OverlayLayer:
+- Render each overlay item using <Video> or <Img> at the correct frames
+- Apply opacity, blend mode (CSS mix-blend-mode), mask strategy
+- Provide safe defaults (no jitter, clean positioning)
+
+B) SmartVideoClip:
+- If cameraMotion is preset: use your existing spring zoom/pan
+- If cameraMotion.type === "luma":
+  - instead of transforming the base clip, swap to Luma-generated motion clip asset for that segment
+  - ensure it aligns with startFrom/endAt and frame counts
+
+C) Timeline:
+- Keep @remotion/transitions crossfade for ALL hard cuts (still needed even with Luma assets)
+- Crossfade should remain 4–6 frames by default
+
+========================================================
+6) USER CHAT UX: “LIVE PREVIEW” STILL WORKS
+========================================================
+When user asks “add clapperboard”:
+- show in chat: “Generating clapperboard animation…”
+- run Luma generation (short, like 1.0–2.0 sec)
+- insert overlay into EDL near the hero/hook frames
+- render preview in Remotion
+- swap preview_url when ready
+
+When user asks “make it more cinematic with camera moves”:
+- Gemini chooses 2–4 segments only (don’t overdo)
+- for each segment, call Luma “camera motion” generation
+- patch EDL to use those assets for those segments
+- rerender
+
+========================================================
+7) FAILSAFE / FALLBACKS (MUST)
+========================================================
+If Luma fails or takes too long:
+- fallback to Remotion motion presets (slow zoom-in / subtle shake / dolly-left)
+- still produce a usable preview (never block the entire edit)
+
+Also:
+- show “Luma generation failed; used fallback motion” message in chat
+
+========================================================
+8) COST CONTROL / PLAN GATING (MUST)
+========================================================
+Add plan-based caps:
+- Free:
+  - preview only + watermark
+  - Luma generations disabled OR 1 per day max
+- Starter:
+  - limited Luma overlay + limited b-roll
+- Pro:
+  - more Luma generations
+- Studio:
+  - highest limits + priority queue
+
+Enforce in backend before creating any Luma job.
+Store usage counters in DB:
+- luma_jobs_today
+- luma_seconds_generated
+- luma_overlays_count
+- luma_broll_count
+
+========================================================
+9) WHAT “LUMA CAN DO” — HOW TO STRUCTURE PROMPTS
+========================================================
+Create prompt templates (server-side) that Gemini fills:
+
+A) Motion Overlay prompt template:
+“Create a clean, premium motion graphic overlay on a transparent-like background if supported; otherwise black background. Style: [cinematic/minimal]. Subject: [clapperboard/hearts/thumbs up/emoji burst]. Motion: smooth, easing, 1.2 seconds. Keep center safe area. No text. High contrast suitable for overlay.”
+
+B) Camera Motion prompt template:
+“Apply subtle cinematic camera move to this talking-head shot: [dolly in / pan]. Keep subject centered, avoid warping face, smooth motion, no jitter, preserve quality. Duration: X seconds.”
+
+C) B-roll prompt template:
+“Generate a short b-roll clip that visually supports: [concept]. Style: realistic, high quality, matched lighting, smooth motion.”
+
+NOTE:
+If Luma can’t output alpha:
+- add a “chromaKey” mask option and generate overlays on pure green background for easy keying in Remotion.
+Implement chroma key in Remotion for overlays (simple key is acceptable initially).
+
+========================================================
+10) IMPLEMENTATION TASK LIST (DO THIS EXACTLY)
+========================================================
+- Update EDL Zod schema to add overlays + luma cameraMotion type + broll sourceType
+- Implement luma.service.ts (server) with create/poll/store
+- Implement asset registry (db table or storage manifest)
+- Implement OverlayLayer to render overlay video assets with blend/mask
+- Update SmartVideoClip to support cameraMotion.type="luma" asset swap
+- Update Gemini Intent Router to output luma-first ops
+- Update message processing worker:
+  - detect ops requiring Luma
+  - create Luma jobs
+  - wait/poll
+  - store assets
+  - patch EDL
+  - validate
+  - render preview
+- Add usage caps + plan gating
+- Add fallback logic for all Luma-dependent ops
+- Add chat UX status updates (“Generating overlay…”, “Rendering preview…”)
+
+========================================================
+11) DEMO BEHAVIOR (MUST MATCH)
+========================================================
+In Director Chat Studio:
+- User types: “Add a clapperboard at the start, then subtle hearts when I say ‘love’”
+- System:
+  - finds start segment + timestamps for “love”
+  - generates clapperboard overlay via Luma
+  - generates hearts overlay via Luma
+  - inserts both into EDL overlays track
+  - renders preview
+  - user sees motion graphics on top of the video
+
+- User types: “Make the hook more dynamic with a dolly-in and a quick pan”
+- System:
+  - chooses first 2–3 seconds as hook segment
+  - generates Luma camera motion clip
+  - swaps that segment in EDL
+  - renders preview
+
+========================================================
+12) DO NOT CHANGE
+========================================================
+- No theme/font/color changes
+- No removal of current flows
+- Only add/extend this new editing capability
+
+DELIVERABLE
+- Everything compiles
+- Director Chat Studio is usable end-to-end
+- Luma integration is server-side, secure, plan-gated, and fallback-safe

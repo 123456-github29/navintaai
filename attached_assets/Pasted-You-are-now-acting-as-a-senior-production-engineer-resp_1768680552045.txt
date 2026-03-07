@@ -1,0 +1,132 @@
+You are now acting as a senior production engineer responsible for securing and stabilizing this application so it is safe for real users and can scale to thousands of users.
+
+GOAL:
+Make this app production-ready, secure, and stable without changing functionality.
+
+STRICT RULES:
+- Do NOT remove features
+- Do NOT rewrite the app architecture
+- Do NOT introduce breaking changes
+- Only add security, validation, rate limiting, and safety
+- All secrets MUST come from Replit Secrets (process.env)
+- Frontend must NEVER access secrets
+- Backend is the only place allowed to call OpenAI, FFmpeg, Supabase service role, or any paid APIs
+
+================================
+1. ENVIRONMENT & SECRETS (CRITICAL)
+================================
+- Remove all hardcoded keys or .env usage
+- Read secrets only from process.env
+- Required secrets:
+  SUPABASE_URL
+  SUPABASE_ANON_KEY
+  SUPABASE_SERVICE_ROLE_KEY
+  OPENAI_API_KEY
+  JWT_SECRET
+- Fail fast if any are missing (app should not start)
+
+================================
+2. AUTH & USER SAFETY
+================================
+- Ensure every protected API route requires authentication
+- Ensure users can only access their own data
+- Reject any request where user_id is missing or mismatched
+- Never trust client-sent user_id (derive from auth token only)
+
+================================
+3. RATE LIMITING (MANDATORY)
+================================
+Add rate limits:
+- /api/generate-plan → 5 requests/minute/IP
+- /api/generate-caption → 5 requests/minute/IP
+- /api/generate-video → 2 requests/minute/IP
+- uploads → 10 requests/minute/IP
+- global fallback → 100 requests/minute/IP
+
+Block abusers automatically.
+
+================================
+4. INPUT VALIDATION & SANITIZATION
+================================
+For EVERY API route:
+- Validate input types
+- Enforce max lengths (text, arrays, objects)
+- Reject unexpected fields
+- Sanitize text inputs
+- Reject empty or malformed payloads
+- Enforce JSON schema validation
+- Reject requests > 10MB unless explicitly allowed
+
+================================
+5. SUPABASE SECURITY (NON-NEGOTIABLE)
+================================
+- Ensure RLS is enabled on ALL tables
+- Ensure anon key is safe for frontend use
+- Ensure service role key is ONLY used server-side
+- Add comments where service role is used explaining why
+
+================================
+6. AI COST & ABUSE PROTECTION
+================================
+- Add a global AI kill-switch using:
+  DISABLE_AI=true
+- If enabled, all AI endpoints must return a safe message
+- Log every AI request with user_id and endpoint name
+
+================================
+7. FILE UPLOAD SAFETY
+================================
+- Enforce file size limits
+- Validate MIME types
+- Reject unknown extensions
+- Store uploads in isolated directories
+- Never allow path traversal
+- Never trust filenames from client
+
+================================
+8. FFmpeg SAFETY
+================================
+- Validate all FFmpeg inputs
+- Use temp directories only
+- Auto-clean temp files after processing
+- Add timeout protection
+- Prevent infinite processing
+
+================================
+9. ERROR HANDLING
+================================
+- No stack traces to users
+- All errors return safe messages
+- Log full errors server-side only
+- Never leak secrets in logs
+
+================================
+10. OBSERVABILITY
+================================
+Add logging for:
+- login
+- plan generation
+- video generation
+- caption generation
+- upload start/end
+- errors
+Logs must include requestId and userId (if available)
+
+================================
+11. PRODUCTION DEFAULTS
+================================
+- Disable debug logs in production
+- Enable strict CORS
+- Enable helmet or equivalent
+- Disable directory listing
+- Disable eval, unsafe headers, etc.
+
+================================
+12. FINAL STEP
+================================
+After all changes:
+- Run through all routes
+- Ensure app still works
+- Ensure no functionality is broken
+- Ensure security is enforced everywhere
+- Report what was added and where

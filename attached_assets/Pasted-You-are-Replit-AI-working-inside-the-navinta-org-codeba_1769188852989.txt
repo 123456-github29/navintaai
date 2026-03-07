@@ -1,0 +1,156 @@
+You are Replit AI working inside the navinta.org codebase. Your task is to build a NEW, production-grade landing page (marketing site) that feels like a premium product launch (Apple-level polish + Opus Clip-level motion), with GSAP-driven cinematic scroll storytelling that visually demonstrates the Navinta workflow.
+
+ABSOLUTE REQUIREMENTS
+- The page must be information-complete: explain Navinta clearly (value prop, how it works, who it’s for, why different, outcomes, pricing, FAQs).
+- Must include the FULL animation narrative sequence described below (Action → Onboarding → Plan → Shots → Recording → Editing → Polish → Publish → Loop).
+- Must include a clapperboard animation on page load that spins into view and snaps shut timed with the first headline reveal. This must be the signature moment.
+- Use GSAP + ScrollTrigger for orchestrated scroll-based animations.
+- No “vibe coded” look: do NOT use random bright icon colors, do NOT use generic component patterns. Also: user explicitly said “no greys either” — do not make the design depend on grey surfaces/backgrounds.
+- Typography must be distinctive (NOT Inter/Roboto/Arial/system). Use an intentional pairing: one expressive display font + one refined body font. Load via next/font or equivalent. Keep it readable and accessible.
+- Must be responsive, performant, accessible: good contrast, reduced motion support, keyboard accessible CTAs, ARIA for key interactive components.
+- Must not break existing app routes. Landing page is for signed-out users; signed-in users should still go to dashboard.
+- Keep code clean, modular, and explainable. Use real components, not a single giant file.
+- Use Heroicons for icons (not random emoji or colored icon packs).
+- Add a pricing section before sign-in.
+- Add a “real examples” section using Pexels (NOT AI video generation). Use Pexels API via server route so the API key is never exposed client-side.
+
+TECH STACK ASSUMPTIONS (adjust to actual repo)
+- Next.js app directory or existing React SPA. Detect what navinta uses and implement accordingly.
+- Tailwind is likely present; if so use it, but do not create generic Tailwind marketing page—this must look designed.
+- GSAP installed or install it. Use dynamic import if needed to avoid SSR issues.
+
+AESTHETIC DIRECTION (commit to one and execute precisely)
+Choose “Luxury Editorial / Cinematic Studio”:
+- Background: deep near-black with subtle rich undertones (not grey), e.g. ink-black with a hint of blue/green warmth; use gradient meshes + grain overlay for depth.
+- Accents: controlled, premium color moments (like Opus Clip dark theme with tasteful color). Use 1–2 dominant accents (e.g. electric-cyan + warm gold) and apply sparingly as glow highlights, thin strokes, or animated light sweeps. Do not splash color everywhere.
+- Layout: editorial grid with intentional asymmetry; large type, generous spacing, cinematic transitions; use layered depth and parallax.
+- Texture: grain/noise overlay, subtle film dust, light leaks used tastefully (CSS, not heavy images).
+- Micro details: custom cursor optional (but must remain accessible), hover parallax on cards, magnetic buttons.
+
+INFORMATION ARCHITECTURE (must implement these sections)
+1) HERO / ABOVE THE FOLD
+- Headline: “Navinta — Your AI-Powered Director”
+- Subhead: “Record clips. Navinta directs, edits, and polishes.”
+- Primary CTA: “Get Started” (Google sign-in)
+- Secondary CTA: “Watch the workflow”
+- MUST: Clapperboard animation intro synced with headline reveal.
+- Add a small “Trusted by creators who hate editing” style line + small brand badges (text-only if needed).
+
+2) THE WORKFLOW STORY (scroll-driven cinematic sequence)
+Build a single continuous “StoryRail” section where each scroll segment morphs the same stage element through:
+A. Idea → Plan (Onboarding Simulation)
+   - Floating cards appear; question card slides in left; typed answers; cards snap into a single plan card.
+B. Plan → Shots (Shot Breakdown)
+   - Plan card transforms into a vertical phone frame; shot cards stack; timeline line draws down.
+C. Recording (Director Mode)
+   - Phone UI switches to recording mode; red dot pulses; instruction fades; timer counts; progress ring fills; then a freeze + “clip snaps into timeline”.
+D. Editing (Invisible Intelligence)
+   - Timeline shows pauses shrink; clips slide closer; transitions smooth; b-roll layers glide in; captions appear word-by-word.
+E. Polish
+   - Timeline compresses into one clean video card; subtle “color grade” sweep; motion smoothing; music waves animate behind.
+F. Publish
+   - Video splits into 9:16, 1:1, 16:9 frames; each snaps into platform mock frames and fades.
+G. Loop
+   - Subtle loop cue at bottom: “Next video starts” with minimal looping animation (not nauseating).
+IMPORTANT: This must be one cohesive orchestrated experience, not separate random animations.
+
+3) “HOW NAVINTA THINKS” (differentiation)
+- 3–5 pillars as editorial blocks:
+  - Thinks in shots, not prompts
+  - Director-level onboarding (not generic)
+  - Smart editing (no ugly cuts)
+  - Intelligent b-roll
+  - Exports everywhere
+Use heroicons, monochrome, with subtle animated strokes.
+
+4) SOCIAL PROOF / EXAMPLES (Pexels)
+- “Real examples” section that pulls 6–12 vertical/short-form clips & images from Pexels relevant to business/creator filming/editing (search queries like “creator filming”, “small business”, “podcast”, “product showcase”, “speaking to camera”, “b-roll hands typing”, etc.)
+- Implement backend route: /api/pexels/search?query=... that uses PEXELS_API_KEY server-side. Cache results (in-memory) to avoid rate limits.
+- Client shows a tasteful mosaic with mixed aspect ratios (9:16, 1:1, 16:9) and subtle hover motion.
+
+5) PRICING (before sign-in)
+- 3 tiers: Starter, Creator, Studio (or similar). Must look premium.
+- Include monthly price placeholders (we can edit later), plus bullets:
+  - Minutes included, exports, captions, b-roll suggestions, team features.
+- Add “Compare plans” accordion.
+- Add “FAQ about billing” minimal.
+
+6) FAQ + SECURITY / TRUST
+- Include a “Security & Privacy” mini section:
+  - “Your auth is handled by Google + Supabase”
+  - “Keys stored server-side”
+  - “Row-level security (RLS) enforced” (only if actually true; otherwise phrase carefully like “designed to support RLS”)
+Don’t make claims that are untrue. If unknown, phrase as “designed for” not “guaranteed”.
+
+7) FINAL CTA
+- Bold closing: “Publish your best video this week.”
+- CTA: Get Started / Sign in
+- Secondary: “See workflow again” scroll-to-story.
+
+IMPLEMENTATION DETAILS
+- Create new route/page:
+  - If Next.js: app/(marketing)/page.tsx or pages/index.tsx depending on project
+  - Keep existing app routes intact.
+- Create components:
+  - <HeroClapper />
+  - <StoryRail /> with GSAP timelines per scroll segment
+  - <Pillars />
+  - <PexelsMosaic />
+  - <Pricing />
+  - <FAQ />
+  - <Footer />
+- Animation approach:
+  - Use GSAP context + cleanup on unmount.
+  - Use ScrollTrigger with scrub true for the StoryRail.
+  - Use one master timeline that maps scroll progress to state morphs.
+  - Use transforms + opacity + clip-path for morphing cards to phone.
+- Reduced motion:
+  - If prefers-reduced-motion: disable heavy GSAP, show static states with gentle fades.
+- Performance:
+  - Avoid huge images; lazy load Pexels assets.
+  - Use CSS gradients/noise overlays instead of heavy videos for background.
+  - Keep DOM manageable; reuse elements and morph them rather than mounting tons of nodes.
+
+COPY REQUIREMENTS (include this message content)
+Use the provided Navinta description to populate the landing page copy in a refined concise way:
+- Explain the problem (overwhelm)
+- Explain the solution (AI director)
+- Explain steps (onboarding → plan → record → edit → publish)
+- Highlight benefits (no ugly cuts, real scripts, b-roll, captions, exports)
+- Who it’s for (founders, coaches, creators, businesses)
+- Outcome statement (“I just published my best video yet”)
+
+NAVIGATION + AUTH INTEGRATION
+- If user is signed out: show marketing page with CTA that triggers Google sign-in.
+- If user is signed in: CTA should route to /dashboard (or current logged-in home).
+- Ensure header has:
+  - Product
+  - Workflow
+  - Examples
+  - Pricing
+  - FAQ
+  - Sign in / Get Started
+Sticky header with smooth scroll to sections.
+
+COLOR RULES
+- No grey UI blocks. Use deep ink-black backgrounds and rich gradients; surfaces can be tinted (deep navy, deep emerald, deep aubergine) but not flat grey.
+- Accents must be tasteful and sparse: subtle glows, thin lines, animated light sweeps.
+
+DELIVERABLES
+1) Implement the full landing page with all sections.
+2) Implement GSAP animations exactly matching the workflow narrative.
+3) Implement Pexels backend route + front-end mosaic.
+4) Ensure responsive + accessible + reduced motion.
+5) Remove any existing clutter/technical junk from landing page and keep technical content only in a small “Security & Privacy” section.
+
+AFTER YOU FINISH
+- Run the app and verify:
+  - Page loads fast
+  - Clapperboard animation triggers and syncs with hero headline
+  - Scroll story works on desktop and mobile
+  - Pricing shows before sign-in
+  - Pexels examples load without exposing API key
+  - No layout cramping; everything centered and balanced
+- If anything looks “template-y”, refine spacing/typography/composition until it feels designed.
+
+Now implement this in the codebase.

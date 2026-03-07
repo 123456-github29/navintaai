@@ -1,0 +1,130 @@
+You are an expert full-stack engineer and motion-graphics engineer. Implement a CAPTION STYLE GENERATOR system (Option 2) for my app so we can have hundreds of high-quality caption styles without hand-writing hundreds of templates.
+
+SCOPE: CAPTIONS ONLY. No auto-zoom, no cuts, no other features.
+
+GOAL
+1) Build a “CaptionStyleSpec” (JSON) system that a single Remotion caption renderer can apply.
+2) Build a generator script that creates 2,000–10,000 random style specs from curated primitives (fonts, palettes, effects), SCORES them for quality/readability, and keeps the top 300–800.
+3) Save the curated results to a JSON file that the app loads as the “Style Library”.
+4) In the editor “Finish video” or caption panel, show a scrollable “Style Library” grid/list (name + tiny preview thumbnail if easy, else just name chips for now). Selecting a style applies it instantly to captions.
+5) Captions must support TikTok-style per-word emphasis (active word scale/color/pill) when word timestamps are available.
+
+IMPORTANT ARCHITECTURE CHOICE (BEST OPTION)
+- DO NOT create hundreds of separate caption template components.
+- Create ONE spec-driven Remotion caption renderer that reads CaptionStyleSpec and renders accordingly.
+- Store styles as JSON specs in data (generated.json).
+- Add a generator script + scoring + filtering to produce hundreds of “good” styles.
+
+ASSUMPTIONS
+- App uses Remotion for final rendering and has a caption overlay component already (even if basic).
+- Transcript data ideally contains word timestamps (Whisper verbose_json + timestamp_granularities:["word"]), but if not, captions still render line-based.
+- Project is JS/TS and can run a Node script (package.json scripts).
+
+DELIVERABLES (IMPLEMENT ALL)
+A) CaptionStyleSpec schema + validation
+- Create src/captions/styleSpec.ts
+- Use Zod to validate and clamp numeric ranges.
+- Whitelist fonts; fallback to Inter if not available.
+- Export:
+  - CaptionStyleSpec type
+  - CaptionStyleSpecSchema
+  - clampSpec(spec)
+  - DEFAULT_SPEC
+
+B) Spec-driven Remotion caption renderer
+- Create/Update src/captions/SpecCaptionRenderer.tsx
+- Inputs: captions (CaptionLine[] with words), styleSpec (CaptionStyleSpec)
+- Must:
+  - Render current caption line based on time
+  - Render each word as its own inline-block span (no connected underline/bar)
+  - Determine active word by nowMs between word.startMs and word.endMs
+  - Apply highlight behavior from spec:
+    - modes: none, color, scale, pill, scale+color, pill+scale
+  - Apply stroke/shadow/plate
+  - Respect layout: position, safe margin, max width, align, word spacing, max lines
+  - Include good defaults for readability
+- Ensure preview == export (same renderer/spec)
+
+C) Style generator + scoring + output file
+- Create scripts/generateCaptionStyles.ts (TS or JS)
+- Generator must:
+  1) Define font whitelist:
+     Inter, Montserrat, Poppins, Anton, Bebas Neue, Playfair Display (or existing fonts in project)
+  2) Define palettes: classic, MrBeast, neon, luxury gold, hot pink, etc.
+  3) Define effect choices:
+     stroke on/off, shadow on/off, plate on/off, highlight modes, motion types
+  4) Randomly generate many specs (e.g., 5000)
+  5) Score each spec for readability:
+     - contrast between fill/stroke (must be high)
+     - fontSize in a good range for short-form (72–104 preferred)
+     - stroke/shadow presence gives bonus
+     - highlight scale should be 1.10–1.24
+     - plate opacity in 0.12–0.35
+     - penalize extreme letter spacing, huge stroke, huge blur
+  6) Keep top N (e.g., 500) and output to:
+     src/captions/styles/generated.json
+- Add npm script:
+  "gen:caption-styles": "ts-node scripts/generateCaptionStyles.ts" (or node if JS)
+
+D) Load style library and apply in UI
+- Create src/captions/styles/useCaptionStyles.ts (or simple loader)
+- Load generated.json + include DEFAULT_SPEC + a few hand-picked base specs if desired.
+- Update caption UI:
+  - Add a “Style Library” panel that lists styles (name + category)
+  - Search and category filter optional (nice-to-have)
+  - On click style: setCaptionStyleSpec(spec)
+  - Persist selected style in project state
+
+E) Minimal preview approach
+- If easy: render a tiny Remotion preview card per style using @remotion/player for 1–2 seconds of sample captions.
+- If that’s too much, ship v1 as a list/grid with names, and we’ll add previews later.
+
+DATA TYPES
+Use these caption types (create if missing):
+- Word: { text: string; startMs: number; endMs: number }
+- CaptionLine: { startMs: number; endMs: number; words: Word[]; text?: string }
+
+If only line-based captions exist, synthesize word timings evenly across the line duration for highlight to still work (best-effort fallback).
+
+TECH DETAILS / CODE SNIPPETS TO USE (OK TO MODIFY)
+
+1) CaptionStyleSpec (suggested shape)
+- typography: fontFamily, fontWeight, fontSizePx, letterSpacingPx, lineHeight
+- layout: position, safeMarginPx, maxLines, maxWidthPct, align, wordSpacingPx
+- fill: color, opacity
+- stroke: enabled, color, widthPx, opacity
+- shadow: enabled, color, blurPx, offsetXPx, offsetYPx, opacity
+- plate: enabled, color, opacity, paddingPx, radiusPx, blurPx
+- highlight: mode, activeColor, inactiveOpacity, scale, pillColor, pillOpacity, pillPaddingPx, pillRadiusPx
+- motion: lineIn, lineInMs, wordPop, spring params
+
+2) Generator scoring heuristics (must implement)
+- Use WCAG-ish contrast heuristic (simple luminance + ratio)
+- Add scoring weights as described above
+- Keep top N and ensure variety by category:
+  - e.g., at least 80 Cinematic, 80 Bold, 80 Neon, etc.
+
+3) Font loading
+- Ensure fonts used by specs are available:
+  - If using Google Fonts in web preview, ensure export can still load fonts reliably
+  - If export environment can’t load remote fonts, add a note and fallback to Inter
+  - Prefer bundling fonts locally if possible
+
+ACCEPTANCE CRITERIA
+- Running `npm run gen:caption-styles` generates a JSON file with 300–800 styles.
+- App loads the file and shows a style library.
+- Selecting a style changes captions instantly in preview.
+- Captions support per-word emphasis (scale/color/pill) when word timings exist.
+- Captions look readable and professional by default (stroke + shadow sane).
+- No explosion of template components; one renderer + many specs.
+
+IMPLEMENTATION ORDER
+1) Implement CaptionStyleSpec schema + defaults + clamp.
+2) Implement SpecCaptionRenderer and connect it to preview/export.
+3) Implement generator script and generated.json output.
+4) Implement UI library and selection/persist.
+5) Optional: mini preview per style.
+
+Start by locating the existing caption overlay and replacing it with SpecCaptionRenderer, then add the style generator + UI.
+
+Only captions. No other features.

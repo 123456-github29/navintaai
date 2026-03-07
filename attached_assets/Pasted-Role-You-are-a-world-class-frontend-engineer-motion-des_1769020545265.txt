@@ -1,0 +1,158 @@
+Role:
+You are a world-class frontend engineer + motion designer.
+Your task is to transform navinta.org into a cinematic, intentional, Apple-level experience using GSAP + ScrollTrigger + Three.js (light usage).
+This must feel like a directed film sequence, not a website with random animations.
+
+⸻
+
+Core Rules
+	•	Use GSAP for all motion (no CSS-only animations)
+	•	Use ScrollTrigger to connect sections into one continuous scene
+	•	Animations must explain, guide, and connect
+	•	No vibe-coded UI
+	•	No random colors
+	•	No greys
+	•	Use existing Navinta brand colors only
+	•	Everything must feel intentional, cinematic, premium
+
+⸻
+
+🧠 Animation Philosophy (VERY IMPORTANT)
+
+This is not a “fade in on scroll” site.
+
+Each section is a scene
+Each scroll is a camera move
+Each animation is telling the story of how Navinta works
+
+⸻
+
+🎬 HERO SECTION — OPENING SCENE
+
+Text animation:
+	•	Animate the word NAVINTA
+	•	Letters appear as points of light
+	•	Points connect into letterforms
+	•	Letters slightly twist in 3D as user scrolls
+	•	Subtext fades in from depth:
+“Your AI-powered director”
+
+Motion:
+	•	Use GSAP timeline
+	•	Letters subtly rotate on Y-axis
+	•	Parallax on scroll (slow, elegant)
+	•	No harsh movement
+
+⸻
+
+🎞️ SCENE 2 — PROBLEM
+
+As user scrolls:
+	•	Text slides in from left
+	•	Supporting lines slide from right
+	•	They collide and lock together
+	•	Background subtly darkens (very slightly)
+
+Add micro motion:
+	•	Thin lines draw themselves under text
+	•	Small dots animate into place
+
+⸻
+
+🎥 SCENE 3 — HOW IT WORKS (DIRECTED EXPERIENCE)
+
+Create a vertical timeline spine:
+	•	A thin line grows as user scrolls
+	•	Each step appears as a node
+	•	Each node animates from a different direction:
+	•	left
+	•	right
+	•	bottom
+	•	depth
+
+Each node animation:
+	•	Scale from 0.9 → 1
+	•	Fade from 0 → 1
+	•	Slight Y movement
+	•	Soft easing (power2.out)
+
+⸻
+
+📱 SCENE 4 — PHONE → EDITOR TRANSFORMATION
+
+Create a central phone mockup:
+	•	As user scrolls:
+	•	Phone rotates slightly
+	•	UI morphs into editing interface
+	•	Clips slide in
+	•	Timeline grows
+	•	Captions animate in
+
+Use GSAP + transforms (no heavy Three.js)
+
+This must feel like:
+
+“record → cut → caption → export”
+
+⸻
+
+🎞️ SCENE 5 — AI POWER MOMENT
+
+Text comes from sides of screen:
+	•	“AI Script”
+	•	“AI Cuts”
+	•	“AI B-roll”
+	•	“AI Captions”
+
+Each text:
+	•	Slides in from different edges
+	•	Locks into a grid
+	•	Slight overshoot easing
+	•	Feels magnetic
+
+⸻
+
+🎬 SCENE 6 — CINEMATIC DETAIL
+
+Add:
+	•	subtle floating particles
+	•	slow moving background dots
+	•	line reveals
+	•	soft glow accents
+	•	slight camera push on scroll
+
+⸻
+
+✨ MICRO-INTERACTIONS (EVERYWHERE)
+
+Add GSAP hover animations:
+	•	buttons lift slightly
+	•	icons rotate 5–8 degrees
+	•	cards scale to 1.02
+	•	text underline draws itself
+
+Everything should feel touchable and alive.
+
+⸻
+
+🧩 LAYOUT FIXES
+	•	Fix spacing issues
+	•	Fix crowded sections
+	•	Add proper margins
+	•	Ensure no button is covered
+	•	Balance left/right spacing
+	•	Use grid consistently
+	•	Nothing should feel accidental
+
+⸻
+
+🎼 SCROLL FEELS LIKE MUSIC
+
+Scroll should feel:
+	•	smooth
+	•	rhythmic
+	•	intentional
+	•	cinematic
+	•	like scenes dissolving into each other
+
+Use:

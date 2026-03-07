@@ -1,0 +1,194 @@
+REPLIT AI PROMPT (Navinta AI landing page) — DO NOT CHANGE COLORS/FONTS, ONLY CONTENT + ANIMATIONS
+
+ROLE
+You are a senior creative frontend engineer + motion designer. You will update navinta.org to feel like a premium, trustworthy “storytelling” landing page for SMALL CREATORS + SMALL AGENCIES who want professional content without paying expensive agencies. The site already has a look (colors + fonts) that must remain exactly as-is.
+
+NON-NEGOTIABLE CONSTRAINTS
+1) DO NOT change the current color palette, CSS variables, gradients, button styles, border radii, shadows, or font families. Keep all existing typography settings (sizes/weights can only be adjusted if it’s already using existing classes — do not introduce new fonts or new color values).
+2) DO NOT change existing global CSS theme tokens. No new “brand colors.” No vibe-coded purple gradients.
+3) ONLY change: (a) copy/content, (b) layout of content inside existing sections, and (c) GSAP animations (ScrollTrigger + timeline choreography).
+4) KEEP animations smooth, cinematic, and scroll-synced. Everything should feel intentional, not random micro-animations.
+5) Make sure the experience communicates trust: clarity, social proof, “how it works,” and outcomes. No fluff.
+
+TECH
+- Use GSAP + ScrollTrigger (and SplitText only if already installed; otherwise implement your own line/word splitting).
+- Respect prefers-reduced-motion: if user prefers reduced motion, disable scroll-scrubbed animations and use simple fade/slide.
+- Performance: avoid heavy blur filters on mobile; no huge box-shadow animation; use transform/opacity; use will-change sparingly.
+- All sections must work on mobile (stacked), tablet, desktop.
+
+PRIMARY GOAL
+Make the page feel like a premium narrative: “You don’t need an agency budget → Navinta AI directs you → You record confidently → Navinta AI edits & polishes → You publish everywhere.”
+
+SECONDARY GOAL
+Add a clapperboard “Action” moment in the HERO (clapperboard snap timed with headline reveal) and then a smooth scroll story that simulates the product workflow with animated UI cards and Pexels “b-roll”/visual cards moving around the workflow — BUT do not change the site’s existing colors/fonts.
+
+WHAT TO BUILD (CONTENT + STORYLINE)
+Create/replace copy so the page reads like this storyline (keep existing sections but rewrite their text + add animation choreography):
+
+SECTION 1 — HERO (Make it feel like a HERO)
+Headline (big, confident, plain language):
+“Agency-quality content — without agency prices.”
+Subheadline:
+“Navinta AI is your on-screen director. It turns your idea into a plan, guides every shot, and polishes the final video so small teams can look world-class.”
+Primary CTA (existing style):
+“Get Started”
+Secondary CTA:
+“See how it works”
+
+Trust row directly under subheadline (keep same style tokens):
+- “Built for small agencies + solo creators”
+- “Fast. Guided. Professional.”
+- “Export formats: 9:16 • 1:1 • 16:9”
+(If you already have badges/logos/testimonials placeholders, use them; don’t invent famous brands. Use generic placeholders like “Creator studio”, “Local agency”, “Coach team” unless we have real customers.)
+
+HERO CLAPPERBOARD ANIMATION REQUIREMENT
+Add a clapperboard graphic (SVG or pure HTML/CSS; do NOT add new external images if not needed).
+Animation: clapperboard rotates/flies in → top slate snaps shut → on snap, headline reveals (staggered) and a subtle “flash”/highlight happens (using existing colors only).
+Timing: should be 0.9–1.4s total for initial load.
+
+SECTION 2 — “THE PROBLEM” (Short, punchy)
+Title:
+“Why small teams struggle to look premium”
+Bullets (3–4):
+- “No time to plan shots”
+- “Scripts feel robotic”
+- “Editing takes forever”
+- “Consistency dies after week two”
+Animate each bullet in with scroll-triggered stagger.
+
+SECTION 3 — “THE SOLUTION” (Navinta AI as director)
+Title:
+“Navinta AI directs the entire workflow”
+3 cards (keep existing card styles), rewrite as:
+1) “Director-level plan”
+2) “On-screen shot guidance”
+3) “Automatic polish”
+Each card should have a short 1–2 sentence description and a tiny micro “chip” label (like “Plan”, “Record”, “Edit”) using existing chip styling.
+
+SECTION 4 — “HOW IT WORKS” (THE MAIN STORY ANIMATION)
+This is the centerpiece. Build a scroll-driven cinematic simulation:
+- A central “phone / editor frame” (existing mock container if present; otherwise create a simple div frame using existing styles).
+- Around it, animated “cards” representing:
+  A) Onboarding question cards (text cards)
+  B) A generated content plan card
+  C) Shot cards (Shot 1 / Shot 2 / Shot 3) that can collapse to “1 shot” if the concept is talking-head
+  D) Pexels visual cards (image/video placeholders) that fly in as “b-roll suggestions”
+  E) Caption lines that appear word-by-word
+
+The story beats (must be visible as you scroll):
+1) Idea → Plan:
+   - Question cards slide in, auto-type answers (fake typed effect).
+   - Cards collapse into a single “Plan” sheet.
+2) Plan → Shots:
+   - The plan splits into shot cards.
+   - IMPORTANT: show that Navinta AI chooses “One-shot” for talking-head.
+   - Use a visible badge: “ONE SHOT” vs “MULTI SHOT” and animate toggling based on example.
+3) Recording (Director Mode):
+   - A red record dot pulses.
+   - A progress ring fills.
+   - A small “Take captured” moment snaps onto a mini timeline.
+4) Editing (Smart cuts + b-roll):
+   - Grey “dead air” blocks shrink away.
+   - B-roll Pexels cards slide into the timeline above the main track.
+   - Captions appear in sync (word-by-word).
+5) Publish:
+   - Final video card splits into 9:16, 1:1, 16:9 tiles that fan out then settle.
+
+Pexels integration (visual only for landing page):
+- Do NOT build a full backend. Just simulate cards.
+- Use real Pexels assets ONLY if the project already has a Pexels key. If not, use placeholders with “Pexels: …” labels and a CTA “Connect Pexels” (nonfunctional).
+- The cards should look premium: rounded, subtle border, small caption label like “B-roll suggestion”.
+
+SECTION 5 — “OUTCOMES” (Proof + metrics style)
+Title:
+“What you get in minutes”
+3–4 metric tiles (use existing tile styles):
+- “Clear structure”
+- “Confident delivery”
+- “Professional pacing”
+- “Export-ready formats”
+Add a short before/after text block:
+“Before: guessing + endless editing. After: directed recording + clean output.”
+
+SECTION 6 — “FOR WHO” (Small agency narrative)
+Title:
+“Made for small agencies that need to look big”
+3 audience cards:
+- “Local agencies”
+- “Solo creators”
+- “Coaches & consultants”
+Each card: 1 sentence describing how they use it. Keep it specific:
+Local agencies: “Turn client wins into weekly content without hiring editors.”
+
+SECTION 7 — FAQ (Short, trust-building)
+Keep existing FAQ UI, rewrite questions/answers:
+- “Do I need editing skills?”
+- “Does Navinta AI work for talking-head videos?”
+- “How does b-roll selection work?”
+- “Can I export for multiple platforms?”
+- “What if I’m a small agency with clients?”
+Answers should be 2–4 lines max each, direct.
+
+SECTION 8 — FINAL CTA (Cinematic close)
+Title:
+“Look premium. Stay consistent. Without an agency budget.”
+CTA: “Get Started”
+Secondary text: “Your first plan takes minutes.”
+
+ANIMATION REQUIREMENTS (GSAP)
+Implement a cohesive set of GSAP timelines:
+A) Page-load timeline:
+- Clapperboard intro → headline lines reveal → CTA fade/slide → trust row stagger.
+B) ScrollTrigger storytelling:
+- Each section triggers a structured animation (no random movement).
+- The “How it works” section is pinned on desktop (NOT pinned on small mobile; on mobile use sequential stacked animations).
+- Use scrub for the main workflow simulation to feel like a product demo tied to scroll.
+C) Micro-interactions:
+- On hover, cards lift slightly (existing shadow tokens), subtle sheen sweep (do not add new colors).
+- Buttons: keep existing. Only add a tiny press feedback.
+
+TIMING FIX (IMPORTANT)
+The current animations feel off. Fix by:
+- Using one master timeline per section (avoid many competing ScrollTriggers).
+- Standardize durations: 0.35–0.6s for fades/slides, 0.8–1.2s for hero intro, scrubbed timeline for the workflow.
+- Ensure elements start hidden (opacity/transform) then animate in once, not repeatedly flashing.
+- Use ScrollTrigger defaults:
+  start: "top 75%"
+  end: "bottom 25%"
+  toggleActions: "play none none reverse"
+- For scrubbed workflow: start: "top top", end: "+=2500" (desktop), scrub: 0.8
+
+COPY IMPLEMENTATION RULES
+- Keep the same existing headings structure if possible; just replace text.
+- Avoid buzzwords: “revolutionary”, “game-changer”, “synergy”.
+- Make the message about affordability + professionalism for small teams.
+
+FILES / IMPLEMENTATION STEPS
+1) Locate the landing page component(s) (likely pages/index or Landing.tsx).
+2) Replace hero copy and add clapperboard element in hero.
+3) Add / refactor “How it works” section markup to include:
+   - central frame
+   - onboarding cards
+   - plan card
+   - shot cards
+   - timeline bar + b-roll cards + caption line
+4) Create a single animation module (e.g. landingAnimations.ts) that exports initLandingAnimations().
+5) In the landing component, call initLandingAnimations() on mount, and clean up on unmount (ScrollTrigger.getAll().forEach(kill)).
+6) Respect prefers-reduced-motion with a hook; if true, skip scrub/pin and use simple fades.
+7) Ensure mobile behavior:
+   - remove pin
+   - reduce card count visible at once
+   - no huge transforms that cause clipping
+
+ACCEPTANCE CHECKLIST
+- Hero feels like a real hero: bold promise, clear who it’s for, clapperboard “Action” moment.
+- Scroll feels like a guided demo; workflow simulation clearly shows “one-shot vs multi-shot decision”.
+- Pexels/b-roll cards appear as part of the edit stage (visual simulation).
+- No colors/fonts changed.
+- No jittery or mistimed animations.
+- Page remains fast, responsive, and readable.
+
+DELIVERABLE
+Implement the above changes in the codebase with GSAP + ScrollTrigger, keeping the existing theme intact. If anything requires a new asset, use SVG or CSS only (no new brand images). If Pexels key is not available, use simulated cards with placeholder labels.
+
+NOW DO IT.

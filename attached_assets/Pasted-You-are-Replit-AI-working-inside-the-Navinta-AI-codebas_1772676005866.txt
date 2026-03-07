@@ -1,0 +1,329 @@
+You are Replit AI working inside the Navinta AI codebase. Do NOT add any “hard-coded test edit” button or demo UI. The requirement is to FIX the editing pipeline end-to-end so the “Chat to edit video” actually applies edits by calling the configured APIs (Gemini + Luma + any existing services like Pexels/Remotion/FFmpeg) and then produces visible, high-quality results in preview and export.
+
+CORE PROBLEM
+Right now: chat messages are being accepted, but the system is not:
+1) Turning the chat request into an actionable edit plan,
+2) Calling the right API(s) to generate assets (motion graphics, b-roll, enhancements),
+3) Producing a frame-accurate Edit Decision List (EDL) that Remotion/renderer can apply,
+4) Updating the preview with the new EDL,
+5) Exporting the final render from the same EDL.
+
+We will fix by implementing a production “Edit Orchestration” pipeline:
+Chat → Intent JSON → Plan JSON → API Calls → Asset Registry → EDL JSON → Preview + Render
+
+NON-NEGOTIABLE CONSTRAINTS
+- No “demo buttons” or hard-coded edit UI.
+- Keep existing site colors/fonts/layout; only implement backend + wiring + missing editor features (preview update).
+- No secrets on frontend. All API keys server-only.
+- All edit plans must validate against a strict Zod schema. If invalid, retry/fallback.
+- Preview and export must use the SAME EDL (single source of truth).
+
+SECTION 1 — DEFINE A REAL “EDIT CONTRACT” (EDL) USED EVERYWHERE
+1) Create/confirm these files:
+
+A) src/schemas/edl.schema.ts (Zod)
+- All frame numbers must be integers.
+- Clips must have:
+  id, src, trimStartFrame, durationInFrames, volume, cameraMotionPreset, colorPreset
+- Captions must have:
+  startFrame, endFrame, text, stylePackId, optional activeWordTimings[]
+- Transitions must have:
+  type, atClipIndex, durationInFrames
+- Overlays must have:
+  type ('sticker'|'lower-third'|'broll'|'graphic'),
+  src (url),
+  startFrame,
+  durationInFrames,
+  positionPreset,
+  motionPreset,
+  opacity
+
+B) src/types/edl.ts
+Export TypeScript types inferred from Zod schema:
+export type EDL = z.infer<typeof EDLZodSchema>;
+
+2) Create src/config/stylePacks.ts
+- Define allowed style pack IDs:
+  captionStylePacks: ['clean', 'impact', 'karaoke']
+  transitionPacks: ['crossfade', 'blur-dissolve', 'whip-pan']
+  cameraMotionPacks: ['none', 'subtle-zoom', 'punch-in', 'dolly-left']
+  overlayMotionPacks: ['fade-in', 'pop', 'slide-up', 'spin-in']
+  colorPresets: ['neutral', 'warm', 'cool', 'vivid', 'noir']
+IMPORTANT: AI MUST ONLY choose IDs from these packs.
+
+SECTION 2 — IMPLEMENT THE EDIT ORCHESTRATOR (THIS IS THE REAL FIX)
+Create: src/services/editOrchestrator.ts
+
+This service does:
+A) Parse the user chat request → “Intent JSON”
+B) Build a “Plan JSON” (what to do, where to do it)
+C) Execute API calls (Luma, Pexels, captions, etc.)
+D) Register resulting assets (URLs + metadata)
+E) Build a final validated EDL JSON
+F) Persist EDL and return it
+
+2.1 Intent JSON Schema (Zod) — src/schemas/editIntent.schema.ts
+Fields:
+- wantCaptions: boolean
+- captionStyle: 'clean'|'impact'|'karaoke' (optional)
+- wantCameraMotion: boolean
+- cameraMotionIntensity: 0..1
+- wantTransitions: boolean
+- transitionType: 'crossfade'|'blur-dissolve'|'whip-pan'
+- wantBroll: boolean
+- brollCount: number (0..6)
+- wantMotionGraphics: boolean
+- graphics: array of { type: 'sticker'|'lower-third'|'graphic', theme: string, intensity: 0..1 }
+- wantColorGrade: boolean
+- colorPreset: 'neutral'|'warm'|'cool'|'vivid'|'noir'
+- targetPlatform: 'tiktok'|'reels'|'youtube'
+- notes: string (free)
+
+2.2 Planner — “LLM must output ONLY valid JSON”
+Implement: src/services/llmPlanner.ts
+- Use Gemini (existing integration) to produce EditIntent JSON first.
+- Then produce “EditPlan JSON” (where to place things).
+EditPlan JSON Schema: src/schemas/editPlan.schema.ts
+Fields:
+- fps
+- aspectRatio
+- clipCuts: array of { startMs, endMs } OR { startFrame, endFrame }
+- cameraMoves: array of { clipIndex, presetId, intensity }
+- transitions: array of { atClipIndex, packId, durationInFrames }
+- captionPlan: { stylePackId, chunkSize, highlightMode, maxWordsPerLine }
+- brollSlots: array of { startMs, durationMs, query, type }
+- graphicsSlots: array of { startMs, durationMs, type, text?, theme, motionPreset }
+
+CRITICAL:
+- The LLM is NOT allowed to output arbitrary code or CSS.
+- It must select from pack IDs.
+
+2.3 Timeline Extraction (truth source)
+If you have transcript with word timestamps: use it.
+If not: implement transcript generation on backend:
+- Use your existing transcript pipeline (Whisper or other). If you already have transcript saved, load it.
+
+Create/confirm: src/services/timelineExtractor.ts
+Output:
+- fps
+- words[]: { text, startMs, endMs }
+- pauses[] computed from word gaps
+- suggestedCuts[] computed from pauses (baseline)
+
+2.4 API Executors
+Create: src/services/apiExecutors/
+- luma.executor.ts
+- pexels.executor.ts
+- captions.executor.ts
+- enhancements.executor.ts (optional)
+
+LUMA EXECUTOR (server-only)
+- Reads LUMA_API_KEY from backend env only.
+- Exposes functions like:
+  - generateMotionGraphic(prompt, options) -> { url, width, height, durationMs, alpha? }
+  - generateBrollClip(prompt, options) -> { url, durationMs }
+  - applyStyleOrCamera(inputVideoUrl, prompt, options) -> { url }  (ONLY if your Luma endpoint supports video-to-video / camera control)
+IMPORTANT:
+- Implement robust polling: Luma jobs are async.
+- Add exponential backoff and max timeout.
+- Store jobId + status in DB for resilience.
+
+PEXELS EXECUTOR
+- Given a query, returns best matching video/image URLs.
+- Prefer videos for b-roll if possible.
+- Cache results per query (redis or DB) to avoid rate limits.
+
+CAPTIONS EXECUTOR
+- Turns transcript into caption chunks and frame timing:
+  - chunk words into readable groups
+  - compute startFrame/endFrame via ms→frames
+- If karaoke/word highlighting is requested:
+  - create per-word timing mapping for active word highlight.
+
+SECTION 3 — ASSET REGISTRY (STOP LOSING GENERATED ASSETS)
+Create DB table (Supabase) OR use existing:
+video_assets:
+- id (uuid)
+- video_id
+- type ('broll'|'graphic'|'caption-data'|'enhanced-video')
+- source ('luma'|'pexels'|'internal')
+- url
+- metadata jsonb (durationMs, dims, prompt, etc.)
+- created_at
+
+Whenever Luma/Pexels returns a URL, register it. Do NOT just keep it in memory.
+
+SECTION 4 — BUILD THE FINAL EDL (RENDERABLE)
+Implement: src/services/edlBuilder.ts
+Input:
+- raw clips list (user recorded assets)
+- transcript words
+- EditPlan JSON
+- registered assets (broll/graphics)
+Output:
+- EDL that validates with EDLZodSchema
+
+Rules:
+- Convert all ms to integer frames using fps.
+- Ensure no negative frames.
+- Ensure durations >= 1 frame.
+- Ensure transitions don’t exceed clip duration.
+- Ensure overlays fit in timeline.
+- If the user requested motion graphics:
+  - Use overlay track items pointing to Luma-generated transparent WebM/MP4 if available, or standard mp4 with alpha workaround.
+- If b-roll requested:
+  - overlays of type 'broll' full-frame above main video for short durations.
+- Apply camera motion preset per clip (subtle-zoom/punch-in/dolly-left) via SmartVideoClip logic.
+
+SECTION 5 — REMOTION MUST ACTUALLY APPLY THE EDL (NO TODOs)
+You already have Remotion structure. The main failure is usually:
+- components return null,
+- props schema mismatch,
+- or preview is not wired to props updates.
+
+Implement/verify these files are fully functional:
+
+1) src/remotion/Root.tsx
+- Composition schema = EDLZodSchema
+- durationInFrames = derived from EDL metadata (sum of clips minus overlaps)
+- width/height based on aspectRatio:
+  - 9:16 => 1080x1920
+  - 1:1  => 1080x1080
+  - 16:9 => 1920x1080
+
+2) src/remotion/Composition.tsx (MainComposition)
+Render layers in correct order:
+- Base Timeline (clips + transitions)
+- Overlays (broll + motion graphics)
+- Captions topmost
+- Optional music track
+
+3) Timeline transitions
+Install and use:
+npm i @remotion/transitions
+Use TransitionSeries + crossfade/blur dissolve/whip-pan presentation (as you already planned).
+This is how you avoid harsh cuts.
+
+4) Captions
+Implement caption renderer that uses EDL captions array.
+If “impact” style: highlight active word using timing mapping if present.
+If “clean”: show full chunk.
+
+5) Overlays
+Implement OverlayLayer to render:
+- sticker / graphic near corners
+- lower-third near bottom
+- broll full-frame
+with simple motion presets.
+
+IMPORTANT FOR QUALITY:
+- Ensure video scaling/cropping is correct (objectFit cover).
+- Avoid blurry text: use pixel-perfect font sizes.
+- Ensure captions have stroke + shadow for readability.
+
+SECTION 6 — PREVIEW MUST USE REMOTION PLAYER (LIVE)
+Your current “finished video only in library” design is why edits feel like they do nothing.
+
+Implement:
+- Replace editor preview with @remotion/player, fed by current EDL from DB.
+- After chat edit completes, UI refetches EDL and updates Player props.
+- If render is still processing, preview shows Remotion timeline anyway.
+
+Do NOT require a full export render just to preview.
+
+SECTION 7 — API ROUTES (WHAT TO BUILD)
+Add/confirm backend endpoints:
+
+1) POST /api/videos/:id/edits/chat
+Body: { message: string }
+Flow:
+- auth check
+- orchestrator.run(videoId, userId, message)
+- returns { edl, assetsAddedCount }
+
+2) GET /api/videos/:id/edl
+Returns current EDL JSON.
+
+3) POST /api/videos/:id/render
+Queues render job with BullMQ/Redis:
+- payload: { videoId }
+Worker will load EDL from DB and render.
+
+4) GET /api/render-jobs/:id
+Returns status and signed URL if finished.
+
+SECTION 8 — WHY “EDITS ARE NOT HAPPENING” (ADD REAL OBSERVABILITY)
+Implement:
+- Server logs with requestId (uuid) per edit request
+- Save an “edit_runs” table:
+  edit_runs:
+  - id
+  - video_id
+  - user_id
+  - message
+  - intent_json
+  - plan_json
+  - status ('started'|'api_running'|'edl_built'|'failed'|'completed')
+  - error_message
+  - created_at
+This lets you see if:
+- LLM returned invalid JSON,
+- Luma calls failed/polled incorrectly,
+- Assets aren’t saved,
+- EDL validation failed,
+- UI isn’t refetching.
+
+Front-end:
+- Add a minimal “Edit status” line under chat:
+  “Planning…” → “Generating assets…” → “Applying edits…” → “Updated preview”
+- If failed, show the server error summary (not stack trace).
+
+SECTION 9 — SECURITY
+- LUMA_API_KEY, PEXELS_API_KEY, GEMINI_API_KEY only in backend secrets.
+- Never send them to client.
+- Verify user ownership on every video route.
+- Use signed URLs for Supabase assets.
+- Rate limit /edits/chat per user/video (e.g., 5/min).
+- Validate everything with Zod (intent, plan, edl).
+
+SECTION 10 — ACCEPTANCE TEST (NO DEMO BUTTON)
+These must work in the real UX:
+1) User opens a video in editor and sees a Remotion preview (even before exporting).
+2) User types: “Make cuts smoother, add captions, add subtle punch-in, add 2 b-roll moments”:
+   - system calls orchestrator
+   - LLM produces intent+plan JSON
+   - b-roll assets retrieved via Pexels and/or Luma
+   - EDL built and saved
+   - preview updates immediately showing:
+     - captions
+     - crossfades
+     - zoom/punch-in
+     - b-roll overlays
+3) Export produces same result as preview (same EDL).
+4) If Luma is slow, the system still updates with captions/transitions first, then later inserts generated assets when available (progressive enhancement):
+   - Implement this by allowing orchestrator to save EDL in stages:
+     - Stage 1: captions/transitions/zoom
+     - Stage 2: replace placeholder b-roll with real URLs when ready
+
+IMPLEMENTATION INSTRUCTIONS (DO THIS NOW)
+1) Install missing deps:
+   - @remotion/player
+   - @remotion/transitions
+   - zod (if missing)
+   - bullmq + ioredis (if using jobs)
+2) Implement schemas and pack config.
+3) Implement orchestrator + executors + asset registry.
+4) Implement EDL builder.
+5) Fully implement Remotion layers (no TODO/null).
+6) Replace preview with Remotion Player wired to DB EDL.
+7) Add edit_runs logging + UI status messages.
+8) Verify end-to-end: chat edit → preview changes → export matches.
+
+OUTPUT REQUIRED AFTER CHANGES
+After implementing, print a concise summary:
+- Which files were added/modified
+- Which env vars must be set (backend only)
+- How to run locally and how to verify edits apply
+- Common failure causes (Luma job polling, invalid JSON) and where logs show them
+
+NOW START CODING IN THE EXISTING PROJECT AND DO NOT CHANGE COLORS/FONTS.

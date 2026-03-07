@@ -1,0 +1,112 @@
+You are a senior motion designer + frontend architect.  
+Your task is to FIX animation timing across the entire navinta.org website so it feels premium, cinematic, and intentional like Apple / Opus Clip / Linear — not chaotic or rushed.
+
+DO NOT redesign UI.
+DO NOT add new sections.
+DO NOT remove existing animations unless necessary for timing.
+ONLY fix animation orchestration, pacing, hierarchy, and rhythm.
+
+========================
+GLOBAL ANIMATION RULES
+========================
+1. Use GSAP ONLY. Remove or disable any Tailwind/CSS/Framer transitions that conflict.
+2. Use ONE easing function everywhere: power3.out
+3. Use these global timing tokens:
+   - SLOW = 1.0s
+   - MEDIUM = 0.6s
+   - FAST = 0.2s
+4. Never run more than 2 animations at the same time on screen.
+5. Add breathing room (delays) so animations don’t feel rushed.
+
+========================
+ANIMATION HIERARCHY
+========================
+Every section MUST follow this order:
+1. Background / container (SLOW)
+2. Headline (MEDIUM)
+3. Subtext (MEDIUM, delayed)
+4. Visuals (MEDIUM, delayed more)
+5. CTA buttons (FAST, last)
+
+NO exceptions.
+
+========================
+SECTION LOAD BEHAVIOR
+========================
+For each section:
+- Create ONE GSAP timeline (timeline per section)
+- Stagger children with 0.08–0.12 delay
+- Add 0.2–0.4s pause between groups
+- Never animate everything at once
+- Text always comes BEFORE visuals
+- CTA always comes LAST
+
+========================
+SCROLL ANIMATIONS
+========================
+- Convert all scroll animations to ScrollTrigger
+- Use scrubbed animations for large sections
+- Pin important sections so scroll controls animation progress
+- Remove any autoplay scroll animations
+- Sync motion to scroll (no free-running animations)
+
+========================
+PAGE TRANSITIONS
+========================
+- Add a soft fade + vertical lift (y: 24px → 0) on page enter
+- Duration: 0.8s
+- Delay content by 0.2s
+- NEVER animate page exit aggressively
+
+========================
+MICRO INTERACTIONS
+========================
+Buttons:
+- Scale 1 → 1.03 on hover
+- Duration 0.2s
+- Ease power1.out
+- NO bounce, no overshoot
+
+Cards:
+- Lift y: 6px
+- Shadow increase
+- Duration 0.25s
+
+========================
+REMOVE THESE PROBLEMS
+========================
+- Animations firing simultaneously
+- Inconsistent easing
+- Different durations in same section
+- Scroll animations triggering too early
+- Text appearing too fast
+- Visuals animating before text
+- CTA appearing before user reads content
+- Decorative animations that distract
+
+========================
+FINAL GOAL
+========================
+When done:
+- Site feels calm, premium, cinematic
+- Animations feel orchestrated, not random
+- User can predict motion
+- Nothing feels rushed
+- Sections breathe
+- Animations feel like music, not noise
+
+Audit EVERY page:
+- Landing
+- Onboarding
+- Dashboard
+- Director Mode
+- Library
+- Settings
+
+Fix timing everywhere.
+
+Do NOT add features.
+Do NOT change layout.
+ONLY fix animation timing, delays, hierarchy, and scroll sync.
+
+Execute this fully and carefully.

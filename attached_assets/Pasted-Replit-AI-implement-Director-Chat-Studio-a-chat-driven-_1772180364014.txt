@@ -1,0 +1,332 @@
+Replit AI — implement “Director Chat Studio”: a chat-driven editing UI with live preview + tool-calling pipeline (Gemini + Luma + existing Remotion/EDL renderer).
+
+IMPORTANT CONSTRAINTS
+- Do NOT redesign the whole app. Keep existing fonts/colors/theme.
+- Add a NEW editing experience that replaces the single “AI Edit” button with:
+  (1) Live video preview on one side
+  (2) A chat panel on the other side
+  (3) Changes apply by generating/updating an EDL and re-rendering a preview
+- This must be production-grade: secure, feature-gated by plan, job-based rendering, no secrets in frontend.
+- B-roll generation uses transcript reasoning + Luma API for video generation, then inserted into the edit as b-roll clips.
+- The system must support iterative edits: user can say “make captions bigger”, “add b-roll for this section”, “make cuts tighter”, “add subtle zooms”, “make it more energetic”, “remove b-roll”, etc., and it updates the edit.
+
+HIGH-LEVEL RESULT
+Create a new page/route: /studio/:videoId/edit
+Name: “Director Chat Studio”
+Layout:
+- Left: Live Preview (video player) + render status + timeline summary
+- Right: Chat panel + preset suggestions + “Apply / Undo / Versions” controls
+
+--------------------------------------------
+1) CORE CONCEPT: EDL IS THE SINGLE SOURCE OF TRUTH
+--------------------------------------------
+All edits are expressed as an EDL JSON contract (the Remotion-friendly edit decision list).
+User chat messages DO NOT directly call FFmpeg. They produce “EDL patches”.
+The preview player always plays the latest rendered output of the current EDL version.
+
+We will implement:
+- An “EDL Version” system
+- A “Chat → Intent → Tool calls → Patch EDL → Render Preview” pipeline
+
+--------------------------------------------
+2) DATABASE TABLES (Supabase) — EDIT SESSIONS + VERSIONS + MESSAGES
+--------------------------------------------
+
+A) edit_sessions
+- id (uuid pk)
+- user_id (uuid)
+- video_id (uuid)
+- status: idle | generating | rendering | failed
+- active_version_id (uuid)
+- created_at, updated_at
+
+B) edl_versions
+- id (uuid pk)
+- session_id (uuid fk)
+- user_id (uuid)
+- base_version_id (uuid nullable)  // for branching
+- version_number (int)             // 1,2,3...
+- edl_json (jsonb)                 // validated EDL
+- preview_url (text)               // signed URL to mp4 preview render
+- final_url (text nullable)        // export URL if user exports
+- render_status: queued|running|succeeded|failed
+- render_progress (int 0..100)
+- notes (text)                     // short summary of what changed
+- created_at
+
+C) edit_messages
+- id (uuid pk)
+- session_id (uuid)
+- user_id (uuid)
+- role: user | assistant | tool
+- content (text)
+- tool_name (text nullable)
+- tool_payload (jsonb nullable)
+- created_at
+
+RLS:
+- users can only access their own rows (all three tables).
+
+--------------------------------------------
+3) UI — DIRECTOR CHAT STUDIO PAGE
+--------------------------------------------
+Route: /studio/:videoId/edit
+
+Layout (responsive):
+- Desktop: 2-column split 60/40
+  LEFT (Preview):
+    - Video player
+    - “Rendering…” status + progress bar
+    - “Version: vX” dropdown + “Undo” + “Redo” + “Restore version”
+    - Small “EDL summary” accordion:
+       - #clips, avg cut length, caption style, #b-roll inserts, transitions
+    - Export button (plan-gated)
+  RIGHT (Chat):
+    - Chat transcript (messages)
+    - Composer input (textarea)
+    - Quick chips above input:
+       “Tighten cuts”
+       “Add subtle zoom”
+       “Add b-roll”
+       “Make captions pop”
+       “Make it calmer”
+       “Remove b-roll”
+       “More cinematic”
+    - “Apply Changes” is implicit: sending message triggers pipeline.
+    - A tiny “What will happen” preview line (assistant explains the change in 1–2 lines).
+
+Mobile:
+- Tabs: Preview | Chat | Versions
+
+UX REQUIREMENTS
+- When user sends a message:
+  - show “Thinking…” then “Rendering preview…” in chat
+  - keep the previous preview playing until the new preview is ready
+  - when ready, swap the player src to the latest preview_url
+- Support “Undo last change” by setting active_version_id to previous version.
+- Support “Make a copy” of a version.
+
+--------------------------------------------
+4) PIPELINE: CHAT → INTENT → TOOL CALLS → EDL PATCH → RENDER PREVIEW
+--------------------------------------------
+
+A) Backend endpoint: POST /api/edit-sessions/:videoId/start
+- creates session if none exists
+- creates version 1 (baseline EDL from the raw video: single clip + basic captions if available)
+- returns sessionId, active version, preview_url if exists
+
+B) Backend endpoint: POST /api/edit-sessions/:sessionId/message
+Auth required.
+Body: { content: string }
+Returns immediately: { messageId, queuedJobId }
+Processing is async.
+
+C) Backend worker job “ProcessEditMessage”
+Steps:
+1) Load session, active EDL version
+2) Run “Intent Router” with Gemini (LLM) to decide what the user is asking
+3) Produce “EDL Patch Plan” (structured JSON) + tool calls required
+4) Execute tool calls (some are internal computations; some call Luma)
+5) Apply patch to EDL JSON deterministically
+6) Validate EDL with Zod
+7) Create new edl_versions row (version_number +1), set render_status queued
+8) Queue a render job
+9) Update session active_version_id to new version on success
+10) Write assistant + tool messages to edit_messages
+
+D) Backend endpoint: GET /api/edit-sessions/:sessionId
+- returns session + messages + versions list + active version details
+
+E) Backend endpoint: GET /api/edl-versions/:versionId
+- returns render status, progress, preview_url
+
+Polling:
+Frontend polls active version render_status every 1.5s while running.
+
+--------------------------------------------
+5) INTENT ROUTER (Gemini) — TOOL CALLING CONTRACT
+--------------------------------------------
+Implement a STRICT JSON contract for Gemini responses.
+Gemini must NOT output prose for tool calls. It must output JSON like:
+
+{
+  "intent": "ADD_BROLL" | "CAPTION_STYLE" | "TIGHTEN_CUTS" | "ADD_ZOOMS" | "TRANSITIONS" | "COLOR_GRADE" | "REMOVE_BROLL" | "UNDO" | "MULTI",
+  "confidence": 0.0-1.0,
+  "operations": [
+    {
+      "op": "insert_broll",
+      "strategy": "keyword_visualize" | "product_mentions" | "beat_emphasis",
+      "sources": ["luma", "pexels", "user_unused_clips"],
+      "max_inserts": 5,
+      "min_gap_seconds": 3,
+      "duration_seconds": [0.8, 1.6],
+      "where": "between_sentences" | "during_claims",
+      "style": { "motion": "subtle", "blend": "soft" }
+    },
+    {
+      "op": "caption_style",
+      "stylePackId": "bold_impact",
+      "fontScale": 1.1,
+      "karaoke": true,
+      "highlightColor": "#FFD700"
+    }
+  ],
+  "notes": "One sentence summary shown to user"
+}
+
+Make Gemini use existing transcript + word timestamps + current EDL summary as context.
+
+SECURITY:
+- Gemini API key stays server-side only.
+- Never send secrets to client.
+
+--------------------------------------------
+6) B-ROLL FEATURE (Gemini chooses timing, Luma generates the visuals)
+--------------------------------------------
+
+A) Transcript requirements
+We must have word-level timestamps.
+If transcript missing:
+- trigger transcription pipeline first (existing Whisper or your chosen transcription service)
+- store transcript in DB with word timings
+
+B) Timing selection (Gemini)
+Given transcript and EDL segments:
+- Gemini outputs exact insertion points in TIME or FRAMES:
+  { atFrame: 1020, durationFrames: 45, prompt: "..." }
+
+C) Luma generation
+When an operation requires Luma:
+- Call Luma API server-side to generate video assets.
+- Poll Luma job until complete.
+- Store generated asset in storage bucket.
+- Add assetId to EDL broll track with startFrame & duration.
+
+D) Visual consistency
+For each b-roll insert:
+- apply soft blend (opacity crossfade) or picture-in-picture depending on user request
+- default: overlay b-roll full-screen with a short crossfade (4–6 frames) so it looks professional
+
+E) Cost & safety
+- Rate-limit b-roll operations per user + plan tier.
+- Keep a “max Luma generations per video” cap per plan.
+
+--------------------------------------------
+7) OTHER EDIT FEATURES (each driven by chat)
+--------------------------------------------
+
+Supported operations (must implement in EDL patcher):
+1) Tighten cuts:
+- Use DecisionEngine to increase cut aggressiveness:
+  PAUSE_CUT_THRESHOLD_MS down, BUFFER_MS maintained
+- Increase crossfade usage if requested
+
+2) Add subtle zooms / camera motion:
+- Change clip.zoomTarget to 1.03–1.08 based on blueprint
+- Hook clip can go 1.10–1.15
+
+3) Caption changes:
+- font size up/down
+- karaoke on/off
+- highlight color changes
+- chunk size changes (4 words → 3 or 5)
+- position changes (lower third vs mid)
+- safe area constraints for 9:16
+
+4) Transitions:
+- crossfade, blur dissolve, whip-pan (if you have implemented packs)
+- ensure no audio pops by using TransitionSeries
+
+5) Color polish:
+- choose among your color presets filters (contrast/saturate/brightness/sepia)
+- keep it subtle and consistent
+
+6) Remove b-roll:
+- remove broll track items inserted by the last operation or by time range
+
+7) “Make it more energetic / calmer”
+- map to multiple operations:
+  energetic = tighter cuts + stronger captions + slightly higher zoom
+  calmer = fewer cuts + softer captions + minimal transitions
+
+--------------------------------------------
+8) RENDERING STRATEGY FOR “LIVE” PREVIEW
+--------------------------------------------
+“Live” means “fast preview re-render,” not true frame-accurate realtime editing.
+
+Implement 2 render qualities:
+- Preview: lower bitrate, faster settings, shorter pipeline
+- Export: high bitrate, best encoding
+
+Preview render:
+- render mp4 quickly (crf higher)
+- cache Remotion bundle
+- return preview_url within ~tens of seconds (best effort)
+
+Export:
+- behind “Export” button
+- plan-gated
+- final_url saved
+
+--------------------------------------------
+9) PLAN GATING (CRITICAL)
+--------------------------------------------
+Free users:
+- Can enter Director Chat Studio
+- Can preview edits WITH WATERMARK
+- Cannot export final without upgrade
+
+Paid tiers:
+- remove watermark on export
+- higher limits for Luma generations
+- more style packs / transitions
+
+Watermark implementation:
+- OverlayLayer adds a watermark text/logo in preview renders when plan is free
+- For paid plan: watermark off in export and optionally off in preview
+
+Backend enforcement:
+- export endpoint must verify entitlements in DB
+- never rely on frontend checks
+
+--------------------------------------------
+10) SECURITY / CYBERSEC BEST PRACTICES (MUST DO)
+--------------------------------------------
+- All edit endpoints require auth and verify user owns the video
+- Gemini/Luma keys stored only in server secrets
+- No keys in EXPO_PUBLIC_ vars except safe public ones
+- Validate all Gemini outputs with Zod before execution
+- Sanitize user instructions (length limit, rate limit)
+- Implement idempotency keys on tool calls and renders to avoid double charges
+- Store Luma generated assets in private storage and serve via signed URL
+- Log audit trail in edit_messages with tool_name and payload (no secrets)
+
+--------------------------------------------
+11) IMPLEMENTATION CHECKLIST (WHAT YOU MUST BUILD)
+--------------------------------------------
+- New route /studio/:videoId/edit (UI)
+- edit_sessions + edl_versions + edit_messages tables + RLS
+- Start session endpoint
+- Message endpoint (async processing)
+- Worker queue (BullMQ + Redis preferred)
+- Gemini intent router + JSON schema validation
+- EDL patcher functions for each op
+- Luma integration module:
+   createGeneration(prompt, aspectRatio, duration)
+   pollGeneration(jobId)
+   storeResult(assetId)
+- Preview render job + export job
+- Watermark & plan gating enforcement
+
+--------------------------------------------
+12) DO NOT CHANGE THESE
+--------------------------------------------
+- Do not change existing site fonts/colors/theme
+- Do not remove existing pages
+- Only ADD the “Director Chat Studio” flow and connect it to existing video assets and renderer pipeline
+
+DELIVER
+- Make it compile and run
+- Provide a minimal seed EDL version for any video
+- Demo flow:
+  user enters edit studio → says “add b-roll on my key points” → system generates 3 inserts → preview updates → user says “make captions bigger and more punchy” → preview updates → export (paid only)

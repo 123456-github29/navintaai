@@ -1,0 +1,213 @@
+Replit AI — implement a PRODUCTION-GRADE Stripe + Supabase entitlement system for Navinta AI and make it actually work end-to-end (checkout always, plan always reflects, feature gating enforced). Do NOT do partial fixes. Follow these requirements exactly.
+
+GOAL
+- When a user clicks “Subscribe” on Pricing, it MUST always create a Stripe Checkout Session and redirect to Stripe Checkout (no embed UI).
+- After successful payment, the app MUST immediately reflect the correct plan (starter/pro/studio) everywhere.
+- All paid features MUST be enforced server-side (cannot be bypassed by editing frontend).
+- Existing users who signed up before payments MUST be defaulted to Free and blocked from premium export until they pay.
+- Fix the current errors: “Invalid JWT” / “No checkout URL received” / “plan still shows free after upgrade” / “sometimes redirects into dashboard instead of checkout”.
+
+ASSUMPTIONS / ASSIGNMENTS
+- App name everywhere: “Navinta AI”
+- Auth: Supabase Auth (Google)
+- Payments: Stripe
+- Database: Supabase Postgres
+- Deployment: Replit
+- Current Stripe products exist:
+  studio: prod_Tqbp7YpPhMZcZK
+  pro: prod_TqbpksJcbCRgnF
+  starter: prod_TqbocE9ndCZYKw
+- You will fetch/require the ACTUAL Stripe Price IDs (price_...) for monthly and yearly for each plan, because Checkout uses price IDs (NOT product IDs). Add a safe admin script or instructions to list prices via Stripe API from the backend only.
+
+PART 1 — SINGLE SOURCE OF TRUTH: ENTITLEMENTS
+1) Create/verify a table: user_entitlements
+   Columns:
+   - user_id (uuid, pk, references auth.users.id)
+   - plan (text enum: 'free'|'starter'|'pro'|'studio')
+   - status (text enum: 'active'|'past_due'|'canceled'|'incomplete'|'trialing')
+   - stripe_customer_id (text, unique, nullable)
+   - stripe_subscription_id (text, unique, nullable)
+   - current_period_end (timestamptz, nullable)
+   - cancel_at_period_end (bool, default false)
+   - updated_at (timestamptz default now())
+   Add indexes on user_id, stripe_customer_id, stripe_subscription_id.
+
+2) Create/verify a table: entitlement_audit (optional but recommended)
+   - id, user_id, event_type, stripe_event_id, payload jsonb, created_at
+   This supports debugging + idempotency.
+
+3) On every login (or first authenticated API request), ensure entitlements row exists:
+   If missing -> insert { plan:'free', status:'active' }.
+   This handles old users automatically.
+
+PART 2 — BACKEND ENFORCEMENT MIDDLEWARE (NO BYPASS)
+4) Implement a server middleware: requireEntitlement(feature)
+   - Reads user_id from verified auth (do NOT trust client)
+   - Loads user_entitlements
+   - Checks status is active/trialing (configurable)
+   - Checks plan is allowed for the feature
+   - If not allowed: return 402 Payment Required with code UPGRADE_REQUIRED and include planNeeded.
+
+5) Enforce on ALL premium endpoints (examples):
+   - Export video endpoint
+   - Any “Remove watermark”
+   - Any “AI b-roll”
+   - Any “HD/4K export”
+   - Any “Caption styling premium”
+   Make sure free users can still record and preview, but exports must be gated.
+
+6) Add “watermark mode” logic:
+   - Free: can preview within app, cannot download/export OR exports must be watermarked + limited resolution (your choice).
+   - Starter: can export but with watermark + limits.
+   - Pro/Studio: export clean.
+   This gating must be enforced in the export pipeline server-side.
+
+PART 3 — CORRECT CHECKOUT FLOW (WHY IT FAILS NOW)
+7) Fix the “sometimes goes to dashboard instead of checkout” bug:
+   - Do NOT route based on “isAuthenticated” alone.
+   - Pricing Subscribe button must always call createCheckoutSession() unless user already has active paid subscription.
+   - If user is paid: show “Manage subscription” instead of “Subscribe”.
+
+8) Create a backend endpoint (preferred) OR Supabase Edge Function to create checkout:
+   Endpoint: POST /api/billing/create-checkout-session
+   - Requires auth
+   - Creates or fetches Stripe customer for user (store stripe_customer_id in user_entitlements)
+   - Accepts: plan ('starter'|'pro'|'studio'), interval ('monthly'|'yearly')
+   - Maps to correct Stripe price_id
+   - Creates checkout session with:
+       mode: subscription
+       line_items: [{ price: price_id, quantity: 1 }]
+       success_url: https://navinta.org/billing/success?session_id={CHECKOUT_SESSION_ID}
+       cancel_url: https://navinta.org/pricing?canceled=1
+       customer: stripe_customer_id
+       metadata: { user_id, plan, interval, app:'navinta-ai' }
+   - Returns { url }
+
+9) Frontend behavior:
+   - On click Subscribe: call endpoint, get url, window.location.href = url
+   - If url missing -> show error toast with the server message.
+
+10) FIX “Invalid JWT” on calling Supabase Edge Function:
+   If using Edge Functions:
+   - Ensure frontend sends Authorization header exactly:
+     Authorization: Bearer <supabase_access_token>
+   - Also send apikey header with SUPABASE_ANON_KEY (required by Supabase)
+   - Use supabase-js to invoke functions (supabase.functions.invoke) so headers are correct.
+   - Confirm your Replit environment variables are set and available to the client build.
+   - Add detailed logging on the Edge Function: whether Authorization header is present, whether JWT verifies, and return a clear 401 error if not.
+
+   If using Express backend endpoint instead (recommended on Replit):
+   - Do NOT call Supabase Functions from browser.
+   - Use your existing requireAuth middleware (JWT verify) and call Stripe secret key directly server-side.
+   This avoids Supabase “apikey” header problems and reduces failure points.
+
+PART 4 — WEBHOOKS THAT ACTUALLY SYNC PLANS
+11) Implement Stripe webhook endpoint: POST /api/stripe/webhook
+   - Verify Stripe signature (STRIPE_WEBHOOK_SECRET)
+   - Idempotency: store stripe_event_id in entitlement_audit; if already processed, return 200.
+   Handle these events (minimum):
+   - checkout.session.completed
+   - customer.subscription.created
+   - customer.subscription.updated
+   - customer.subscription.deleted
+   - invoice.paid
+   - invoice.payment_failed
+   For each event:
+   - Determine user_id from metadata OR map customer->user via user_entitlements.stripe_customer_id
+   - Update user_entitlements:
+       plan -> derived from subscription items price/product mapping
+       status -> subscription.status
+       stripe_subscription_id -> subscription.id
+       current_period_end -> subscription.current_period_end
+       cancel_at_period_end -> subscription.cancel_at_period_end
+       updated_at -> now()
+   IMPORTANT:
+   - Treat webhook as the ONLY authority to change plan/status.
+   - Never set plan based only on “user clicked subscribe”.
+
+12) Add a secure mapping from Stripe price_id -> plan:
+   - Create a config file on backend:
+     PRICES = { starter: { monthly: price_x, yearly: price_y }, pro: {...}, studio: {...} }
+   - Validate incoming plan/interval and only allow those defined.
+
+PART 5 — FRONTEND: ALWAYS REFLECT DATABASE TRUTH
+13) Add a client hook: useEntitlements()
+   - Calls GET /api/billing/entitlements (auth required)
+   - Returns plan/status/limits
+   - Cache with react-query and refetch on:
+       - after returning from success_url
+       - app focus (optional)
+       - every 30–60 seconds for freshness
+
+14) Everywhere you display plan (dashboard badge, pricing page, settings):
+   - Use entitlements from this endpoint only.
+   - Do not infer from Stripe client state.
+   - If entitlements says free -> show upgrade CTA.
+
+15) After checkout success:
+   Route /billing/success should:
+   - show “Activating your plan…” loading
+   - poll entitlements endpoint until plan is updated OR timeout after ~15–30s
+   - then redirect to dashboard with success toast
+   This handles webhook delay gracefully like a real SaaS.
+
+PART 6 — SUBSCRIPTION MANAGEMENT / ACCOUNT CONTROLS (PRO LEVEL)
+16) Add “Manage billing”:
+   Endpoint: POST /api/billing/create-portal-session
+   - Requires auth
+   - Requires stripe_customer_id in entitlements
+   - Creates Stripe Billing Portal session
+   - return { url }
+   Frontend: button “Manage Subscription” opens url.
+
+17) Add account settings page with:
+   - Delete account (requires re-auth confirmation)
+   - Cancel subscription (via billing portal only OR server call)
+   - Update payment method (portal)
+   - Download invoices (portal)
+   - Email preferences (basic toggles stored in DB)
+   Keep it professional and secure.
+
+PART 7 — SECURITY REQUIREMENTS (NON-NEGOTIABLE)
+18) Secrets:
+   - STRIPE_SECRET_KEY backend only
+   - STRIPE_WEBHOOK_SECRET backend only
+   - Supabase service role key backend only (never ship to client)
+   - SUPABASE_ANON_KEY is allowed client-side
+   Confirm no secret keys are logged in browser console.
+
+19) RLS:
+   - Enable RLS on user_entitlements and any user data tables.
+   - Policies should allow user to read their own entitlements but not others.
+   - Webhook writes should be via server using service role OR via backend with DB credentials (not client).
+
+20) Observability:
+   - Log webhook event type + event id + mapped user_id (no secrets)
+   - Add a /api/billing/debug endpoint (admin-only) to verify mapping for a user (protect with ADMIN_TOKEN)
+   - Add clear error messages for 401/402 cases.
+
+PART 8 — FIX THE CURRENT BROKEN STATES
+21) Existing users currently bypassing paywall:
+   - On app load, if entitlements is free, disable exports and show upgrade modal.
+   - If entitlements missing, create free row then apply gating.
+
+22) If someone paid but still shows free:
+   - Add a “Sync subscription” button (admin or user) that calls backend to fetch Stripe subscription by customer id and update entitlements (safe fallback).
+   - Prefer webhook, but add this rescue path.
+
+DELIVERABLES
+- Update backend endpoints (or Edge Functions) and Stripe webhook
+- Update DB schema + RLS policies
+- Update frontend pricing buttons to always redirect to checkout url
+- Update UI to show plan correctly and gate features correctly
+- Provide a short internal checklist at the end: “How to test in Stripe test mode / live mode”
+
+IMPORTANT UI/UX NOTES
+- Use custom Navinta AI UI for pricing cards; do not embed Stripe pricing table UI.
+- Buttons:
+  - Free users see “Upgrade”
+  - Paid users see “Manage subscription”
+- No random colors. Keep it aligned with existing brand design.
+- The experience must feel as smooth as Opus Clip: instant feedback, no confusing redirects, no broken plan badges.
+
+NOW IMPLEMENT ALL OF THE ABOVE IN THIS CODEBASE.

@@ -1,0 +1,193 @@
+You are implementing Stripe subscriptions for Navinta AI.
+This is NOT a UI task — this is a payments + entitlements task.
+Be precise. Be safe. Be correct.
+
+=====================================================
+PLANS (USE THESE EXACT STRIPE PRODUCT IDS)
+=====================================================
+
+Starter:
+- product_id: prod_TqbocE9ndCZYKw
+
+Pro:
+- product_id: prod_TqbpksJcbCRgnF
+
+Studio:
+- product_id: prod_Tqbp7YpPhMZcZK
+
+Each product already has:
+- monthly price
+- yearly price
+configured in Stripe
+
+DO NOT create new products.
+DO NOT create new prices.
+Use existing Stripe configuration.
+
+=====================================================
+REQUIRED FLOW (MUST IMPLEMENT EXACTLY)
+=====================================================
+
+1. Pricing Page
+----------------
+- Pricing page has 3 plans: Starter, Pro, Studio
+- Each plan has a "Subscribe" button
+- When clicked:
+  → Call backend endpoint: POST /api/stripe/checkout
+  → Pass product_id + billing_interval (monthly/yearly)
+  → Backend creates Stripe Checkout Session
+  → Redirect user to Stripe Checkout URL
+
+IMPORTANT:
+- The frontend NEVER talks to Stripe directly
+- The frontend NEVER sees the secret key
+- The frontend ONLY redirects to checkout_url returned by backend
+
+=====================================================
+2. Checkout Session Creation (BACKEND)
+=====================================================
+
+Backend must:
+- Require authenticated user
+- Create Stripe customer if one does not exist
+- Attach user_id to metadata
+- Attach product_id to metadata
+- Attach plan_name to metadata
+- Use success_url and cancel_url
+- Use subscription mode
+- Return checkout_url to frontend
+
+=====================================================
+3. Webhooks (CRITICAL)
+=====================================================
+
+Webhook endpoint:
+POST /api/stripe/webhook
+
+Verify signature (REQUIRED)
+
+Handle events:
+- checkout.session.completed
+- customer.subscription.created
+- customer.subscription.updated
+- customer.subscription.deleted
+- invoice.paid
+- invoice.payment_failed
+
+For each event:
+- Update user_entitlements table
+- Store:
+  - user_id
+  - stripe_customer_id
+  - stripe_subscription_id
+  - plan (starter / pro / studio)
+  - status (active / past_due / canceled)
+  - current_period_end
+
+Make webhook idempotent (no double processing)
+
+=====================================================
+4. Entitlements Table (SOURCE OF TRUTH)
+=====================================================
+
+user_entitlements table controls everything.
+The app MUST NOT rely on Stripe API calls at runtime.
+
+Example:
+- plan = "starter" | "pro" | "studio"
+- status = "active" only grants features
+
+=====================================================
+5. Feature Gating (VERY IMPORTANT)
+=====================================================
+
+The app must check entitlements BEFORE allowing:
+
+- Export without watermark
+- Director mode advanced features
+- AI b-roll generation
+- Multi-shot editing
+- High resolution export
+- Platform resizing
+- Batch exports
+
+Free users:
+- Can preview everything
+- Watermark always visible
+- Export disabled
+
+Starter:
+- Limited exports
+- Watermark optional
+- No advanced AI features
+
+Pro:
+- Full exports
+- AI features enabled
+- No watermark
+
+Studio:
+- Everything unlocked
+- Priority processing
+- Team features (future-ready)
+
+All checks must happen:
+- In backend
+- And in frontend (UI disabling)
+
+=====================================================
+6. Billing Portal
+=====================================================
+
+Add endpoint:
+POST /api/stripe/billing-portal
+
+- Create Stripe billing portal session
+- Redirect user
+- Allow:
+  - Cancel subscription
+  - Upgrade
+  - Downgrade
+  - Update payment method
+
+=====================================================
+7. Security Rules (MANDATORY)
+=====================================================
+
+- Secret key NEVER in frontend
+- Webhook signature verified
+- Auth required for all billing routes
+- No plan logic in frontend only
+- No price logic hardcoded
+- All entitlements enforced server-side
+- Log all Stripe errors
+- Handle retries safely
+
+=====================================================
+8. Final Behavior
+=====================================================
+
+When user subscribes:
+- Redirects to Stripe Checkout
+- Payment succeeds
+- Webhook fires
+- Entitlements update
+- App instantly unlocks features
+- No refresh required
+- No manual sync needed
+
+When payment fails:
+- Features lock automatically
+- UI shows billing warning
+- Export disabled
+
+When canceled:
+- Access continues until period end
+- Then features lock
+
+=====================================================
+IMPLEMENT THIS CLEANLY.
+DO NOT SIMPLIFY.
+DO NOT GUESS.
+DO NOT CHANGE PRODUCT IDS.
+THIS IS A PRODUCTION PAYMENTS SYSTEM.

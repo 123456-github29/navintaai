@@ -1,0 +1,175 @@
+REDESIGN ONLY THE HERO SECTION of navinta.org to be CINEMATIC, MEMORABLE, and DIRECTOR-LEVEL.
+The hero must feel like the opening shot of a film, not a SaaS landing page.
+
+This is NOT a layout task. This is a MOMENT.
+
+========================================================
+CONCEPT: “THE FIRST TAKE”
+========================================================
+
+Navinta is an AI director. The hero section is the moment someone yells “Action”.
+
+The hero should feel like:
+- entering a film set
+- the beginning of creation
+- confidence, control, intention
+- cinematic, calm, premium
+
+========================================================
+HERO STRUCTURE (MANDATORY)
+========================================================
+
+FULL-VIEWPORT HERO (100vh)
+Center stage composition, nothing cramped, nothing busy.
+
+Layered structure (very important):
+1. Background atmosphere
+2. Clapperboard animation (main character)
+3. Hero headline (big, cinematic)
+4. Supporting subline (quiet, confident)
+5. CTA (only one primary)
+6. Subtle motion details (life, not noise)
+
+========================================================
+BACKGROUND (FIX THE BORING FEEL)
+========================================================
+
+Background must have DEPTH and ATMOSPHERE, not flat color.
+
+Implement:
+- Soft blue-white gradient wash (like Vyro)
+- Very large radial glow behind center (like a spotlight)
+- Subtle film grain/noise texture (VERY faint)
+- Slight vignette at edges
+- Slow drifting light (opacity animation, 12–18s loop)
+
+It should feel like a lit soundstage, not a website.
+
+========================================================
+CLAPPERBOARD ANIMATION (NON-NEGOTIABLE)
+========================================================
+
+Create a 3D-ish (or 2.5D) clapperboard in the center.
+
+Animation sequence:
+1. On page load:
+   - clapperboard spins in slowly from depth (scale 0.6 → 1)
+   - slight perspective tilt
+   - soft shadow below (grounding)
+2. It pauses for 300ms
+3. CLAP:
+   - top bar snaps shut
+   - small motion blur
+   - subtle sound-wave ripple (visual only)
+   - entire scene reacts with micro shake (very subtle)
+4. As it snaps, the headline fades/slides in perfectly timed
+5. Clapperboard then drifts upward and becomes decorative (top-center)
+
+This instantly communicates:
+“Navinta is a director, not a tool.”
+
+========================================================
+HEADLINE (MAKE IT FEEL IMPORTANT)
+========================================================
+
+Huge, bold, cinematic type.
+
+Example structure (NOT gradient text, NOT colored words):
+“Press record.  
+Navinta directs the rest.”
+
+OR
+
+“From idea to action.  
+Your AI director.”
+
+Rules:
+- No awkward accent coloring (remove blue words)
+- Use hierarchy, not color, for emphasis
+- First line bold black
+- Second line slightly lighter gray
+- Tight line-height
+- Centered, confident
+
+========================================================
+SUBLINE (QUIET POWER)
+========================================================
+
+One sentence only.
+Soft gray.
+Feels like a movie tagline.
+
+Example:
+“Plan, record, and publish videos with the confidence of a professional director.”
+
+========================================================
+CTA (CONFIDENT, NOT SALESY)
+========================================================
+
+One primary CTA only:
+“Start your first take”
+
+Style:
+- Pill
+- Calm blue
+- Slight glow on hover (very subtle)
+- Appears AFTER the headline (staggered animation)
+
+========================================================
+SCROLL TRANSITION (IMPORTANT)
+========================================================
+
+When user scrolls:
+- Clapperboard subtly moves upward and fades
+- Hero content scales down slightly
+- Next section (How it works) slides up like a new scene
+
+This should feel like:
+Scene 1 → Scene 2
+Not “scrolling down a page”
+
+========================================================
+ANIMATION RULES (IMPORTANT)
+========================================================
+
+Use GSAP timeline:
+- Load sequence (staggered)
+- Clapper snap synced with headline
+- ScrollTrigger for exit
+
+DO NOT:
+- Bounce
+- Rotate wildly
+- Use neon glows
+- Add excessive blur
+- Add random floating shapes
+
+========================================================
+FIX THE “AWKWARD ACCENT” PROBLEM
+========================================================
+
+Remove:
+- Blue words in headlines
+- Highlighted phrases
+- Mixed emphasis styles
+
+Instead:
+- Use spacing
+- Use line breaks
+- Use weight
+- Use motion timing
+
+Professional sites use rhythm, not color, to emphasize.
+
+========================================================
+FINAL CHECK
+========================================================
+
+After implementation, the hero should make users think:
+“Oh. This is different.”
+“This feels serious.”
+“This feels expensive.”
+“I want to try this.”
+
+If it feels like a SaaS hero, you failed.
+If it feels like a film opening, you succeeded.

@@ -1,0 +1,106 @@
+You must fix video playback errors by implementing proper production-grade video delivery.
+
+CURRENT PROBLEM:
+- Video playback fails with 401 Unauthorized
+- <video> element cannot authenticate
+- API routes are being used to serve video (this is wrong)
+- Browser receives JSON/HTML instead of video → MEDIA_ELEMENT_ERROR
+
+GOAL:
+- Use Supabase Storage for all video playback
+- Use signed URLs for private access
+- Make video playback work like CapCut / Opus / professional apps
+- Do NOT serve videos from Express API routes
+- Keep everything secure and scalable
+
+FOLLOW THESE STEPS EXACTLY (DO NOT SKIP):
+
+--------------------------------------------
+STEP 1 — STOP USING API ROUTES FOR PLAYBACK
+--------------------------------------------
+- Remove usage of /api/clips/:id/video for video playback
+- Keep API routes only for metadata (id, duration, etc.)
+- Video files must never be streamed through Express
+
+--------------------------------------------
+STEP 2 — STORE VIDEOS IN SUPABASE STORAGE
+--------------------------------------------
+- Create Supabase bucket: "clips" (private)
+- Upload recorded clips to Supabase Storage instead of DB
+- Use path format:
+  clips/{userId}/{clipId}.webm
+- Set correct contentType on upload (video/webm or video/mp4)
+- Store ONLY the storage path in database (videoPath)
+
+--------------------------------------------
+STEP 3 — GENERATE SIGNED URL FOR PLAYBACK
+--------------------------------------------
+- When fetching clips, generate signed URLs:
+
+  supabase.storage
+    .from("clips")
+    .createSignedUrl(videoPath, 3600)
+
+- Attach signedUrl to response JSON
+- DO NOT expose service role key to frontend
+- This must run on server only
+
+--------------------------------------------
+STEP 4 — FRONTEND VIDEO FIX
+--------------------------------------------
+- Update <video> components to use signedUrl
+- Example:
+  
+  <video src={clip.signedUrl} controls playsInline />
+
+- Remove any API-based src usage
+- Remove blob playback for saved clips
+
+--------------------------------------------
+STEP 5 — DATABASE UPDATE
+--------------------------------------------
+- Update clips table:
+  - Remove base64 videoData usage
+  - Add column: videoPath (string)
+- Migration must be safe
+
+--------------------------------------------
+STEP 6 — FIX RECORDING UPLOAD FLOW
+--------------------------------------------
+- After recording:
+  - Upload blob directly to Supabase Storage
+  - Get storage path
+  - Save metadata to DB
+- Never store base64 in DB
+
+--------------------------------------------
+STEP 7 — SECURITY REQUIREMENTS
+--------------------------------------------
+- Bucket must be private
+- Playback must use signed URLs
+- Signed URLs expire (1 hour)
+- Users only get URLs for their own files
+- No API keys exposed to frontend
+- No open public buckets
+
+--------------------------------------------
+STEP 8 — VERIFY
+--------------------------------------------
+- Devtools Network tab must show:
+  https://*.supabase.co/storage/v1/object/sign/...
+- Status must be 200
+- Content-Type must be video/*
+- Video must play without auth errors
+
+--------------------------------------------
+IMPORTANT RULES:
+--------------------------------------------
+- DO NOT ask me questions
+- DO NOT give options
+- DO NOT partially implement
+- DO NOT leave TODOs
+- Fix backend + frontend fully
+- This is a production app for thousands of users
+- Follow best practices
+
+When done, video playback MUST work.

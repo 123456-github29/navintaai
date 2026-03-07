@@ -1,0 +1,102 @@
+FIX VIDEO DOWNLOAD AUTH + CAPTIONS 404 BUGS
+
+========================
+PROBLEM A — VIDEO DOWNLOAD FAILS (401)
+========================
+
+CAUSE:
+Browser does not send auth headers when downloading files
+
+FIX:
+Convert download to authenticated fetch + blob
+
+----------------------------------
+STEP 1 — FRONTEND FIX
+----------------------------------
+
+Find download button code (Library / ClipCard / VideoCard)
+
+REPLACE direct link or window.open with:
+
+async function downloadVideo(id, title) {
+  const res = await fetch(`/api/videos/${id}/download`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("supabase.auth.token")}`
+    }
+  });
+
+  if (!res.ok) throw new Error("Download failed");
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${title}.mp4`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+----------------------------------
+STEP 2 — BACKEND FIX (OPTIONAL BUT RECOMMENDED)
+----------------------------------
+
+Add this helper endpoint:
+
+app.get("/api/videos/:id/download-url", requireAuth, async (req, res) => {
+  const video = await storage.getVideo(req.params.id, req.user.sub);
+  const signedUrl = await videoProcessor.getSignedUrl(video.videoData);
+  res.json({ url: signedUrl });
+});
+
+========================
+PROBLEM B — CAPTIONS 404 SPAM
+========================
+
+CAUSE:
+Frontend polls captions before transcription exists
+
+FIX:
+Return 200 empty response instead of 404
+
+----------------------------------
+STEP 3 — BACKEND FIX
+----------------------------------
+
+Find:
+
+GET /api/videos/:videoId/captions
+
+REPLACE:
+
+if (!transcription) {
+  throw createError("No transcription found", 404)
+}
+
+WITH:
+
+if (!transcription) {
+  return res.json(null);
+}
+
+----------------------------------
+STEP 4 — FRONTEND FIX
+----------------------------------
+
+When fetching captions:
+
+if (data === null) {
+  // no captions yet, show loader
+  return;
+}
+
+DO NOT treat as error.
+
+========================
+RESULT
+========================
+- Download works
+- Auth works
+- No 401
+- No infinite retries
+- No console spam
+- Production-safe behavior

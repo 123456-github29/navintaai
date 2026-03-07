@@ -1,0 +1,230 @@
+You are an expert full-stack engineer building an AI video editor. Implement a “B-roll Slot Filler” system that ONLY generates/retrieves B-roll assets, while the Director/Editor systems control timing and placement. This must be production-quality, schema-validated, and source-adapter based.
+
+SCOPE (IMPORTANT)
+- Only implement the B-roll system that fills “B-roll slots” with candidate clips + suggested trims.
+- Do NOT implement directing, timeline placement, captioning, or full rendering.
+- The Director will provide slots with start/end times and constraints; our job is ONLY to return the best B-roll candidates for each slot.
+
+CORE IDEA
+- Director outputs BrollSlot[] (with intent + constraints + duration target).
+- Broll system calls one or more stock video APIs (start with Pexels Video API) to retrieve candidate clips for each slot.
+- Broll system ranks candidates by relevance + duration fit + style constraints + novelty rules.
+- Output: For each slot, return top K candidates with score and suggested in/out points (trim inside the candidate clip). The Editor will place them at the slot times.
+
+TECH STACK ASSUMPTIONS
+- Node.js + TypeScript backend (or JS allowed if repo is JS)
+- Express or Next.js API routes (detect project; implement accordingly)
+- Use Zod for schema validation
+- Use fetch/axios for HTTP calls
+- Use environment variables for API keys:
+  - PEXELS_API_KEY
+Optionally also support a second provider later via adapter interface.
+
+DELIVERABLES
+1) Contracts & Schemas (Zod)
+Create: src/systems/broll/contracts.ts
+
+Define these schemas and types:
+
+A) BrollIntent
+{
+  entities: string[];          // e.g., ["Shubman Gill"] (but system is general)
+  actions: string[];           // e.g., ["short arm jab"]
+  keywords: string[];          // e.g., ["cricket", "batting", "jab"]
+  visualEnergy: "static" | "dynamic" | "cinematic";
+  query: string;               // optimized search string for provider
+}
+
+B) BrollSlot (Director output)
+{
+  slotId: string;
+  startMs: number;
+  endMs: number;
+  durationTargetMs: number;   // desired duration for b-roll insert
+  purpose: "example" | "explain" | "contrast" | "mood" | "transition" | "emphasis";
+  intent: BrollIntent;
+  styleConstraints: {
+    cropMode: "9:16-safe" | "any";
+    matchColorMood?: "warm" | "cool" | "neutral";
+    cameraStyle?: "stable" | "handheld" | "action" | "any";
+    avoidTags?: string[];       // tags to avoid like ["slow motion", "aerial"]
+    preferTags?: string[];      // tags to prefer like ["close up", "stadium"]
+    minResolution?: { width: number; height: number }; // default 1920x1080
+  };
+  priority: number;            // 0..1
+}
+
+C) BrollCandidate (our output per clip)
+{
+  assetId: string;            // provider:id format, e.g., "pexels:12345"
+  source: "pexels";
+  license: "stock";           // since this is provider footage
+  previewUrl: string;         // mp4 preview or image
+  downloadUrl?: string;       // chosen file url if available
+  durationMs: number;
+  width: number;
+  height: number;
+  tags: string[];             // provider tags if available; else empty
+  suggestedTrim: { inMs: number; outMs: number }; // must fit slot durationTargetMs
+  fit: {
+    semanticScore: number;     // 0..1 (can be heuristic if no embeddings)
+    keywordScore: number;      // 0..1
+    entityScore: number;       // 0..1
+    durationFit: number;       // 0..1
+    cropFit: number;           // 0..1
+    styleFit: number;          // 0..1
+  };
+  overallScore: number;        // 0..1
+  reason: string;              // short explanation
+}
+
+D) BrollFillRequest
+{
+  slots: BrollSlot[];
+  topK?: number;              // default 5
+  sourcePriority?: ("pexels")[]; // default ["pexels"]
+  globalRules?: {
+    minGapMsBetweenSameAsset?: number;  // default 60000
+    maxReusePerVideo?: number;          // default 1 or 2
+  };
+}
+
+E) BrollFillResponse
+{
+  slotResults: Array<{
+    slotId: string;
+    candidates: BrollCandidate[];
+  }>;
+  stats: {
+    slotsProcessed: number;
+    providerCalls: number;
+    cacheHits: number;
+  };
+}
+
+Validate numeric ranges with Zod (nonnegative ints for ms, 0..1 for scores, etc.)
+
+2) Provider Adapter Pattern
+Create: src/systems/broll/providers/types.ts
+- interface BrollProvider {
+    name: string;
+    searchVideos(query: string, perPage: number): Promise<ProviderClip[]>;
+  }
+
+Create: src/systems/broll/providers/pexels.ts
+Implement Pexels Video API adapter:
+- Endpoint: https://api.pexels.com/videos/search?query=...&per_page=...
+- Auth header: Authorization: PEXELS_API_KEY
+Return a normalized ProviderClip object:
+{
+  id: string;
+  durationMs: number;
+  width: number;
+  height: number;
+  url: string;              // pexels page url
+  videoFiles: Array<{ quality: string; fileType: string; width: number; height: number; link: string }>;
+  videoPictures?: Array<{ picture: string }>;
+  tags?: string[];          // if not available, set []
+}
+
+Select best downloadUrl:
+- Prefer mp4
+- Prefer highest resolution >= minResolution if possible
+- Otherwise pick the highest available
+
+3) Ranking + Scoring Engine
+Create: src/systems/broll/scoring.ts
+
+Implement:
+- normalizeTokens(str): lowercases, trims, removes punctuation
+- token overlap score between intent.keywords and clip tags (if tags missing, use query tokens vs clip url text)
+- entityScore:
+  - if any entity token appears in tags/title/url -> boost
+  - else 0
+- durationFit:
+  - compute how well clip.durationMs can cover durationTargetMs
+  - ideal: clip.durationMs >= target and not excessively longer (cap)
+- cropFit:
+  - if cropMode is 9:16-safe, prefer clips with:
+     - width/height close to 9:16, OR
+     - high resolution allowing crop (width >= 1080 and height >= 1920 OR width >= 1920 and height >= 1080)
+  - output 0..1
+- styleFit (MVP heuristic):
+  - preferTags/avoidTags influence
+  - visualEnergy influences:
+     - dynamic: prefer tags like ["action", "sports", "movement", "fast"] (if tags absent, skip)
+     - cinematic: prefer tags like ["cinematic", "sunset", "moody"] (if tags absent, skip)
+  - if constraints are "any", styleFit defaults to 0.5
+- semanticScore (MVP):
+  - if no embeddings, set semanticScore = 0.55 baseline
+  - (optional) if project already has embeddings infra, implement cosine similarity
+
+Combine into overallScore:
+- overall = 0.35*semantic + 0.20*keyword + 0.20*durationFit + 0.15*cropFit + 0.10*styleFit
+- entityScore acts as a multiplier boost: overall *= (1 + 0.25*entityScore) capped at 1
+
+Add global quality gate:
+- keep candidates with overallScore >= 0.60
+- always return at least 1 candidate if any exist (even if below threshold), but mark reason “low confidence”
+
+Add novelty / dedup rules:
+- avoid selecting the same assetId for multiple slots unless necessary
+- respect globalRules.minGapMsBetweenSameAsset by tracking used assetIds and slot start times
+Return topK per slot.
+
+4) Suggested Trim Logic
+Create: src/systems/broll/trim.ts
+Given candidate clip duration and slot durationTargetMs:
+- choose suggestedTrim.inMs randomly or centered:
+  - if clip is longer, pick a window of target duration inside clip
+  - prefer start offset 200–600ms (avoid opening frames)
+- suggestedTrim.outMs = inMs + target (clamped)
+Return ms in clip-time (0..clipDurationMs)
+
+5) Orchestrator
+Create: src/systems/broll/orchestrator.ts
+Implement function fillBrollSlots(request: BrollFillRequest): Promise<BrollFillResponse>
+- Validate request with Zod
+- For each slot:
+  - Build provider query: intent.query (fallback join entities/actions/keywords)
+  - Call provider adapter searchVideos(query, perPage=15)
+  - Normalize clips
+  - Score with scoring engine using slot constraints
+  - Apply trim logic
+  - Rank + filter + dedup
+  - Return topK
+Add simple in-memory cache:
+- cache by query string for 5 minutes to reduce provider calls
+- cache map: query -> clips[]
+
+6) API Endpoint
+Implement an API route:
+- If Express: POST /api/v1/broll/fill-slots
+- If Next.js: pages/api/v1/broll/fill-slots.ts or app/api/v1/broll/fill-slots/route.ts
+Body = BrollFillRequest
+Response = BrollFillResponse
+Return 400 with validation errors if invalid.
+
+7) Minimal Tests / Smoke Script
+Add a script or test:
+- Provide a sample BrollFillRequest with 2 slots
+- Print top candidates
+- Ensure it runs with PEXELS_API_KEY set
+
+8) Documentation
+Add README snippet in src/systems/broll/README.md:
+- How to set PEXELS_API_KEY
+- Example request/response
+- Notes: This system only returns candidates; the Director/Editor decides placement.
+
+IMPORTANT PRODUCT RULES
+- This system must NOT decide when B-roll appears in the final video beyond returning suggestedTrim within the clip.
+- Timing/placement is dictated by the Director slot startMs/endMs. We do not modify those.
+- The system must be general across domains; “cricket” is only an example.
+
+IMPLEMENTATION NOTES
+- If Pexels response doesn’t include tags, set tags=[] and rely on query tokens + url text for keywordScore.
+- Ensure all returned URLs are https.
+- Keep code clean, typed, and modular.
+
+Now implement the above in my repo. Locate my backend framework and add the new system under src/systems/broll. Ensure it compiles and runs.

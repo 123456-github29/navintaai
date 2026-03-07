@@ -1,0 +1,50 @@
+Implement the first working vertical slice of the new editing architecture.
+
+Context:
+- We already created the folders/files shown below and pasted the scaffold code (schemas, agents interfaces, renderer skeleton, routes skeleton, remotion Root/Composition and component placeholders).
+- Goal: POST /api/videos/:id/render should accept a JSON payload that matches EditDecisionJSONSchema, render a video via Remotion using src/remotion/Root.tsx and src/remotion/Composition.tsx, and return a downloadable mp4.
+
+Requirements:
+1) Implement RendererService.apply(edl, assetMap) to actually render with Remotion:
+   - Use @remotion/bundler to bundle Remotion entry (src/remotion/Root.tsx)
+   - Use @remotion/renderer to render composition "PremiumVideo"
+   - Pass the EDL as inputProps
+   - Render to a temp mp4 file, then return it (either as Buffer or stream response)
+   - Add safe temp cleanup
+   - Do NOT put any secrets on frontend; server-only.
+
+2) Implement MainComposition in src/remotion/Composition.tsx:
+   - Render video segments from props.tracks.video.
+   - Each segment uses assetMap[assetId] as the source.
+   - Respect startFrame/endFrame/trimStart/volume.
+   - Implement a basic cameraMotion preset: 'slow-zoom-in' (scale from 1.0 to 1.06) and 'none'.
+   - Apply colorPreset as a simple CSS filter map (preset IDs -> filter strings).
+
+3) Implement CaptionTrack minimally:
+   - Render captions from props.tracks.captions based on startFrame/endFrame.
+   - Use stylePackId to pick a preset from src/remotion/styles/presets.ts (create 2 caption style packs).
+   - Implement animationType 'pop-in' and 'karaoke' (karaoke can just highlight the whole caption for now).
+
+4) Implement TransitionLayer minimally:
+   - For each transition at atFrame, apply a short crossfade or blur dissolve between current and next segment (simple implementation OK).
+
+5) Implement the API route:
+   - In src/api/routes.ts, implement POST /api/videos/:id/render:
+     - Validate req.body with EditDecisionJSONSchema
+     - For now render synchronously (no BullMQ yet)
+     - Return the mp4 as a streamed download response
+     - Proper error handling and logging
+
+6) Add one test endpoint or dev script that builds a tiny sample EDL with 2 assets so we can verify rendering works end-to-end.
+
+Folders:
+src/schemas/editDecision.schema.ts
+src/services/renderer.service.ts
+src/api/routes.ts
+src/remotion/Root.tsx
+src/remotion/Composition.tsx
+src/remotion/components/CaptionTrack.tsx
+src/remotion/components/TransitionLayer.tsx
+src/remotion/styles/presets.ts
+
+Make sure it runs in Replit, TypeScript compiles, and the endpoint returns an actual playable mp4.

@@ -1,0 +1,153 @@
+You are redesigning the authenticated (inside-app) UI for Navinta AI.
+
+GOAL:
+Make the inside experience feel like a premium creative studio, not a dashboard.
+It should feel like Apple + Linear + a film studio control room.
+Everything must feel intentional, cinematic, calm, and powerful.
+
+Do NOT add random colors.
+Do NOT add generic gradients.
+Do NOT add glassmorphism spam.
+Use subtle depth, spacing, motion, and hierarchy to create life.
+
+=====================================================
+GLOBAL DESIGN SYSTEM (APPLY EVERYWHERE)
+=====================================================
+
+Theme:
+- Background: deep charcoal black (#0B0D10)
+- Secondary panels: #11141A
+- Borders: subtle 1px rgba(255,255,255,0.06)
+- Primary accent: cool electric blue (#3B82F6) used sparingly
+- Secondary accent: soft cyan glow (#7DD3FC) at 8–12% opacity for highlights only
+- Text primary: #FFFFFF
+- Text secondary: #A1A1AA
+- Muted: #6B7280
+
+Typography:
+- Headings: clean modern grotesk (medium weight)
+- Body: neutral sans (regular)
+- Numbers (stats): slightly heavier
+- Use scale and spacing instead of color to create hierarchy
+
+Motion:
+- Every section should fade + rise in (8–12px)
+- Cards hover with subtle lift (translateY(-2px))
+- Buttons glow slightly on hover (not neon)
+- Transitions: 220–300ms ease-out
+- Use GSAP for sequences, CSS for micro-interactions
+
+=====================================================
+DIRECTOR MODE REDESIGN
+=====================================================
+
+Current problem:
+- Feels empty
+- Looks like raw dev UI
+- No emotional weight
+- No studio feel
+
+Fix by turning it into a “Director’s Console”:
+
+Layout:
+- Center: phone frame (already exists) = STAGE
+- Right panel: director notes = CONTROL BOARD
+- Left icons = TOOLS RACK (vertical, dim, subtle)
+
+Enhancements:
+- Add faint vignette around phone frame
+- Add subtle moving grain/noise overlay (very light)
+- Add thin glowing outline around active shot
+- Progress bar should feel like a timeline, not a loading bar
+
+Shot cards (bottom):
+- Should look like film strips
+- Rounded corners
+- Tiny timeline tick marks under each
+- Active shot pulses gently
+- Completed shots get subtle check glow
+
+Director notes panel:
+- Separate sections with spacing, not borders
+- Shot duration = small pill badge
+- Instructions should feel like a director whispering, not system text
+- Add subtle animated underline when script changes
+
+=====================================================
+LIBRARY REDESIGN
+=====================================================
+
+Current problem:
+- Empty
+- Dead
+- Feels like unfinished admin panel
+
+Fix:
+Turn library into a “Film Vault”
+
+Top section:
+- Large title (Library)
+- Subtitle smaller, lighter
+- Add thin horizontal divider line with gradient fade
+
+Tabs (Finished / Recorded):
+- Should look like toggle buttons in a studio desk
+- Rounded pill container
+- Active tab gets soft glow and slight elevation
+
+Video grid:
+- Always show content cards (never empty space)
+- If empty, show elegant placeholder cards with shimmer
+- Cards should be tall, cinematic
+- Hover: preview pulse + play icon fade in
+
+Card contents:
+- Title
+- Status pill (Finished / Draft)
+- Platform icons (small)
+- Duration
+- Date
+
+Floating Play Button:
+- Bottom right
+- Should feel like “enter stage”
+- Subtle glow + scale on hover
+
+=====================================================
+EMPTY STATE FIX (IMPORTANT)
+=====================================================
+
+Empty states should NEVER be blank.
+
+Use:
+- 3 ghost cards with shimmer
+- A soft message like:
+  “Your next video is waiting to be directed”
+- A single CTA button
+- Keep the screen alive even when data is empty
+
+=====================================================
+FINAL REQUIREMENTS
+=====================================================
+
+- Make the UI feel like a creative space, not software
+- No random colors
+- No cheap gradients
+- No generic SaaS layout
+- Everything should feel intentional
+- Spacing > color
+- Motion > decoration
+- Hierarchy > boxes
+
+Implement using:
+- Tailwind or CSS modules (existing stack)
+- GSAP for staged animations
+- Framer Motion only if already used
+- Keep performance smooth (no heavy filters)
+
+DO NOT change functionality.
+DO NOT add new features.
+ONLY redesign layout, spacing, motion, and visual system.
+
+This should look like a $50/month professional tool.
+If it looks like a dev dashboard, redo it.

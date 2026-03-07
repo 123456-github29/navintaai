@@ -1,0 +1,133 @@
+REPLIT PROMPT
+
+You are a senior product engineer + UX designer.
+
+I need you to redesign Navinta’s captions workflow. Right now captions can only be generated after export and the user can only see the captioned result inside the Library. That is bad UX. Fix it by adding a proper “Preview + Captions” step before export, so captions are previewable and editable BEFORE the final video is rendered.
+
+GOAL
+Captions must be:
+	•	previewable before export
+	•	editable before export
+	•	treated as an overlay layer (not baked into video until export)
+	•	part of the editing flow, not “Library-only”
+
+NEW FLOW (MUST IMPLEMENT)
+Director Mode → Preview & Captions (NEW) → Export → Library
+	1.	CREATE A NEW PAGE: PreviewAndCaptionsPage
+Route: /videos/:videoId/preview
+
+This page should appear immediately after the user finishes recording all shots.
+
+Layout requirements:
+	•	Center: video preview player (autoplay)
+	•	Right panel: “Captions” controls and timeline list
+	•	Bottom sticky bar: Back to Shots + Export Video buttons
+	•	The UI must be premium, calm, organized, and NOT crowded. Add proper padding, max-width containers, and consistent spacing.
+
+Exact layout structure:
+A) Video Preview Area (center)
+	•	video player with play/pause, scrubber
+	•	captions toggle: ON/OFF
+	•	preview overlays captions while video plays
+
+B) Captions Controls Panel (right)
+	•	Style preset dropdown (Minimal, Bold, Cinematic)
+	•	Font size selector (S / M / L)
+	•	Position selector (Top / Center / Bottom)
+	•	Animation selector (Fade / Pop / Slide)
+	•	Apply changes instantly to preview overlay (no export needed)
+
+C) Captions Timeline List (right, below controls)
+	•	List segments with timestamps
+	•	Each caption line editable inline
+	•	Controls per line:
+	•	nudge timing start/end (+0.1s / -0.1s)
+	•	delete
+	•	merge with next
+	•	Changes should update the captions data immediately and reflect in the preview overlay
+
+D) Bottom Sticky Actions
+	•	Left: Back to Shots (returns to Director Mode)
+	•	Right: Export Video (final high quality export with captions burned in)
+
+	2.	CHANGE WHEN CAPTIONS ARE GENERATED (IMPORTANT)
+When the user completes all shots and clicks “Finish Video”:
+DO NOT immediately do the final export.
+
+Instead, implement this behavior:
+	•	Compile a fast preview video (lower quality is acceptable)
+	•	Run transcription immediately
+	•	Generate caption segments immediately
+	•	Save captions as structured data (segments + style settings)
+	•	Redirect the user to /videos/:videoId/preview
+
+This way captions are editable BEFORE export.
+	3.	DATA MODEL CHANGE (CAPTIONS STORED SEPARATELY)
+Do NOT store captions only as a finished baked result.
+
+Create or ensure a captions/transcriptions structure that stores:
+	•	videoId
+	•	caption segments with start/end/text
+	•	caption style settings (fontSize, position, animation, stylePreset)
+	•	a “finalized” flag or lastExportHash so we know if a re-export is required
+
+Segments must be persisted so when user returns later, they can keep editing captions.
+	4.	VIDEO PREVIEW PLAYER OVERLAY
+Overlay captions in the preview player by syncing the current playback time with the segments. Captions should render as text on top of the video (HTML overlay), not burned into the video.
+
+When captions are edited:
+	•	Update the stored captions JSON
+	•	Update overlay instantly
+	•	Do not recompile the preview video for simple text edits
+
+	5.	EXPORT BEHAVIOR (CRITICAL)
+Only when the user clicks Export Video:
+
+	•	render final high-quality video
+	•	burn captions into video using the stored segments + styles
+	•	save final video to storage
+	•	mark captions as finalized or record that export matches latest captions version
+	•	then redirect to Library
+
+If the user edits captions after export, prompt:
+“Captions changed — re-export to update final video.”
+Provide a Re-export button.
+	6.	LIBRARY CHANGES
+Update library cards so users clearly understand status:
+
+	•	badge: Captioned / No captions
+	•	badge: Needs export (if captions changed since last export)
+	•	clicking a video opens the Preview & Captions page (where captions can be edited again)
+
+Do not force users to only see captions inside library playback; the Preview page is the main place for editing.
+	7.	DIRECTOR MODE BUTTON FIX
+In Director Mode, there’s a “Generate Captions” button.
+Right now, users can’t do captions until video is compiled.
+
+For now:
+	•	If user clicks “Generate Captions” while still recording shots, show a toast:
+“Captions are generated after preview — finish recording to edit them.”
+	•	Do not break anything. Keep other buttons unchanged.
+
+	8.	DESIGN REQUIREMENTS (VERY IMPORTANT)
+
+	•	Dark theme, premium feel
+	•	Use clean spacing and grid alignment
+	•	No clutter, no cramped elements
+	•	No random colors
+	•	Only subtle accent glow (very low opacity)
+	•	Smooth transitions 200–300ms
+	•	Make it feel like a real editor (Opus/CapCut vibe)
+	•	Ensure nothing overlaps or hides controls at common screen sizes
+
+	9.	QUALITY CHECKS (MUST DO)
+
+	•	Verify the flow works end-to-end
+	•	Verify captions show in preview immediately after finishing shots
+	•	Verify captions edits persist after refresh
+	•	Verify export burns captions correctly
+	•	Verify library statuses update correctly
+	•	Verify the UI does not overflow on smaller screens
+
+Final expectation:
+This should make captions feel like a real editing step, not an afterthought. Users should be able to review and perfect captions before export, then export once and get a clean final video.

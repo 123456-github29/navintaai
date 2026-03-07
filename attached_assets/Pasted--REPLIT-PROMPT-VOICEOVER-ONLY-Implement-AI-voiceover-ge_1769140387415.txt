@@ -1,0 +1,116 @@
+✅ REPLIT PROMPT (VOICEOVER ONLY)
+
+Implement AI voiceover generation using the ElevenLabs API for the “Voiceover” button in Director Mode.
+All other buttons should remain visually present but inactive (no functionality yet).
+
+⸻
+
+1️⃣ FUNCTIONALITY TO ADD
+
+When the user clicks the Voiceover (speaker icon) button:
+	1.	Open a modal (or right-side panel) with:
+	•	Title: AI Voiceover
+	•	Textarea: “Enter or generate narration”
+	•	Button: “Generate Voice”
+	•	Dropdown: voice selection (default 1 voice)
+	•	Play / Stop preview button
+	•	“Apply to video” button
+	2.	On “Generate Voice”:
+	•	Send text to ElevenLabs API
+	•	Receive audio (mp3 or wav)
+	•	Store audio temporarily (local state or backend)
+	•	Allow preview playback
+	3.	On “Apply to video”:
+	•	Attach audio to current clip timeline
+	•	Replace or layer over existing audio
+	•	Save reference to backend (no FFmpeg mixing yet — just attach)
+
+⸻
+
+2️⃣ ELEVENLABS API SETUP
+	•	Add environment variable:
+	•	ELEVENLABS_API_KEY
+	•	Use ElevenLabs text-to-speech endpoint:
+	•	Model: eleven_multilingual_v2
+	•	Format: mp3
+	•	Voice: default professional narrator
+
+⸻
+
+3️⃣ BACKEND (MINIMAL, SAFE)
+
+Create endpoint:
+
+POST /api/voiceover
+Body:
+	•	text
+	•	voiceId
+	•	clipId
+
+Returns:
+	•	audioUrl (or base64 for now)
+
+⸻
+
+4️⃣ FRONTEND UX REQUIREMENTS
+	•	Modal slides in from right (like Director Notes)
+	•	Dark theme, elegant
+	•	Subtle glow on active voice button
+	•	Loading state while generating
+	•	Error state if API fails
+	•	Preview audio player before apply
+
+⸻
+
+5️⃣ OTHER BUTTONS (IMPORTANT)
+
+All other sidebar buttons:
+	•	Stay visible
+	•	Stay clickable
+	•	Show tooltip: “Coming soon”
+	•	Do nothing else
+
+Do NOT remove them.
+Do NOT add functionality.
+Do NOT change layout.
+
+⸻
+
+6️⃣ CODE STRUCTURE (IMPORTANT)
+	•	Create reusable useVoiceover() hook
+	•	Create VoiceoverModal.tsx
+	•	Add clean separation of concerns
+	•	No inline logic inside button component
+	•	Use existing auth + clip context
+
+⸻
+
+7️⃣ UX POLISH (VERY IMPORTANT)
+	•	When voiceover is applied:
+	•	Show subtle checkmark on Voiceover icon
+	•	Tooltip updates to “Voiceover added”
+	•	If user regenerates:
+	•	Replace existing voiceover
+	•	Audio preview must not auto-play
+
+⸻
+
+8️⃣ DO NOT DO
+	•	Do NOT touch FFmpeg yet
+	•	Do NOT auto-mix audio
+	•	Do NOT touch captions
+	•	Do NOT touch B-roll
+	•	Do NOT change layout
+	•	Do NOT implement other buttons
+
+⸻
+
+9️⃣ GOAL
+
+This is an MVP voiceover feature, not final editing.
+
+Goal is:
+	•	users understand the power
+	•	UI feels alive
+	•	app feels premium
+	•	foundation is clean for later expansion

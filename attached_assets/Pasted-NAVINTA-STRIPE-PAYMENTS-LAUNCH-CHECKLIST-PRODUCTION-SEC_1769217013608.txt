@@ -1,0 +1,215 @@
+NAVINTA – STRIPE PAYMENTS LAUNCH CHECKLIST (PRODUCTION & SECURITY)
+
+=====================================
+1. SECRETS & ENVIRONMENT SAFETY (CRITICAL)
+=====================================
+
+[ ] STRIPE_SECRET_KEY stored ONLY on backend (sk_live_...)
+[ ] STRIPE_WEBHOOK_SECRET stored ONLY on backend (whsec_...)
+[ ] STRIPE_PUBLISHABLE_KEY (pk_live_...) is the ONLY key exposed to frontend
+
+DO NOT:
+- commit secrets to git
+- put secrets in frontend env variables
+- log secrets in console
+- expose secrets in network tab
+- store secrets in localStorage
+- put secrets in Vite / Expo public envs
+
+Replit:
+[ ] All secrets added in Replit Secrets tab
+[ ] No secrets appear in build logs
+[ ] No secrets appear in frontend JS bundles
+
+=====================================
+2. STRIPE WEBHOOKS (NON-NEGOTIABLE)
+=====================================
+
+Webhook endpoint created:
+[ ] https://yourdomain.com/api/stripe/webhook
+
+Events enabled:
+[ ] checkout.session.completed
+[ ] customer.subscription.created
+[ ] customer.subscription.updated
+[ ] customer.subscription.deleted
+[ ] invoice.paid
+[ ] invoice.payment_failed
+
+Security:
+[ ] Webhook signature is verified using STRIPE_WEBHOOK_SECRET
+[ ] Requests without valid signature are rejected
+[ ] No logic runs before signature verification
+[ ] Webhook handler is idempotent (safe on retries)
+
+=====================================
+3. STRIPE PRODUCTS & PRICING
+=====================================
+
+Products created in Stripe:
+[ ] Free (no billing)
+[ ] Creator
+[ ] Pro
+[ ] Studio
+
+Each paid product has:
+[ ] Monthly price
+[ ] Yearly price (with discount)
+[ ] Separate price IDs saved in backend
+
+Example:
+- price_creator_monthly
+- price_creator_yearly
+- price_pro_monthly
+- price_pro_yearly
+- price_studio_monthly
+- price_studio_yearly
+
+=====================================
+4. CHECKOUT FLOW
+=====================================
+
+Frontend:
+[ ] Uses ONLY publishable key
+[ ] Calls backend to create checkout session
+[ ] Never creates sessions directly
+[ ] Never sends price IDs directly to Stripe from frontend
+[ ] Redirects to Stripe-hosted checkout
+
+Backend:
+[ ] Creates checkout session
+[ ] Attaches Supabase user ID to metadata
+[ ] Attaches plan name to metadata
+[ ] Uses success_url and cancel_url
+[ ] Returns only checkout URL to frontend
+
+=====================================
+5. SUBSCRIPTION STATE (SOURCE OF TRUTH)
+=====================================
+
+Database table:
+subscriptions:
+- user_id
+- stripe_customer_id
+- stripe_subscription_id
+- plan
+- status (active / canceled / past_due)
+- current_period_end
+
+Updated ONLY from webhook:
+[ ] checkout.session.completed
+[ ] subscription.created
+[ ] subscription.updated
+[ ] subscription.deleted
+[ ] invoice.payment_failed
+
+Never trust frontend state for access control.
+
+=====================================
+6. FEATURE GATING (SECURITY)
+=====================================
+
+Backend enforces:
+[ ] Export locked for free users
+[ ] Watermark applied for free users
+[ ] Pro features require active subscription
+[ ] Director mode preview allowed, export blocked
+[ ] API endpoints verify subscription on every call
+
+Frontend:
+[ ] Shows locked UI
+[ ] Shows upgrade modal
+[ ] Never decides access itself (backend always checks)
+
+=====================================
+7. STRIPE CUSTOMER MANAGEMENT
+=====================================
+
+[ ] Each user has one Stripe customer
+[ ] Customer ID stored in database
+[ ] Billing portal enabled
+[ ] Users can cancel, update card, view invoices
+
+=====================================
+8. YEARLY / MONTHLY TOGGLE
+=====================================
+
+[ ] Both monthly and yearly price IDs exist
+[ ] UI toggle switches price IDs
+[ ] Backend validates price ID
+[ ] Yearly plans have clear discount (15–25%)
+
+=====================================
+9. TESTING (REQUIRED BEFORE LIVE)
+=====================================
+
+Test scenarios:
+[ ] Free → Paid upgrade
+[ ] Monthly → Yearly upgrade
+[ ] Cancel subscription
+[ ] Payment failure
+[ ] Card expired
+[ ] Webhook retry
+[ ] Refresh page after payment
+[ ] Login from new device
+[ ] Export blocked on free
+[ ] Export allowed on paid
+
+Stripe test cards used:
+- 4242 4242 4242 4242 (success)
+- 4000 0000 0000 0341 (failure)
+- 4000 0000 0000 9995 (insufficient funds)
+
+=====================================
+10. PRODUCTION MODE SWITCH
+=====================================
+
+[ ] Live keys enabled
+[ ] Test keys removed
+[ ] Webhook endpoint switched to live
+[ ] Domain verified in Stripe
+[ ] Success and cancel URLs use production domain
+[ ] Billing portal live
+[ ] Emails enabled in Stripe
+
+=====================================
+11. COMPLIANCE & LEGAL
+=====================================
+
+[ ] Privacy policy mentions payments
+[ ] Terms mention subscription billing
+[ ] Refund policy defined
+[ ] Cancellation terms clear
+[ ] Tax collection enabled if required
+[ ] Stripe Tax enabled (recommended)
+
+=====================================
+12. MONITORING & ALERTS
+=====================================
+
+[ ] Stripe webhook failures alerts enabled
+[ ] Payment failure alerts enabled
+[ ] Subscription cancellation alerts enabled
+[ ] Revenue dashboard reviewed
+[ ] Logs monitored
+
+=====================================
+FINAL SAFETY RULE
+=====================================
+
+NEVER:
+- trust frontend
+- trust client state
+- trust query params
+- trust localStorage
+- trust session alone
+
+ALWAYS:
+- verify subscription on backend
+- verify webhook signatures
+- store billing state in DB
+- gate exports server-side
+
+=====================================
+STATUS: READY FOR PRODUCTION
+=====================================

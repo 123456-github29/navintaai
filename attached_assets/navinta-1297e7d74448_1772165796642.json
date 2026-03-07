@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "navinta",
+  "private_key_id": "1297e7d74448e6f15830eea93bd4ca330ea1b6a2",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCt8qn3tNw/Thgr\n8BlUiKEJXo380pbkc5nthF2a++iMaUCNnvnnFbyroyiTU2fCj8uNNNk4uO0BGkJJ\nJ8qMdHPzeU4Aa06auukT2pQehKu1K/YKP3W0fDCzlbkJH683xZbBer4qHmrwvSaD\nOZo0FO/DXW8xHvOBqRpnWWsT2j8JEBTBKYEgLl4p/PSncXQRNmZtJL1S6FIKI3EW\nGnqJslyg2Gsf02Vsyre5Sq+IaLvsObFtFXnCGulFvvASlcLMSn8x5F6Dv72A0VG9\nyp0klgQFiRCrO1l+aa2OQQIlP7p6SuzMYWlfWrym0MVoTJvNa+UjSEnIJwuxCSgO\nOzYqU42PAgMBAAECggEAFflcvV0Mobak2RAYsxQbe8qFF1YnF67+2AFrrcN66hn1\nvK5DlYyqa+hNnObhabOunCT79+1si0Ic847iSIIBj9VYJDdqE6PfA9IN+hj6dAWc\nrEi9/tHdeSJF4MAu61W7qK9vzHRRQB40+kjRkRi//ScVf9gQHOYW3s1t+HEOm39G\nMyFext5YgRVmFCvuefiNzZISWqdo+BaXjgS6eMLA+ibcbWd8v81QMbIl3vo9s0Hb\n0hznig30TA07+wDXkoGd68ga89LSDXzx6NdYET0HSgZuEfvnzYLLzJoZmR39g821\nydwF0dBjt54Ien6gsfJN7k4TS2RzmzdmI6A1RUdy4QKBgQDcBS7XT2esoUatDVmT\nkEAOyqxQrMoZJxv5XjO6chnqe36Sqz9PNaq3hrzF/SzkeGaWL+/JtA4lHdgHlHGO\n0gYfccKEzlF9pP/M2vrU2eIqDQnMS4ZzFRfNVV7xXYUNBkk4g6luopXth1JwSJeT\nLXPKuM0F3KlOnO6tBFYoEU8NfwKBgQDKZLtOzkxy54019X9KKnk9kFquHlFQ/YL6\nxrQ9fr41ksmb9upqSEDushCB895346abmGfHJ5NrQYzs4FKw+58tdawUB3EZGraL\nC8Zikpeidvmm4JayO9i3JV/pCgmxknUdxV6YUaZdo/gpIxMHjkgxpnA1L84Kw41v\nqKKzU+an8QKBgQDEbCwhNFaOG30JSX3K62EE05N6gof6ZJvoyFzN+seAOrgJILDo\nejTqm3M0Ho5Redu8ARfFruVh5X7TZYbrxjyJHfpWrgq6bO+hZ22/ULVEbVdt948U\ndqRFQA3+1UrPEemUdpZwmt3WrJTAgU4wqsdRGCKRNSpBcID0HYb9RlaY6QKBgFoo\naS//whplf4gL5joZlYyRI3Pw2XRkmdYwcdX7AaxHyTuK0H2r1hD+jU/2XKG3bV5e\nk8wpmwfqWWajvvJMBGpxwsfhUMZIGgzyn9sFRjr/GNL3tOmMs0tSgNkEubC6dyVd\n6Hed16hbBI7+qtlwzkQfylhHBVfSKM0Wp/OOam9hAoGANKG3wxOx+ZW7XtoVxF/x\nrTIL0WSarl8gM85NZya1/ZT9w9pd5DXPYo5LJrl1aHu4YfPD6lpkiDpP6TxLFMoB\nMp3IjsHPyVWBzebVq/7/PZytfGuhvduRtBxHa5qMiI5ZjOyCCWB7cgHNddEde8e/\n+4Vcm5bUd1dZ60TB2OpREqg=\n-----END PRIVATE KEY-----\n",
+  "client_email": "replit-deployer@navinta.iam.gserviceaccount.com",
+  "client_id": "101641618261711887196",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/replit-deployer%40navinta.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

@@ -1,0 +1,66 @@
+PROMPT START
+
+Implement “Record with Phone (QR)” + “Flip Camera” for Navinta AI.
+
+Requirements:
+	1.	Add a Flip Camera button to the existing recorder UI:
+
+	•	Works on mobile and desktop where multiple cameras exist.
+	•	Switch between front/back cameras using facingMode, and fall back to enumerating devices and switching deviceId if needed.
+	•	Properly stop and restart MediaStream tracks; do not leak streams.
+
+	2.	Add a new feature: “Record with Phone (QR)”
+Desktop flow:
+
+	•	On Director recording page, add two primary buttons:
+	•	“Record on this device”
+	•	“Record with phone (QR)”
+	•	When user clicks “Record with phone (QR)”, call backend endpoint to create a short-lived recording session tied to the logged-in user and current project/video.
+	•	Backend returns session_id and pair_url. Render a QR code in a centered modal or right-side panel.
+	•	Show session status (pending/paired/uploaded/expired) and a cancel button.
+
+Phone flow:
+	•	Create a new route/page: /record/phone?sid=…
+	•	This page must be mobile-first full screen.
+	•	It should:
+	•	Validate sid with backend (and show error if expired/invalid)
+	•	Open camera preview with record/stop controls
+	•	Include Flip Camera button
+	•	After recording, upload the video and create a clip just like normal clips
+	•	Show upload progress and a success screen
+
+Uploading & persistence:
+	•	Do NOT upload large video blobs through the Node server.
+	•	Use direct-to-storage upload:
+	•	Create an endpoint like POST /api/recording-sessions/:sid/upload-url that returns a signed upload URL (or supabase storage path + auth method).
+	•	Phone uploads video directly to storage.
+	•	After successful upload, phone calls POST /api/recording-sessions/:sid/complete with the storage path and metadata (duration, mime type).
+	•	Backend verifies sid belongs to the correct user/project and is not expired.
+	•	Backend inserts a row into clips table (or the existing clip storage system) so it appears in the same project/library and Director Mode automatically.
+
+Realtime updates:
+	•	Desktop should update instantly when phone finishes upload.
+	•	Use Supabase Realtime subscription if available (preferred) on either:
+	•	recording_sessions table changes OR
+	•	clips table inserts for this project
+	•	Add a polling fallback if realtime is not configured.
+
+Security & correctness:
+	•	Session IDs must be random UUIDs.
+	•	Sessions expire in 10 minutes.
+	•	Session completion endpoint must validate:
+	•	session exists, not expired
+	•	belongs to current logged-in user (or has a server-side secure association)
+	•	storage path matches allowed bucket prefix
+	•	Never expose service role keys to frontend.
+	•	Add rate limiting to session creation endpoint and completion endpoint.
+	•	Handle errors gracefully with clear UI states.
+
+Deliverables:
+	•	Backend endpoints for session create, get status, get upload URL, complete, cancel.
+	•	DB migration for recording_sessions table (if not exists).
+	•	UI changes on desktop recording page.
+	•	New mobile recorder page with working camera + flip + upload.
+	•	Ensure created phone clips behave identically to normal clips in the app’s library and editing pipeline.
+
+PROMPT END

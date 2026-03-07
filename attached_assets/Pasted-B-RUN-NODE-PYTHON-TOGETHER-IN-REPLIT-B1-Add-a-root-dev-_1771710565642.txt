@@ -1,0 +1,135 @@
+B) RUN NODE + PYTHON TOGETHER IN REPLIT
+========================
+B1) Add a root “dev runner” script so BOTH servers start:
+Option 1 (preferred): Use “concurrently” in package.json
+- npm i concurrently --save-dev
+- Add script:
+  "dev": "concurrently \"npm run dev:node\" \"npm run dev:py\""
+
+- dev:node runs your TS/Express server
+- dev:py runs:
+  "cd python_autoedit && uvicorn app:app --host 0.0.0.0 --port 8000"
+
+B2) Add environment variables:
+PY_AUTOEDIT_URL=http://127.0.0.1:8000
+
+========================
+C) NODE/TS BACKEND: CALL PYTHON TO GET EDL
+========================
+C1) In Node backend, create:
+src/services/pythonAutoedit.service.ts
+
+Responsibilities:
+- Accept { signedVideoUrl, fps, aspectRatio, mode, options }
+- POST to `${PY_AUTOEDIT_URL}/autoedit/edl`
+- Validate response shape (zod validation)
+- Return EDL object
+
+C2) SECURITY:
+- Never pass Supabase service role key to Python
+- Only pass a signed URL for the specific file (short TTL)
+- Validate that signed URL corresponds to a clip/video that user owns BEFORE calling Python
+- Python should treat the signed URL as temporary; do not persist it
+
+========================
+D) JOB WORKER FLOW (THE CORRECT ORDER)
+========================
+When a render job starts:
+
+D1) Verify user owns the video + clip path(s)
+D2) Create signed URL for the raw compiled video OR the clip you want to auto-cut
+   - TTL 2–5 minutes
+D3) Call Python to generate EDL
+D4) Feed EDL into Remotion rendering
+D5) Upload MP4 to Supabase renders bucket
+D6) Mark job finished and return signed URL for output MP4 (TTL 10–30 minutes)
+
+IMPORTANT:
+- The Python service is ONLY for EDL creation.
+- Remotion is ONLY for rendering.
+- Supabase is ONLY for storage + auth.
+
+========================
+E) CLIP SOURCE DECISION (WHAT VIDEO DOES PYTHON ANALYZE?)
+========================
+Implement BOTH of these options:
+
+E1) “Analyze compiled raw video” (recommended):
+- Your app already stitches clips into one raw video.
+- Python analyzes that raw video and cuts dead air/padding.
+- This produces the cleanest “remove useless buffer” behavior.
+
+E2) “Analyze a single clip” (fallback):
+- If no compiled video exists, analyze the longest clip.
+
+Implementation rule:
+- If compiled video exists for video_id -> use that
+- Else use the newest clip path
+
+========================
+F) MODE DETECTION (1-SHOT VS MULTI-SHOT)
+========================
+Add a simple “mode” decision in Node:
+- If content plan says “talking head / one shot” OR user selected “single shot” -> mode="talking_head"
+- Else -> mode="multi_shot"
+
+Python behavior:
+- talking_head:
+  - fewer cuts, longer holds, subtler zoom
+- multi_shot:
+  - more frequent cuts on pauses
+  - more aggressive pacing (still not random)
+
+========================
+G) FRONTEND: NO REDESIGN, ONLY WIRING
+========================
+G1) On “Export / Auto Edit” button:
+- call POST /api/videos/:id/autoedit (existing endpoint)
+- poll /api/render-jobs/:id
+- show “Download MP4” when ready
+
+G2) Ensure Authorization header uses supabase session token.
+
+========================
+H) FIX COMMON FAILURES (MUST ADDRESS)
+========================
+H1) Python not reachable:
+- show clear server log + return 503 with message “Autoedit service unavailable”
+- job should become “failed” with readable error
+
+H2) Signed URL expired mid-run:
+- use TTL >= 2 minutes
+- Python must download immediately and work on local file
+
+H3) Remotion cannot load remote signed URL:
+- If Remotion fails to read signed URLs reliably:
+  - Node must download the video into a local temp file
+  - Provide Remotion the local file path
+(Implement automatic fallback: try remote, if fail then local.)
+
+H4) Ensure CORS and CSP are not blocking:
+- CSP should allow media-src for signed supabase domain if you render in browser
+- For server rendering it’s less relevant, but keep backend safe defaults
+
+========================
+I) VERIFICATION CHECKLIST (YOU MUST MAKE THIS PASS)
+========================
+1) `GET /health` (Node) returns ok
+2) `GET http://127.0.0.1:8000/health` returns ok
+3) Start a render job:
+   - job status goes queued -> processing -> finished
+4) The finished job returns a valid signed download URL
+5) The MP4 plays with:
+   - cuts removing dead air (based on pause threshold)
+   - subtle zoom and color polish from SmartVideoClip
+   - kinetic captions syncing word timing
+   - crossfades between cut segments (4 frames)
+
+========================
+J) DO NOTS
+========================
+- Do NOT change website/app colors or fonts
+- Do NOT redesign layout
+- Do NOT store any secret keys in frontend
+- Do NOT store signed URLs permanently
+- Do NOT block request thread with rendering; must be queued

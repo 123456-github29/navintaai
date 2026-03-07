@@ -1,0 +1,499 @@
+Complete Video Pipeline Code (Supabase Version)
+1. DATABASE SCHEMA (Drizzle for Supabase)
+// shared/schema.ts
+import { sql } from "drizzle-orm";
+import { pgTable, text, varchar, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+// Video Clips - individual recorded shots
+export const clips = pgTable("clips", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id"),
+  userId: varchar("user_id").notNull(),
+  shotId: text("shot_id"),
+  filename: text("filename"),
+  videoData: text("video_data").notNull(), // base64 encoded video OR Supabase Storage URL
+  duration: integer("duration").notNull(),
+  transcript: text("transcript"),
+  thumbnail: text("thumbnail"),
+  recordedAt: timestamp("recorded_at").defaultNow().notNull(),
+});
+// Finished Videos
+export const videos = pgTable("videos", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id"),
+  userId: varchar("user_id").notNull(),
+  title: text("title").notNull(),
+  videoData: text("video_data").notNull(), // file path to video
+  thumbnail: text("thumbnail"),
+  duration: integer("duration"),
+  aspectRatio: text("aspect_ratio").notNull().default("9:16"),
+  hasCaption: boolean("has_caption").default(true),
+  musicStyle: text("music_style"),
+  exportedAt: timestamp("exported_at").defaultNow().notNull(),
+});
+// Insert schemas
+export const insertClipSchema = createInsertSchema(clips).omit({
+  id: true,
+  recordedAt: true,
+});
+export const insertVideoSchema = createInsertSchema(videos).omit({
+  id: true,
+  exportedAt: true,
+});
+// Types
+export type Clip = typeof clips.$inferSelect;
+export type InsertClip = typeof insertClipSchema._type;
+export type Video = typeof videos.$inferSelect;
+export type InsertVideo = typeof insertVideoSchema._type;
+2. FRONTEND: Director Mode (Recording)
+// client/src/pages/director-mode.tsx
+import { useState, useRef, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+export default function DirectorMode({ postId, post }) {
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<number | null>(null);
+  // Start camera on mount
+  useEffect(() => {
+    startCamera();
+    return () => stopCamera();
+  }, []);
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: 1080, height: 1920 },
+        audio: true,
+      });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (err) {
+      console.error("Camera error:", err);
+    }
+  };
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+  };
+  const startRecording = () => {
+    if (!stream) return;
+    chunksRef.current = [];
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: "video/webm;codecs=vp8,opus",
+    });
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        chunksRef.current.push(e.data);
+      }
+    };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: "video/webm" });
+      setRecordedBlob(blob);
+    };
+    mediaRecorder.start();
+    mediaRecorderRef.current = mediaRecorder;
+    setIsRecording(true);
+    setRecordingTime(0);
+    timerRef.current = window.setInterval(() => {
+      setRecordingTime((prev) => prev + 1);
+    }, 1000);
+  };
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    }
+  };
+  // SAVE CLIP MUTATION - converts blob to base64 and sends to API
+  const saveClipMutation = useMutation({
+    mutationFn: async (data: { shotId: string; blob: Blob; duration: number }) => {
+      // Convert blob to base64
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(data.blob);
+      });
+      
+      return apiRequest("POST", "/api/clips", {
+        postId,
+        shotId: data.shotId,
+        duration: data.duration,
+        videoData: base64,
+      });
+    },
+    onSuccess: () => {
+      // Refresh clips list
+      queryClient.invalidateQueries({ queryKey: ["/api/clips"] });
+    },
+  });
+  const saveShot = () => {
+    if (!recordedBlob || !post) return;
+    
+    const currentShot = post.shotList[currentShotIndex];
+    saveClipMutation.mutate({
+      shotId: currentShot.id,
+      blob: recordedBlob,
+      duration: recordingTime,
+    });
+    
+    setRecordedBlob(null);
+    setRecordingTime(0);
+  };
+  return (
+    <div>
+      {/* Video preview */}
+      <video ref={videoRef} autoPlay playsInline muted />
+      
+      {/* Recording controls */}
+      {!isRecording ? (
+        <button onClick={startRecording}>Record</button>
+      ) : (
+        <button onClick={stopRecording}>Stop</button>
+      )}
+      
+      {/* After recording, show preview and save button */}
+      {recordedBlob && (
+        <>
+          <video src={URL.createObjectURL(recordedBlob)} controls />
+          <button onClick={saveShot}>Save Shot</button>
+        </>
+      )}
+    </div>
+  );
+}
+3. BACKEND: Save Clip API
+// server/routes.ts
+import { insertClipSchema } from "@shared/schema";
+// Save clip - receives base64 video data
+app.post("/api/clips", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.id; // Your auth user id
+    // Validate data
+    const validation = insertClipSchema.safeParse({
+      ...req.body,
+      userId,
+    });
+    if (!validation.success) {
+      return res.status(400).json({ 
+        error: "Invalid clip data", 
+        details: validation.error.format() 
+      });
+    }
+    // Save to database (Supabase)
+    const clip = await storage.createClip(validation.data);
+    res.json(clip);
+  } catch (error: any) {
+    console.error("Error saving clip:", error);
+    res.status(500).json({ error: "Failed to save clip" });
+  }
+});
+// Get all clips for user
+app.get("/api/clips", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.id;
+    const clips = await storage.getClips(userId);
+    res.json(clips);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch clips" });
+  }
+});
+4. STORAGE: Supabase Functions
+// server/storage.ts
+import { createClient } from "@supabase/supabase-js";
+import { clips, videos, InsertClip, InsertVideo, Clip, Video } from "@shared/schema";
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!
+);
+export class SupabaseStorage {
+  
+  // CREATE CLIP
+  async createClip(clip: InsertClip): Promise<Clip> {
+    const { data, error } = await supabase
+      .from("clips")
+      .insert(clip)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  }
+  // GET CLIPS for user
+  async getClips(userId: string): Promise<Clip[]> {
+    const { data, error } = await supabase
+      .from("clips")
+      .select("*")
+      .eq("user_id", userId)
+      .order("recorded_at", { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  }
+  // GET CLIPS by post (for video compilation)
+  async getClipsByPost(postId: string): Promise<Clip[]> {
+    const { data, error } = await supabase
+      .from("clips")
+      .select("*")
+      .eq("post_id", postId)
+      .order("recorded_at", { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  }
+  // DELETE CLIP
+  async deleteClip(clipId: string, userId: string): Promise<void> {
+    const { error } = await supabase
+      .from("clips")
+      .delete()
+      .eq("id", clipId)
+      .eq("user_id", userId);
+    
+    if (error) throw error;
+  }
+  // CREATE VIDEO
+  async createVideo(video: InsertVideo): Promise<Video> {
+    const { data, error } = await supabase
+      .from("videos")
+      .insert(video)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  }
+  // GET VIDEOS for user
+  async getVideos(userId: string): Promise<Video[]> {
+    const { data, error } = await supabase
+      .from("videos")
+      .select("*")
+      .eq("user_id", userId)
+      .order("exported_at", { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  }
+}
+export const storage = new SupabaseStorage();
+5. VIDEO PROCESSOR (FFmpeg Compilation)
+// server/lib/videoProcessor.ts
+import ffmpeg from "fluent-ffmpeg";
+import { promises as fs } from "fs";
+import path from "path";
+import { randomUUID } from "crypto";
+import type { Clip, Post } from "@shared/schema";
+const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+const VIDEOS_DIR = path.join(UPLOADS_DIR, "videos");
+const TEMP_DIR = path.join(UPLOADS_DIR, "temp");
+// Ensure directories exist
+await fs.mkdir(VIDEOS_DIR, { recursive: true });
+await fs.mkdir(TEMP_DIR, { recursive: true });
+export class VideoProcessor {
+  
+  async processVideo(clips: Clip[], post: Post): Promise<string> {
+    if (clips.length === 0) {
+      throw new Error("No clips to process");
+    }
+    const jobId = randomUUID();
+    const videoId = `video-${jobId}.mp4`;
+    const outputPath = path.join(VIDEOS_DIR, videoId);
+    const tempFiles: string[] = [];
+    try {
+      // Step 1: Convert base64 clips to temp files
+      const clipPaths: string[] = [];
+      for (let i = 0; i < clips.length; i++) {
+        const clip = clips[i];
+        const tempPath = await this.saveBase64AsFile(
+          clip.videoData,
+          `job-${jobId}-clip${i}.webm`
+        );
+        tempFiles.push(tempPath);
+        clipPaths.push(tempPath);
+      }
+      // Step 2: Merge clips with FFmpeg
+      if (clipPaths.length === 1) {
+        await this.encodeSingleClip(clipPaths[0], outputPath);
+      } else {
+        await this.mergeClips(clipPaths, outputPath, jobId, tempFiles);
+      }
+      return videoId;
+    } finally {
+      // Cleanup temp files
+      for (const tempFile of tempFiles) {
+        await fs.unlink(tempFile).catch(() => {});
+      }
+    }
+  }
+  private async saveBase64AsFile(base64Data: string, filename: string): Promise<string> {
+    // Remove data URL prefix
+    const base64Content = base64Data.replace(/^data:video\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64Content, "base64");
+    
+    const filePath = path.join(TEMP_DIR, filename);
+    await fs.writeFile(filePath, buffer);
+    
+    console.log(`Saved: ${filename} (${Math.round(buffer.length / 1024)}KB)`);
+    return filePath;
+  }
+  private async encodeSingleClip(inputPath: string, outputPath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      ffmpeg(inputPath)
+        .videoFilters([
+          "scale=1080:1920:force_original_aspect_ratio=decrease",
+          "pad=1080:1920:(ow-iw)/2:(oh-ih)/2"
+        ])
+        .outputOptions([
+          "-c:v libx264",
+          "-preset veryfast",
+          "-crf 24",
+          "-threads 0",
+          "-c:a aac",
+          "-b:a 128k",
+          "-movflags +faststart",
+        ])
+        .output(outputPath)
+        .on("end", () => resolve())
+        .on("error", (err) => reject(err))
+        .run();
+    });
+  }
+  private async mergeClips(
+    clipPaths: string[], 
+    outputPath: string, 
+    jobId: string,
+    tempFiles: string[]
+  ): Promise<void> {
+    // Create concat file
+    const concatFilePath = path.join(TEMP_DIR, `concat-${jobId}.txt`);
+    tempFiles.push(concatFilePath);
+    const fileListContent = clipPaths.map((p) => `file '${p}'`).join("\n");
+    await fs.writeFile(concatFilePath, fileListContent);
+    return new Promise((resolve, reject) => {
+      ffmpeg()
+        .input(concatFilePath)
+        .inputOptions(["-f concat", "-safe 0"])
+        .videoFilters([
+          "scale=1080:1920:force_original_aspect_ratio=decrease",
+          "pad=1080:1920:(ow-iw)/2:(oh-ih)/2"
+        ])
+        .outputOptions([
+          "-c:v libx264",
+          "-preset veryfast",
+          "-crf 24",
+          "-threads 0",
+          "-c:a aac",
+          "-b:a 128k",
+          "-movflags +faststart",
+        ])
+        .output(outputPath)
+        .on("end", () => resolve())
+        .on("error", (err) => reject(err))
+        .run();
+    });
+  }
+  async getVideoPath(videoId: string): Promise<string> {
+    return path.join(VIDEOS_DIR, videoId);
+  }
+}
+export const videoProcessor = new VideoProcessor();
+6. EXPORT VIDEO API
+// server/routes.ts
+import { videoProcessor } from "./lib/videoProcessor";
+// Export video - compiles clips into final video
+app.post("/api/videos/export", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.id;
+    const { postId } = req.body;
+    // Get post
+    const post = await storage.getPost(postId, userId);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+    // Get clips for this post
+    const clips = await storage.getClipsByPost(postId);
+    if (clips.length === 0) {
+      return res.status(400).json({ error: "No clips found for this post" });
+    }
+    // Process video with FFmpeg
+    const videoId = await videoProcessor.processVideo(clips, post);
+    // Save video record to database
+    const video = await storage.createVideo({
+      postId,
+      userId,
+      title: post.title,
+      videoData: videoId, // This is the filename
+      duration: clips.reduce((sum, c) => sum + c.duration, 0),
+      aspectRatio: "9:16",
+      hasCaption: true,
+    });
+    res.json(video);
+  } catch (error: any) {
+    console.error("Export error:", error);
+    res.status(500).json({ error: "Failed to export video" });
+  }
+});
+// Download video file
+app.get("/api/videos/:id/download", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.id;
+    const video = await storage.getVideo(req.params.id, userId);
+    
+    if (!video) {
+      return res.status(404).json({ error: "Video not found" });
+    }
+    const videoPath = await videoProcessor.getVideoPath(video.videoData);
+    res.download(videoPath, `${video.title}.mp4`);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to download video" });
+  }
+});
+7. FRONTEND: Library Page
+// client/src/pages/library.tsx
+import { useQuery } from "@tanstack/react-query";
+import type { Video, Clip } from "@shared/schema";
+export default function Library() {
+  const { data: videos, isLoading: videosLoading } = useQuery<Video[]>({
+    queryKey: ["/api/videos"],
+  });
+  const { data: clips, isLoading: clipsLoading } = useQuery<Clip[]>({
+    queryKey: ["/api/clips"],
+  });
+  return (
+    <div>
+      <h1>Video Library</h1>
+      
+      {/* Finished Videos */}
+      <h2>Finished Videos</h2>
+      {videos?.map((video) => (
+        <div key={video.id}>
+          <h3>{video.title}</h3>
+          <p>{video.duration}s</p>
+          <a href={`/api/videos/${video.id}/download`} target="_blank">
+            Download
+          </a>
+        </div>
+      ))}
+      {/* Recorded Clips */}
+      <h2>Recorded Clips</h2>
+      {clips?.map((clip) => (
+        <div key={clip.id}>
+          <p>{clip.duration}s</p>
+          <video 
+            src={clip.videoData} 
+            style={{ width: 100, height: 178 }} 
+          />
+        </div>
+      ))}
+    </div>
+  );
+}

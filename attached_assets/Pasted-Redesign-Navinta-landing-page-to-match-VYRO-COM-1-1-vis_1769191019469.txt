@@ -1,0 +1,145 @@
+Redesign Navinta landing page to match VYRO.COM 1:1 visual style (not “similar”, not “inspired”, EXACT FEEL). Current output looks vibe-coded — fix that by LOCKING the visual system and implementing the specific gradients, surfaces, and spacing described below.
+
+CRITICAL: DO NOT introduce any random colors, glows, neon, gradients-on-text, shiny buttons, glassmorphism, or dark mode. This must look like Vyro: clean, bright, airy, soft, trustworthy.
+
+TECH:
+- Next.js/React + Tailwind (existing stack)
+- GSAP for scroll animations (ScrollTrigger)
+- Use Pexels API for placeholder images/videos (cards only, no autoplay sound)
+
+========================================================
+VYRO VISUAL SYSTEM (MUST FOLLOW)
+========================================================
+
+GLOBAL BACKGROUND (this is the big missing piece):
+- Page background is NOT plain white. It’s a soft “sky wash”.
+- Implement as:
+  1) base: #F7FAFF (very light blue-white)
+  2) large radial gradient top-center: rgba(59,130,246,0.16) -> transparent (very wide, very soft)
+  3) secondary radial gradient bottom-left: rgba(59,130,246,0.10) -> transparent
+  4) subtle noise texture overlay at 4–6% opacity (CSS background image noise or SVG noise) to avoid flat AI look
+- DO NOT use grey backgrounds. Use white/blue-white only.
+
+TYPOGRAPHY:
+- Simple clean sans (use system stack OR a neutral web font like “Manrope” / “DM Sans” — NOT Space Grotesk).
+- Headline: bold, huge, black (#0B0F1A), tight tracking.
+- Subhead: medium gray (#5B667A).
+- Accent words can be slightly darker/lighter but NOT bright blue filled text.
+
+BUTTONS:
+- Primary button = calm blue fill (not neon), rounded-full pill, strong padding, very subtle shadow.
+- Secondary button = white fill with thin border, same pill shape.
+- Hover states: extremely subtle (lift 1–2px, shadow slightly stronger).
+- NO gradients inside buttons.
+
+SURFACES / CARDS:
+- Use rounded-3xl (big radius) for major panels.
+- Card background: rgba(255,255,255,0.72) with a soft border rgba(15,23,42,0.08)
+- Shadow: soft, spread out (no harsh drop shadows).
+- Always include generous whitespace inside cards.
+- No “dark cards”.
+
+NAVBAR:
+- Floating pill navbar like Vyro:
+  - Centered container, rounded-full, white with subtle blur/backdrop
+  - Logo left, links center, “Sign up / Get started” right
+- Must look like the screenshots: calm, airy, minimal.
+
+SECTION SPACING:
+- Each section has BIG vertical padding (like 120–180px).
+- Content width constrained (max-w-6xl or similar).
+- Avoid dense layouts.
+
+========================================================
+PAGE STRUCTURE (VYRO-LIKE) BUT NAVINTA CONTENT
+========================================================
+
+HERO (matches Vyro composition):
+- Big headline with some words in a lighter gray (like Vyro’s “for your favorite creators…” style).
+- Subhead: 1–2 lines max.
+- One primary CTA (Get Started) + secondary (See how it works).
+- Below hero text: a wide “hero stage” panel (rounded-3xl) containing the APP-WORKS animation cluster (details below).
+- Under that: a subtle row of moving short-form preview thumbnails (Pexels) partially visible, like a carousel strip, to add life WITHOUT clutter.
+
+“HOW IT WORKS” sections (Vyro style):
+- Alternating sections: left text / right visual panel.
+- Keep copy short. One idea per block.
+
+PRICING:
+- Same calm style. 2–3 tiers. No neon.
+
+FOOTER:
+- Simple, clean.
+
+========================================================
+THE IMPORTANT PART: “HOW NAVINTA WORKS” ANIMATION CLUSTER
+========================================================
+
+Inside the hero-stage panel, create a GSAP-driven scroll-tied sequence (like a product story). It must be clean, readable, and not chaotic.
+
+STORYBOARD (must implement):
+Scene 1 — “Onboarding cards”:
+- 3–5 question cards slide in gently from sides into the center (within the hero-stage).
+- Cards show short prompts like:
+  - “Who are you creating for?”
+  - “Goal: leads / authority / sales”
+  - “Video length: 30–60s”
+- Typed text effect for answers (subtle, not hacker style).
+- Then all cards compress into one “Content Plan” card (smooth scale down + merge).
+
+Scene 2 — “Plan -> Shot list”:
+- The “Content Plan” card morphs into a vertical phone frame (rounded-3xl).
+- Inside phone: a shot list appears (Shot 1, Shot 2…) BUT:
+  - AI decides if it’s one-shot: show ONLY 1 large “Single-take” card
+  - or multi-shot: show 3–5 shot cards stacking.
+- Animate a timeline indicator line growing down.
+
+Scene 3 — “Director Mode buttons”:
+- Show a simplified left sidebar of icons (like your Director Mode) and a main phone preview.
+- Animate a cursor/gesture selecting buttons: Captions, B-roll, Color grade, Export (even if features are not live).
+- As each button is “clicked”, show a corresponding panel change:
+  - Captions: captions bar appears and snaps into place
+  - B-roll: a B-roll card slides in above timeline
+  - Export: phone splits into 9:16, 1:1, 16:9 frames
+
+Scene 4 — “Pexels media cards integration” (THIS YOU REQUESTED):
+- Create 6–10 floating media cards (Pexels images/videos) around the phone. They gently drift.
+- When B-roll is clicked, 2–3 of these cards fly into the timeline layer smoothly (scale down + snap).
+- Make it feel “pulled in” not thrown around. No chaos.
+
+Scene 5 — “Final”:
+- Everything resolves into one clean “Final Video” card.
+- Then the card duplicates into 3 aspect ratios.
+- End state: calm, centered, confident.
+
+ANIMATION RULES:
+- Use GSAP + ScrollTrigger with scrub for the hero-stage sequence.
+- Motions are slow, smooth, and precise.
+- Use easing like power2.out / power3.inOut.
+- Avoid rotation, bounce, elastic, neon glows.
+- Keep focus: only animate 1–2 clusters at once.
+- Ensure responsive: on mobile, simplify to fewer cards and fewer steps.
+
+PEXELS INTEGRATION:
+- Add a tiny server route /api/pexels that returns curated results for:
+  - “business talking head”
+  - “podcast microphone”
+  - “typing laptop”
+  - “cinematic broll city”
+  - “product video hands”
+- Use PEXELS_API_KEY in env.
+- Cache responses for performance.
+- Render the returned assets into the floating cards.
+
+IMPORTANT FIXES (to avoid vibe-coded look):
+- Do NOT use saturated blue accents everywhere.
+- Only use blue in CTA buttons and in very subtle highlight strokes.
+- Keep most UI black text + gray.
+- Gradients should live in the BACKGROUND only, not in components.
+- Add subtle dotted/grid pattern overlay inside hero-stage like Vyro’s soft UI texture (very low opacity).
+- No “card explosion” sections. Most of page should be clean text and 1 visual panel.
+
+DELIVERABLE:
+Implement the full landing page redesign with the above exact visual system and the hero-stage animation cluster with Pexels media cards moving into the timeline and button-click simulation.
+
+If any element looks “AI template”, remove it and replace with simpler, more spacious composition.

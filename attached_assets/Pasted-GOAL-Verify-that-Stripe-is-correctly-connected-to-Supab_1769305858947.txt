@@ -1,0 +1,164 @@
+GOAL:
+Verify that Stripe is correctly connected to Supabase, that webhooks are flowing,
+that subscriptions are persisted, and that security is enforced.
+We want HARD PROOF, not assumptions.
+
+==================================================
+STEP 1 — VERIFY STRIPE WEBHOOK IS RECEIVING EVENTS
+==================================================
+Create a debug table in Supabase:
+
+Table: stripe_events_log
+Columns:
+- id (uuid)
+- event_id (text, unique)
+- type (text)
+- created_at (timestamp)
+- payload (jsonb)
+- processed (boolean, default false)
+
+Then update the webhook handler:
+
+On EVERY Stripe webhook:
+- Insert event into stripe_events_log
+- Log event.type
+- Log event.id
+- Save raw payload
+- Mark processed only after success
+
+This proves Stripe → Supabase works.
+
+==================================================
+STEP 2 — VERIFY USER IS LINKED TO STRIPE CUSTOMER
+==================================================
+Add columns to users table:
+- stripe_customer_id (text)
+- plan (text, default 'free')
+- subscription_status (text)
+- subscription_id (text)
+- current_period_end (timestamp)
+
+On checkout.session.completed:
+- Create stripe_customer_id if missing
+- Attach Supabase user id to metadata
+- Save stripe_customer_id in users table
+- Save plan + status
+
+==================================================
+STEP 3 — CREATE A STRIPE ↔ SUPABASE HEALTH CHECK
+==================================================
+Create backend endpoint:
+
+GET /api/debug/stripe-health
+
+This endpoint must:
+- Fetch last 10 stripe_events_log rows
+- Fetch current user subscription row
+- Return:
+  - webhook working: true/false
+  - user linked to stripe: true/false
+  - active subscription: true/false
+  - plan
+  - period end
+
+Render this in admin UI (dev-only).
+
+==================================================
+STEP 4 — VERIFY FEATURE GATING (MOST IMPORTANT)
+==================================================
+Add middleware:
+
+requirePaidPlan(feature)
+
+Before:
+- export
+- b-roll
+- captions
+- ai voice
+- publish
+
+Check:
+- user.plan
+- subscription_status === active
+- current_period_end > now
+
+If not → 402
+
+Log every denial.
+
+==================================================
+STEP 5 — VERIFY SECURITY (MANDATORY)
+==================================================
+Webhook must:
+- Verify stripe-signature
+- Use raw body (not parsed JSON)
+- Reject unsigned requests
+- Use idempotency (ignore duplicate event_id)
+
+Keys:
+- Stripe secret key ONLY in backend env
+- NEVER in frontend
+- Supabase service role ONLY in backend
+- Frontend uses anon key only
+
+==================================================
+STEP 6 — VERIFY SUPABASE RLS
+==================================================
+Enable RLS:
+- users table
+- subscriptions table
+- stripe_events_log
+
+Policies:
+- User can only read their own row
+- Only service role can update plans
+- Webhook bypasses RLS
+
+==================================================
+STEP 7 — VERIFY EXISTING USERS ARE LOCKED
+==================================================
+Run migration:
+UPDATE users SET plan = 'free' WHERE plan IS NULL;
+
+Ensure:
+- no exports work for free users
+- watermark applied
+- UI shows upgrade
+
+==================================================
+STEP 8 — ADD STRIPE TEST MODE VERIFICATION
+==================================================
+Add script to simulate:
+- checkout.session.completed
+- invoice.paid
+- subscription.deleted
+
+Ensure DB updates correctly.
+
+==================================================
+STEP 9 — ADD PRODUCTION SAFETY CHECK
+==================================================
+On server startup:
+- Verify STRIPE_SECRET_KEY exists
+- Verify SUPABASE_SERVICE_ROLE exists
+- Verify webhook secret exists
+- Crash app if missing (fail fast)
+
+==================================================
+STEP 10 — LOG EVERYTHING
+==================================================
+Log:
+- checkout created
+- redirect sent
+- webhook received
+- db updated
+- access granted/denied
+- subscription change
+- billing portal opened
+
+If logs show data in stripe_events_log
+AND users table updates
+AND exports are gated
+THEN integration is correct.
+
+DO NOT ship until all steps are verified.

@@ -1,0 +1,301 @@
+You are Replit AI working inside my existing Navinta AI repo. Your job is to INTEGRATE the Luma API as an OPTIONAL “Generative B-roll / Insert” layer that plugs into my existing auto-edit pipeline (EDL → Remotion render). Do NOT rewrite the whole app. Do NOT remove DecisionEngine/EDL/Remotion. Add Luma as a new service and a new track type that can be inserted into the final video.
+
+CRITICAL GOALS
+1) Luma must NOT replace editing. It should only generate B-roll inserts (short clips) that enhance clarity during “abstract/claim-heavy” moments.
+2) Everything must remain frame-accurate. Convert all timing to integer frames before Remotion.
+3) Must be secure: Luma API key stays server-side only. Never expose it in frontend bundles. Use env var LUMA_API_KEY on server/edge only.
+4) Must be robust: job queueing, retries, status polling, timeouts, and caching so we don’t regenerate the same thing repeatedly.
+5) Must be production-grade: rate-limit endpoints, validate all inputs with Zod, log safely (no secrets), handle failure gracefully (fall back to stock footage or no B-roll).
+
+ASSUMPTIONS / EXISTING
+- I already have:
+  - EDL types: src/types/edl.ts (Word, Clip, EDL)
+  - DecisionEngine that outputs clip segments and words
+  - Remotion timeline that composes clips, crossfades, kinetic captions, etc.
+  - Express routes in src/api/routes.ts (or equivalent)
+  - Renderer pipeline via Remotion and a render queue concept (or you add BullMQ if missing)
+- I’m using Supabase for storage and auth, but the Luma key is separate.
+- I want to store generated B-roll in Supabase Storage (or S3 equivalent). Use signed URLs only for access.
+
+WHAT YOU MUST BUILD
+A) DATA MODEL EXTENSIONS (EDL)
+Extend the EDL schema/types to support a new optional B-roll track that references generated assets.
+
+1) Update src/types/edl.ts
+- Add:
+  export interface BrollInsert {
+    id: string;
+    src: string;                // final downloadable mp4/webm URL (signed)
+    startFrame: number;         // absolute in final timeline (not clip-local)
+    durationInFrames: number;
+    type: 'luma';
+    prompt: string;             // stored for debugging, not shown to user
+    mix: number;                // 0..1 overlay blend if we do picture-in-picture or overlay
+    transform?: {
+      mode: 'full' | 'pip' | 'overlay';
+      x?: number; y?: number; w?: number; h?: number; // for PiP placement in percentage
+      cornerRadius?: number;
+      shadow?: boolean;
+    };
+    audio?: {
+      keepOriginal: boolean;    // default true
+      lumaAudioGain?: number;   // default 0 (mute luma)
+    };
+  }
+
+- Update EDL:
+  export interface EDL {
+    fps: number;
+    clips: Clip[];
+    musicSrc: string | null;
+    broll?: BrollInsert[];      // NEW
+  }
+
+- Add a Zod schema for EDL + broll (if you already validate EDL, extend it).
+
+B) LUMA SERVICE (SERVER-SIDE ONLY)
+Create src/services/luma.service.ts (or src/services/lumaService.ts) that wraps Luma API:
+- Functions:
+  1) createGeneration(prompt: string, aspectRatio: '9:16'|'1:1'|'16:9', durationSeconds: number): Promise<{ jobId: string; }>
+  2) getGeneration(jobId: string): Promise<{ status: 'queued'|'processing'|'succeeded'|'failed'; assetUrl?: string; error?: string; }>
+  3) downloadAndStore(assetUrl: string, storagePath: string): Promise<{ publicOrSignedUrl: string; }>
+- Requirements:
+  - Use fetch with proper headers
+  - Handle non-200 responses with readable errors
+  - Use exponential backoff on polling (e.g., 1s, 2s, 4s, 8s… up to 60s)
+  - Hard timeout after e.g. 6 minutes per job
+  - NEVER log the API key
+  - Validate prompt length and sanitize prompt to avoid storing user secrets
+  - Support deterministic caching key:
+      cacheKey = sha256(prompt + aspectRatio + durationSeconds)
+    If same request already exists and succeeded recently, reuse stored asset.
+
+IMPORTANT: I do not want to guess Luma endpoints incorrectly. Implement the Luma integration in a way that is easy to swap endpoints:
+- Put all base URL + endpoint paths at top of the file as constants:
+  const LUMA_BASE_URL = process.env.LUMA_BASE_URL ?? '...';
+  const ENDPOINT_CREATE = '/...';
+  const ENDPOINT_STATUS = (jobId)=>`/.../${jobId}`;
+- If you don’t know the exact endpoint, implement with placeholders and add a single config section that I can paste from Luma docs. DO NOT block the rest of the integration.
+
+C) BROLL PLANNER (AI + HEURISTICS)
+Create src/services/brollPlanner.service.ts that decides WHERE to insert B-roll based on transcript + words and optionally “director prompts”.
+It must:
+- Detect “abstract/claim-heavy” segments
+- Avoid inserting too much: max 2 inserts per 30 seconds, min gap 3 seconds
+- Avoid inserts during the hook first 1.5 seconds unless explicitly enabled
+- Prefer inserts on long talky segments (no visual change)
+Inputs:
+- transcript words (with startFrame/endFrame)
+- final fps
+- total duration frames
+Outputs:
+- list of candidate inserts:
+  { startFrame, durationInFrames, prompt, aspectRatio }
+
+PROMPT GENERATION RULES (for Luma)
+For each candidate:
+- Build a prompt that is VISUAL and specific and avoids copyrighted brands.
+- Use neutral phrases: “cinematic b-roll”, “high-end commercial”, “soft natural lighting”, “shallow depth of field”, “clean studio”, etc.
+- Include camera direction: “slow push-in”, “subtle handheld”, “macro detail”, “smooth pan”
+- Match the “topic” of the spoken segment by extracting keywords from nearby words (±2 seconds).
+- Add style constraints: “no text, no captions, no logos, no watermarks, no faces unless requested”
+- Example prompt template:
+  “Cinematic b-roll of [subject], [environment], [lighting], [camera movement], [mood]. Ultra clean, high detail, realistic, no text, no logos.”
+
+If topic is ambiguous, generate “abstract motion background” that fits the vibe.
+
+D) GENERATION QUEUE + STATUS (REQUIRED)
+Add a job queue for Luma generations to avoid blocking the request thread.
+Preferred:
+- BullMQ + Redis (if Redis is already planned).
+If Redis isn’t available, implement a minimal in-memory queue with clear TODO and safe fallback, but still keep API separation.
+
+Implement:
+- src/queue/luma.queue.ts
+  - addJob({videoId, insertId, prompt, aspectRatio, durationSeconds})
+  - process jobs: call luma.service create + poll + store
+  - update DB status
+
+E) DATABASE TABLES (SUPABASE OR DB)
+Create a table for Luma jobs and assets:
+- luma_generations
+  - id (uuid)
+  - user_id (uuid)
+  - video_id (uuid)
+  - insert_id (text)
+  - prompt (text)
+  - aspect_ratio (text)
+  - duration_seconds (int)
+  - status (text) [queued|processing|succeeded|failed]
+  - luma_job_id (text)
+  - asset_storage_path (text)
+  - asset_url (text)
+  - error (text)
+  - created_at, updated_at
+
+Also add a caching table or reuse this one by checking existing succeeded rows for same cacheKey.
+
+If I already have a DB layer, integrate into it. If not, create a small db helper:
+- src/services/db.ts with functions:
+  - insertGeneration(...)
+  - updateGenerationStatus(...)
+  - getGenerationById(...)
+  - findCachedGeneration(cacheKey)
+
+Apply RLS policies so users can only see their own generations.
+Do NOT expose prompts publicly unless needed.
+
+F) API ROUTES (BACKEND)
+Add routes that the UI can call:
+
+1) POST /api/videos/:id/broll/generate
+Auth required.
+Body:
+{
+  mode: 'auto' | 'manual',
+  aspectRatio: '9:16'|'1:1'|'16:9',
+  maxInserts?: number,
+  styleHint?: string
+}
+Behavior:
+- Load transcript/words for video (or accept transcript in body if that’s how current app works)
+- Call brollPlanner to produce candidate inserts
+- For each insert:
+  - create generation row (queued)
+  - enqueue job in luma queue
+Return:
+{
+  inserts: [{insertId, startFrame, durationInFrames, status:'queued'}]
+}
+
+2) GET /api/videos/:id/broll/status
+Auth required.
+Return:
+{
+  inserts: [{insertId, status, assetUrl? , error?}]
+}
+
+3) POST /api/videos/:id/render
+Modify existing render endpoint:
+- When render is requested, if broll inserts exist and succeeded:
+  - include them in final EDL payload
+- If broll exists but still processing:
+  - either (a) render without broll, or (b) block with “B-roll still generating” based on a flag in request
+Add request option:
+{ waitForBroll?: boolean }
+
+G) REMOTION INTEGRATION (FRONTEND RENDER)
+Add a Remotion component to place B-roll inserts:
+- src/components/BrollLayer.tsx
+- It must render each BrollInsert:
+  - If transform.mode = 'full': cut to broll full screen for its duration (with crossfade)
+  - If 'pip': render broll in a rounded rectangle overlay while main video continues (if possible), else simplest: full cut
+  - If 'overlay': blend with mix opacity
+
+IMPORTANT: Keep it simple first:
+- Implement ‘full’ mode first: it inserts as a full-screen cut.
+- Use TransitionSeries to crossfade in/out (4 frames) around broll cut.
+- Keep original audio from main clip (unless instructed otherwise). Default: mute broll audio.
+
+Update Timeline.tsx:
+- Convert the sequence to a unified timeline that can include both:
+  - primary clips
+  - broll inserts
+A simple approach:
+- Build an ordered list of “events”:
+  - {kind:'clip', clipIndex, durationFrames}
+  - {kind:'broll', insertId, durationFrames}
+Then render through TransitionSeries.
+
+H) UI HOOKS (IN APP)
+Add a button “Generate B-roll (AI)” in Director Mode or the editor:
+- When clicked:
+  - call POST /api/videos/:id/broll/generate mode=auto
+  - show progress UI (queued/processing/succeeded)
+- When succeeded:
+  - allow toggle “Include B-roll in export”
+- Add “Regenerate” per insert (manual mode) with custom prompt and duration.
+
+SECURITY REQUIREMENTS (NON-NEGOTIABLE)
+- LUMA_API_KEY never in client
+- All endpoints require auth (Supabase JWT)
+- Validate JWT server-side
+- Rate-limit generation endpoints per user (e.g., 3/min and 20/day for free tier)
+- Add server-side plan gating:
+  - Free: allow preview watermarked or max 1 insert and low duration
+  - Paid: allow more inserts and longer durations
+- Log only request IDs, not prompts or keys
+- Use content safety:
+  - Block prompts requesting copyrighted logos/brands/violent/sexual content
+  - If user types prompt, run basic keyword filter
+- Implement idempotency:
+  - If same request repeats, return existing queued job rather than duplicate
+
+PERFORMANCE / COST REQUIREMENTS
+- Cache results by cacheKey
+- Limit default durationSeconds to 2–4 seconds per insert
+- Max inserts default 3 per video
+- Use polling with exponential backoff
+- Store generated media in Supabase Storage bucket “broll” (private) and serve via signed URL
+- Clean up old generations (cron/job) if needed (optional)
+
+DEVELOPER EXPERIENCE
+- Add a “Luma Integration” doc in /docs/luma.md:
+  - Required env vars
+  - Where to paste Luma endpoint paths from docs
+  - How to test locally
+  - Example curl commands for generate/status
+- Add a small “health check” endpoint for queue status: GET /api/health/queue
+
+TESTING / VERIFICATION STEPS
+After implementing:
+1) Create a test video in library with transcript words (mock if necessary)
+2) Click “Generate B-roll”
+3) Verify DB row created and status transitions: queued → processing → succeeded
+4) Verify stored asset exists in storage
+5) Render video and verify:
+   - broll appears at correct timestamps (frame-accurate)
+   - crossfades are smooth
+   - captions still aligned
+   - audio does not pop
+6) Verify security:
+   - Unauthed call returns 401
+   - Client bundle contains no Luma key
+7) Verify caching:
+   - Re-run generation: returns existing asset quickly
+
+IMPLEMENTATION NOTES
+- If you must choose between “fancy” and “reliable”, choose reliable.
+- Implement full-screen broll cuts first. PiP/overlay can be added later.
+- Keep the edit decision logic deterministic. Luma is purely an asset generator.
+
+NOW DO THE WORK
+Make the required file additions/edits across:
+- src/types/edl.ts
+- src/services/luma.service.ts
+- src/services/brollPlanner.service.ts
+- src/queue/luma.queue.ts (BullMQ preferred)
+- src/components/BrollLayer.tsx
+- src/components/Timeline.tsx (integrate broll events)
+- src/api/routes.ts (new endpoints)
+- DB migrations / SQL for luma_generations (and RLS)
+- docs/luma.md
+
+Output:
+- Implementations in code
+- Minimal UI wiring in Director Mode (button + progress)
+- Clear TODO markers ONLY where Luma endpoint paths must be pasted from docs
+- Everything should build and run with existing project setup
+
+ENV VARS REQUIRED
+LUMA_API_KEY=...
+LUMA_BASE_URL=... (if needed)
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=... (server only)
+REDIS_URL=... (if using BullMQ)
+
+DO NOT:
+- change existing fonts/colors/site design
+- remove the current edit pipeline
+- expose secrets
+- add random UI redesigns

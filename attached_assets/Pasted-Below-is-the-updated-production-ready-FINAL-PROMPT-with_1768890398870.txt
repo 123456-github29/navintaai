@@ -1,0 +1,397 @@
+Below is the **updated, production-ready FINAL PROMPT** with the app name correctly set to **Navinta**.
+Everything else is refined to feel **enterprise-grade, creator-premium**, and ready for AI builders.
+
+---
+
+# **FINAL PROMPT**
+
+You are a **senior product designer + full-stack engineer** building a **pro-level AI video content platform** called **Navinta**.
+
+Navinta helps founders, creators, and brands **plan, record, edit, and publish short-form video content** using AI-generated content plans and a guided in-browser recording experience (**Director Mode**).
+
+Build this as a **production-ready, responsive web app**, desktop-first for recording, fully functional on tablet and mobile.
+
+---
+
+## **PRODUCT NAME**
+
+**Navinta**
+**Tagline:** *Plan once. Record with clarity. Publish with confidence.*
+
+---
+
+## **PRODUCT VISION**
+
+Navinta removes friction from content creation by:
+
+* Turning brand inputs into a structured content calendar
+* Guiding users shot-by-shot while recording
+* Making editing fast, intuitive, and repeatable
+* Centralizing video management, scheduling, and analytics
+
+This should feel like **Linear × Notion × CapCut × Stripe Dashboard**.
+
+---
+
+## **DESIGN PRINCIPLES**
+
+* Professional, confident, calm
+* Creator-first UX (large controls, clear instructions)
+* Minimal UI with powerful depth
+* Strong visual hierarchy
+* Dark & light mode
+* Subtle motion and micro-interactions
+* Clear progress and completion states everywhere
+
+---
+
+## **GLOBAL TECH & UI STACK**
+
+* **Framework:** React + TypeScript
+* **Routing:** App Router style
+* **Styling:** TailwindCSS
+* **UI Primitives:** Radix / Headless UI
+* **Icons:** Lucide
+* **Animation:** Framer Motion
+* **Video:** MediaRecorder API
+* **Drag & Drop:** DnD Kit
+* **Charts:** Recharts
+* **Auth:** Email + OAuth ready
+* **Storage:** Signed URLs for video playback
+* **AI Hooks:** Stubbed AI services for plans, scripts, captions
+
+---
+
+## **GLOBAL APP LAYOUT**
+
+Authenticated experience includes:
+
+### Sidebar (Persistent)
+
+* Dashboard
+* Library
+* Schedule
+* Analytics
+* Brand Kit
+
+### Top Header
+
+* Page title
+* Theme toggle (dark/light)
+* User avatar dropdown
+
+### Main Content Area
+
+* Card-based layouts
+* Consistent spacing
+* Responsive grids
+
+### Global Systems
+
+* Toast notifications
+* Modal dialogs
+* Loading & skeleton states
+* Error handling UI
+
+---
+
+# **PAGE ARCHITECTURE**
+
+---
+
+## **1. Landing Page (`/`)**
+
+**Audience:** Non-logged-in users
+
+### Sections:
+
+**Hero**
+
+* Headline: *Create a month of content in one focused session*
+* Subtext explaining AI planning + guided recording
+* Primary CTA: **Get Started**
+* Secondary CTA: **Log In**
+
+**Features**
+
+* AI Content Planner
+* Director Mode Recording
+* Viral Caption Editor
+* One-Click Export
+
+**How Navinta Works**
+
+1. Configure your brand
+2. Generate a content plan
+3. Record with guidance
+4. Publish everywhere
+
+**Footer**
+
+* Privacy
+* Terms
+
+---
+
+## **2. Onboarding (`/onboarding`)**
+
+**Multi-step setup wizard with progress indicator**
+
+### Steps:
+
+1. **Brand Info**
+
+   * Brand name
+   * Business type (dropdown)
+2. **Audience & Goals**
+
+   * Target audience
+   * Content goals (checkboxes)
+3. **Platforms**
+
+   * Instagram
+   * TikTok
+   * YouTube Shorts
+4. **Posting Frequency**
+
+   * Radio / slider
+5. **Content Tone**
+
+   * Educational
+   * Entertaining
+   * Bold
+   * Calm
+6. **Brand Colors**
+
+   * Primary
+   * Secondary
+   * Accent (color pickers)
+
+### CTA:
+
+**Generate Content Plan**
+
+---
+
+## **3. Dashboard (`/dashboard`)**
+
+**Central command hub**
+
+### Sections:
+
+**4-Week AI Content Calendar**
+
+* Card per post
+* Platform badge
+* Status badge
+
+**Upcoming Posts**
+
+* Planned
+* Recording
+* Editing
+* Completed
+
+**Quick Actions**
+
+* Start Recording
+* View Library
+
+**Progress Stats**
+
+* Completed vs planned posts
+* Weekly output
+
+---
+
+## **4. Post Detail (`/post/:id`)**
+
+**Detailed breakdown of a planned post**
+
+### Layout:
+
+* Post title
+* Platform
+* Scheduled date
+* Concept overview
+* **Shot List**
+
+  * Shot number
+  * Camera angle
+  * Framing
+  * Dialogue/script
+
+### Actions:
+
+* **Start Director Mode**
+* Edit post plan
+
+---
+
+## **5. Director Mode (`/director/:id`) — CORE EXPERIENCE**
+
+**Navinta’s signature feature**
+
+### Layout:
+
+**Left (70%)**
+
+* Live camera preview
+* Framing overlays
+
+**Right (30%) Guidance Panel**
+
+* Current shot number
+* Camera angle instructions
+* Framing guidance
+* Script/dialogue
+* Target duration
+
+**Bottom Controls**
+
+* Large Record button
+* Retake
+* Next shot
+
+**Clip Review**
+
+* Replay
+* Approve / Retake
+
+**Progress Indicator**
+
+* Shot completion bar
+
+**Finish Recording CTA**
+
+* Enabled only when all shots are complete
+
+---
+
+## **6. Editor (`/editor/:id`)**
+
+**Fast, creator-friendly post production**
+
+### Features:
+
+* Timeline with clip blocks
+* Trim controls
+* Caption Editor:
+
+  * Original vs Viral toggle
+  * Highlight words
+  * Font selection
+  * Color & style
+  * Position selector
+* Music selector (trending tracks)
+* Live preview player
+* **Export Video** button (MP4)
+
+---
+
+## **7. Library (`/library`)**
+
+**All exported videos**
+
+### Video Cards:
+
+* Thumbnail
+* Title
+* Duration
+* Export date
+* Status badge
+
+### Actions:
+
+* Play (signed URL modal)
+* Download
+* Transcribe (AI captions)
+* Delete (confirm modal)
+
+---
+
+## **8. Brand Kit (`/brand-kit`)**
+
+**Brand identity management**
+
+### Fields:
+
+* Brand name
+* Logo upload
+* Primary / Secondary / Accent colors
+* Font selection (heading/body)
+* Save button
+
+---
+
+## **9. Schedule (`/schedule`)**
+
+**Visual publishing calendar**
+
+### Features:
+
+* Weekly / monthly toggle
+* Drag-and-drop scheduling
+* Status indicators
+* Quick post preview modal
+
+---
+
+## **10. Analytics (`/analytics`)**
+
+**Performance insights**
+
+### Metrics:
+
+* Post completion rate
+* Recording sessions
+* Content plan progress
+* Weekly / monthly views
+* Clean stat cards + charts
+
+---
+
+## **COMMON UI COMPONENTS**
+
+* Sidebar navigation
+* Theme toggle
+* Toast notifications
+* Loading spinners
+* Dialog modals
+* Tabs
+* Status badges
+* Empty states
+
+---
+
+## **KEY USER ACTIONS**
+
+* Generate Plan → AI calendar
+* Start Recording → Director Mode
+* Record → Capture clip
+* Retake → Re-record shot
+* Export → Final video
+* Transcribe → AI captions
+* Download → Local file
+* Delete → Remove asset
+
+---
+
+## **FINAL DELIVERY EXPECTATION**
+
+Deliver **Navinta** as a **polished, scalable, production-grade app** with:
+
+* Realistic UI
+* Clear flows
+* Placeholder AI logic
+* Strong UX around recording & editing
+* Director Mode treated as the hero experience
+
+---
+
+If you want, next I can:
+
+* Design **Navinta’s visual design system**
+* Generate **database schema & API contracts**
+* Create **Director Mode UX micro-interactions**
+* Write a **Bolt.new or Lovable-specific optimized version**

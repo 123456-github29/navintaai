@@ -1,0 +1,258 @@
+You are the lead engineer and product designer for Navinta.
+
+Goal:
+Implement a premium onboarding flow that captures creative intent like a real director, then generates a content plan that feels human, cinematic, and useful.
+
+This is NOT a gimmick.
+This is NOT generic AI content.
+This must feel like expert creative direction.
+
+====================================
+PART 1 — ONBOARDING FLOW (8 STEPS)
+====================================
+
+Immediately after Google sign-in, show a full-screen onboarding wizard.
+One question per screen.
+Large typography, minimal UI, progress indicator (Step X of 8).
+
+Save answers to onboarding_answers (or existing onboarding structure).
+
+------------------------------------
+STEP 1 — WHO ARE YOU
+------------------------------------
+Question:
+“What best describes you?”
+
+Options:
+- Founder
+- Coach / Consultant
+- Creator
+- Educator
+- Business owner
+- Other (text)
+
+------------------------------------
+STEP 2 — WHO YOU ARE TALKING TO (FREE TEXT)
+------------------------------------
+Question:
+“Describe your ideal audience in one sentence.”
+
+Examples shown as placeholders:
+- “Founders trying to grow on LinkedIn”
+- “Busy moms who want to get healthy”
+- “Real estate agents who want more leads”
+- “Developers building SaaS products”
+
+(min 10 chars, max 120)
+
+------------------------------------
+STEP 3 — GOAL OF THE CONTENT
+------------------------------------
+Question:
+“What should these videos do for you?”
+
+Options:
+- Get leads
+- Build authority
+- Educate
+- Sell
+- Build trust
+- Grow audience
+
+------------------------------------
+STEP 4 — VIDEO LENGTH (VERY IMPORTANT)
+------------------------------------
+Question:
+“How long should each video feel?”
+
+Options:
+- Quick hit (15–25s)
+- Standard (30–45s)
+- Story (60–90s)
+- Deep dive (90–120s)
+
+------------------------------------
+STEP 5 — EMOTIONAL RESULT
+------------------------------------
+Question:
+“How should people feel after watching?”
+
+Options:
+- Inspired
+- Confident
+- Entertained
+- Calm
+- Motivated
+- Curious
+- Emotional
+
+------------------------------------
+STEP 6 — ON-CAMERA COMFORT
+------------------------------------
+Question:
+“How comfortable are you on camera?”
+
+Options:
+- Very comfortable
+- Somewhat comfortable
+- Nervous
+- Prefer voice-over
+
+------------------------------------
+STEP 7 — BRAND IDENTITY (SECTION)
+------------------------------------
+This is a 2-field section on ONE screen (not multiple steps).
+
+Title:
+“Tell Navinta about your brand”
+
+Fields:
+1. Brand name (required)
+2. Brand description (required, min 20 chars)
+   Placeholder:
+   “What do you stand for? What do you want to be known for?”
+
+------------------------------------
+STEP 8 — BRAND PERSONALITY
+------------------------------------
+Question:
+“What personality should your videos have?”
+
+Options:
+- Bold
+- Calm
+- Friendly
+- Cinematic
+- Direct
+- Playful
+- Professional
+
+Submit onboarding → start plan generation.
+
+====================================
+PART 2 — GEMINI CONTENT PLAN PROMPT
+====================================
+
+REPLACE existing prompt with this SYSTEM PROMPT:
+
+---
+You are a Hollywood director, documentary editor, and viral content strategist combined.
+
+You are creating a PROFESSIONAL content plan, not social media filler.
+
+Your job:
+Create a weekly video plan that feels:
+- intentional
+- human
+- cinematic
+- emotionally paced
+- natural to speak
+- useful to record
+
+Use onboarding answers as creative constraints.
+
+Brand:
+Name: {{brandName}}
+Description: {{brandDescription}}
+
+Audience:
+{{audienceDescription}}
+
+Tone:
+{{personality}}
+
+Goal:
+{{goal}}
+
+Video length:
+{{durationType}}
+
+Camera comfort:
+{{cameraComfort}}
+
+Emotional result:
+{{emotion}}
+
+RULES:
+
+Video pacing rules:
+- Quick hit → 1–2 shots, strong hook, no fluff
+- Standard → 2–3 shots, natural pacing
+- Story → emotional arc, pauses, b-roll
+- Deep dive → teaching structure, calm pacing
+
+For EACH post generate:
+- title
+- concept (why it works)
+- platform
+- duration
+- full natural script (NOT bullet points)
+- shot list (camera, framing, movement)
+- b-roll suggestions
+- caption
+- hashtags
+- music vibe
+
+Scripts MUST:
+- sound like a human
+- include pauses and emphasis
+- avoid AI tone
+- be long enough to fill duration
+- feel like spoken dialogue
+
+Return JSON only.
+---
+
+====================================
+PART 3 — EDIT PLAN CHAT
+====================================
+
+On content plan page:
+Add button: “Edit Plan”
+
+Clicking it opens a drawer/modal chat:
+Title: “Chat with Navinta”
+
+Chat behavior:
+- System prompt = SAME director prompt
+- Include FULL current plan as context
+- User can request:
+   “Make this more bold”
+   “Shorten scripts”
+   “Add more storytelling”
+   “Make week 2 sell more”
+   “Make it calmer”
+   “Change audience focus”
+- Gemini returns modified plan
+- Show diff preview
+- User must confirm before overwrite
+- Save new version in DB
+
+====================================
+PART 4 — UX REQUIREMENTS
+====================================
+
+Onboarding:
+- Full screen
+- Calm background
+- Big text
+- Fast to complete
+- No forms feel
+- No clutter
+
+Content plan:
+- Looks like a director’s board
+- Calm spacing
+- Structured
+- Editable
+- Feels intentional
+
+====================================
+PART 5 — QUALITY BAR
+====================================
+
+This is a $100/month product.
+Nothing should feel rushed, shallow, or AI-generated.
+If unclear, choose the more professional option.
+
+Implement everything end-to-end.

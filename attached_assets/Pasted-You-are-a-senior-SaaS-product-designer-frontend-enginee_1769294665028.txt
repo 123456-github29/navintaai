@@ -1,0 +1,208 @@
+You are a senior SaaS product designer + frontend engineer.
+
+Create a NEW page at /pricing for Navinta AI.
+
+This page must be inspired by opus.pro/pricing in structure, clarity, and organization — but adapted to Navinta’s product (AI-powered director for recording, editing, and publishing videos).
+
+DO NOT copy text or branding from Opus.
+DO NOT make it generic.
+This must feel premium, calm, and professional.
+
+========================
+DESIGN DIRECTION
+========================
+- Clean, trustworthy, modern SaaS
+- Light background with subtle gradients (like Opus)
+- No dark theme
+- No neon
+- No “AI vibe-coded” look
+- Use soft blues, off-whites, subtle shadows
+- Rounded cards, lots of breathing room
+- Typography is clear, readable, professional
+
+========================
+PAGE STRUCTURE
+========================
+
+1. HERO (Simple, calm)
+---------------------
+Title:
+"Simple, transparent pricing for creators who want consistency"
+
+Subtitle:
+"Whether you're just starting or publishing daily, Navinta scales with you."
+
+Below:
+- Toggle: Monthly / Yearly (Yearly shows 20% discount)
+- Small note under toggle: “Save 20% with yearly plans”
+
+---------------------
+
+2. PLAN CALCULATOR (like Opus, but for Navinta)
+---------------------
+This is a key differentiator.
+
+Add a section:
+"Find the right plan for you"
+
+With 3 sliders:
+
+Slider 1: Videos per month
+(5 → 100)
+
+Slider 2: Average video length
+(30s → 5 min)
+
+Slider 3: Platforms you publish to
+(1 → 4)
+
+Based on slider values:
+- Highlight the best plan automatically
+- Show text:
+  "Recommended plan for your workflow"
+
+No actual math logic needed yet — just front-end simulation.
+
+---------------------
+
+3. PRICING CARDS (3 tiers + Free)
+---------------------
+
+FREE
+- $0
+- For trying Navinta
+Features:
+- Director onboarding (limited)
+- 1 content plan
+- Record in Director Mode
+- Watermarked exports
+- No B-roll
+- No AI captions
+CTA: "Try Free"
+
+STARTER
+- $19/month ($15/yearly)
+- For new creators
+Features:
+- 8 videos/month
+- AI content plan
+- Director Mode
+- Auto cuts
+- Captions (basic)
+- Export without watermark
+CTA: "Start Starter"
+
+PRO (Most Popular)
+- $49/month ($39/yearly)
+- Highlighted visually
+Features:
+- Unlimited videos
+- Smart shot detection
+- B-roll insertion
+- Advanced captions
+- Multi-platform exports
+- Faster processing
+- Priority AI
+CTA: "Go Pro"
+
+STUDIO
+- $99/month ($79/yearly)
+- For teams & serious creators
+Features:
+- Everything in Pro
+- Team workspace
+- Brand kit
+- Multiple content plans
+- Advanced analytics
+- Early access features
+CTA: "Join Studio"
+
+---------------------
+
+4. DETAILED FEATURE COMPARISON TABLE
+---------------------
+Exactly like Opus (this is important)
+
+Rows:
+- Content planning
+- Director Mode
+- Shot detection
+- Auto editing
+- B-roll
+- Captions
+- Export quality
+- Watermark
+- Platforms
+- Team support
+- Brand kit
+- Analytics
+- Support level
+
+Columns:
+Free | Starter | Pro | Studio
+
+Use checkmarks, dashes, and notes.
+This makes pricing feel justified.
+
+---------------------
+
+5. USE CASE STRIP
+---------------------
+Section:
+"Who each plan is for"
+
+Cards:
+- Free → exploring
+- Starter → consistency
+- Pro → growth
+- Studio → scale
+
+Each with a short paragraph.
+
+---------------------
+
+6. FAQ SECTION
+---------------------
+Add at least 6 questions:
+- Can I cancel anytime?
+- Can I upgrade/downgrade?
+- What happens to my videos if I cancel?
+- Is there a free trial?
+- Do you charge per video?
+- Can I use it for clients?
+
+---------------------
+
+7. FINAL CTA
+---------------------
+Large calm section:
+"Start recording with direction, not guesswork"
+
+Button:
+"Get started with Navinta AI"
+
+========================
+TECHNICAL REQUIREMENTS
+========================
+- Use existing design system
+- Reuse button styles
+- Page must be responsive
+- Animations: subtle fade/slide only
+- No heavy GSAP here (keep calm)
+- Stripe buttons will be wired later — just placeholders now
+- Create clean component structure
+
+========================
+IMPORTANT
+========================
+This pricing page must feel:
+- Honest
+- Clear
+- Trustworthy
+- Professional
+- Expensive (in a good way)
+
+No gimmicks.
+No flashy AI visuals.
+No overload.
+Just clarity and confidence.

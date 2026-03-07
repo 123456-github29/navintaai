@@ -1,0 +1,168 @@
+You are a world-class brand designer and motion UI designer refining the Navinta landing page.
+The animations are already strong, but the page still lacks personality, warmth, and brand identity.
+Your job is to add soul without adding clutter.
+
+Do NOT change layout structure, sections, or animation logic.
+Do NOT add random colors or gradients.
+Do NOT make it playful, neon, or startup-vibe.
+
+This must feel:
+	•	Premium
+	•	Calm
+	•	Confident
+	•	Film-director energy
+	•	Intentional
+	•	Designed by humans, not AI
+
+⸻
+
+1. REMOVE “VIBE-CODED BLUE” AS PRIMARY IDENTITY
+
+Blue currently makes the site feel generic.
+Replace blue as the dominant accent.
+
+New color system (use sparingly):
+	•	Primary accent: warm cinematic ivory / bone (#F5F1EC range)
+	•	Secondary accent: muted copper / bronze (#B08A5A range)
+	•	AI accent: very subtle indigo glow (ONLY on AI actions)
+	•	Success accent: warm sage green (very low opacity)
+
+Color rules:
+	•	Never use pure blue
+	•	Never use bright saturation
+	•	All colors must feel like light passing through glass
+	•	Use gradients and glow, not solid blocks
+	•	Color should appear like atmosphere, not UI paint
+
+⸻
+
+2. ADD BRAND PERSONALITY THROUGH “FILM LANGUAGE”
+
+Navinta is a director.
+Add subtle cinematic elements to make the site feel like film, not SaaS.
+
+Add:
+	•	Film grain texture (1–2% opacity)
+	•	Soft vignette on edges
+	•	Slow ambient light shifts
+	•	Slight depth blur behind hero text
+	•	Motion that feels like camera movement, not UI movement
+
+Think:
+camera pans, fades, cuts, focus shifts — not slide animations.
+
+⸻
+
+3. MAKE HERO SECTION FEEL LIKE A MOVIE OPENING
+
+Hero currently animates well but feels empty emotionally.
+
+Enhance hero with:
+	•	A slow “light sweep” across the headline every 8–10s
+	•	Slight breathing motion on text
+	•	Background gradient that moves extremely slowly
+	•	Subtle parallax between text, animation, and background
+	•	Text should feel like it’s floating in space, not sitting on a page
+
+Add personality by:
+	•	Letting the typography be slightly imperfect (micro letter spacing shifts)
+	•	Adding human timing to text animation (not linear)
+
+⸻
+
+4. ADD “HUMAN MOMENTS” TO SECTIONS
+
+Right now sections feel functional. Add emotional anchors.
+
+For each major section:
+	•	Add a short emotional phrase (not marketing)
+	•	“This is where the work begins.”
+	•	“This is the hard part. We make it easy.”
+	•	“Every shot has a purpose.”
+	•	Animate these lines in gently
+	•	Fade them out as user scrolls
+
+This creates personality without clutter.
+
+⸻
+
+5. USE COLOR AS STORY, NOT DECORATION
+
+Use color only when:
+	•	Showing progression
+	•	Showing AI involvement
+	•	Showing transformation
+	•	Showing “before → after”
+
+Examples:
+	•	Recording section = warm copper glow
+	•	Editing section = subtle indigo
+	•	Export section = ivory glow
+	•	AI actions = faint pulse of indigo
+
+Never color headings.
+Never color paragraphs.
+Never color buttons heavily.
+
+Color should whisper, not shout.
+
+⸻
+
+6. ADD A BRAND SIGNATURE MOTIF
+
+Introduce a repeating subtle visual motif:
+	•	diagonal film cut
+	•	light slit
+	•	soft vertical line
+	•	or rotating mark
+
+Use it in:
+	•	hero
+	•	section transitions
+	•	pricing section
+	•	footer
+
+This creates identity without logos everywhere.
+
+⸻
+
+7. MICRO-INTERACTIONS FOR PERSONALITY
+
+Add:
+	•	Button press depth animation (not scale)
+	•	Cursor hover glow (very subtle)
+	•	Scroll inertia
+	•	Slight lag on big text movement
+	•	Parallax on imagery
+
+Every interaction should feel expensive.
+
+⸻
+
+8. FINAL GOAL
+
+When someone visits navinta.org, they should feel:
+
+“This wasn’t built by a developer.
+This was designed by a director.”
+
+They should feel:
+	•	calm
+	•	confident
+	•	safe
+	•	inspired
+	•	curious
+
+The site should feel quietly powerful, not loud.
+
+⸻
+
+Implement all above changes ONLY for color, personality, and emotional polish.
+Do not add sections.
+Do not remove sections.
+Do not change copy.
+Do not change functionality.
+
+Make it feel human.
+Make it feel cinematic.
+Make it feel premium.

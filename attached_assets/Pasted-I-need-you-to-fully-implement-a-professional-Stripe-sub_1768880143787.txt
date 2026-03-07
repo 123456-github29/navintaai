@@ -1,0 +1,184 @@
+I need you to fully implement a professional Stripe subscription paywall for my app, end-to-end, following best practices.
+This app already uses Supabase authentication and an Express backend.
+Do NOT ask me questions. Just do it.
+
+GOAL
+
+Only paid users can use the app.
+Unpaid users see a paywall and can upgrade via Stripe Checkout.
+Payment state is enforced on backend + frontend.
+
+⸻
+
+REQUIRED IMPLEMENTATION (DO ALL STEPS)
+
+1. Install Stripe
+
+Install Stripe SDK on backend:
+	•	stripe
+
+⸻
+
+2. Environment Variables (read from secrets)
+
+Use these env vars (assume they exist in Replit Secrets):
+	•	STRIPE_SECRET_KEY
+	•	STRIPE_WEBHOOK_SECRET
+	•	STRIPE_PRICE_ID
+	•	PUBLIC_URL (https://navinta.org)
+
+DO NOT hardcode keys.
+
+⸻
+
+3. Database (Supabase / Postgres)
+
+Create or migrate a table:
+
+user_subscriptions
+	•	user_id (uuid, primary key, references auth.users.id)
+	•	stripe_customer_id (text)
+	•	stripe_subscription_id (text)
+	•	status (text)
+	•	current_period_end (timestamptz)
+	•	created_at (timestamptz default now())
+
+⸻
+
+4. Backend – Billing Routes (Express)
+
+Create these routes:
+
+POST /api/billing/create-checkout-session
+	•	Requires authenticated user
+	•	Creates Stripe Checkout Session
+	•	mode: subscription
+	•	price: STRIPE_PRICE_ID
+	•	success_url = ${PUBLIC_URL}/billing/success
+	•	cancel_url = ${PUBLIC_URL}/billing/cancel
+	•	Attach user id in metadata.userId
+	•	Return { url }
+
+⸻
+
+POST /api/billing/create-portal-session
+	•	Requires authenticated user
+	•	Fetch stripe_customer_id from DB
+	•	Create Stripe customer portal session
+	•	Return { url }
+
+⸻
+
+POST /api/billing/webhook
+	•	MUST use raw body
+	•	Verify signature with STRIPE_WEBHOOK_SECRET
+	•	Handle events:
+	•	checkout.session.completed
+	•	customer.subscription.updated
+	•	customer.subscription.deleted
+
+For these:
+	•	Insert or update user_subscriptions
+	•	Keep status in sync
+	•	Update current_period_end
+	•	Never trust frontend state
+
+⸻
+
+5. Backend – Paywall Enforcement
+
+Create middleware:
+requireActiveSubscription
+
+Rules:
+	•	Allow if subscription status is active or trialing
+	•	Block otherwise (403 or 402)
+
+Apply this middleware to all paid routes:
+	•	video export
+	•	clip upload
+	•	AI features
+	•	content plan generation
+	•	transcription
+	•	anything expensive
+
+⸻
+
+6. Frontend – Paywall UI
+
+Create page: /upgrade
+
+Show:
+	•	Feature list
+	•	Price
+	•	Upgrade button
+
+Upgrade button:
+	•	calls /api/billing/create-checkout-session
+	•	redirects to Stripe URL
+
+⸻
+
+7. Frontend – Billing Success
+
+Create page: /billing/success
+	•	refetch user subscription
+	•	redirect to dashboard if active
+	•	otherwise show error
+
+⸻
+
+8. Frontend – Gate App
+
+In auth logic:
+	•	If logged in AND no active subscription → redirect to /upgrade
+	•	If active → allow access
+
+⸻
+
+9. Frontend – Manage Billing
+
+Add button:
+“Manage billing”
+→ calls /api/billing/create-portal-session
+→ redirects user to Stripe portal
+
+⸻
+
+10. Logging + Safety
+
+Add logs for:
+	•	checkout creation
+	•	webhook events
+	•	DB writes
+	•	failed signature checks
+
+Never expose secret keys to frontend.
+Never trust frontend for payment state.
+
+⸻
+
+11. Final Validation
+
+After implementation, verify:
+	•	unpaid users blocked
+	•	paid users allowed
+	•	cancel subscription removes access
+	•	upgrade works
+	•	portal works
+	•	webhook updates DB correctly
+	•	works on navinta.org
+	•	survives refresh
+	•	survives logout/login
+
+⸻
+
+12. IMPORTANT RULES
+	•	DO NOT remove existing functionality
+	•	DO NOT break auth
+	•	DO NOT ask questions
+	•	DO NOT use mock logic
+	•	DO NOT skip webhook
+	•	DO NOT store payment state in frontend
+
+Implement everything cleanly and professionally like a real SaaS.

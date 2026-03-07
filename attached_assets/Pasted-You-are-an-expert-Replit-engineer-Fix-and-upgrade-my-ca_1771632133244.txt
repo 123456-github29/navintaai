@@ -1,0 +1,132 @@
+You are an expert Replit engineer. Fix and upgrade my captions system so the “500 styles” are not just color swaps. Implement REAL caption style families with truly different looks (layout, highlight behavior, background treatments, reveal animations, depth), using Remotion as the renderer. Also ensure Remotion is correctly installed, active, and actually being used for preview + export.
+
+SCOPE
+- Captions only.
+- Do not implement b-roll, directing, or any other features.
+- Must ensure Remotion is installed and integrated (preview + render/export path uses Remotion).
+
+PRIMARY PROBLEM
+My UI shows “500 styles,” but they are all the same style with different colors. I need truly different caption styles like real video editors: subtitle bar, typewriter cursor, glass pill, marker highlight, neon glow, cinematic plate, kinetic bounce, etc.
+
+REQUIREMENTS
+A) Verify Remotion is installed + active
+1) Check package.json and node_modules to confirm Remotion packages are installed:
+   - remotion
+   - @remotion/player (for preview if used)
+   - @remotion/renderer (for server-side rendering/export if used)
+2) If missing, install them and add scripts.
+3) Verify a Remotion composition exists and is being rendered in the app.
+4) Confirm export path uses Remotion overlay captions (NOT ffmpeg subtitle burn).
+5) Add a quick diagnostic route or console check that prints:
+   - Remotion version
+   - compositions detected
+   - current caption style family in use
+6) If captions are still being burned by ffmpeg -vf subtitles=..., remove/disable that and switch to Remotion overlay.
+
+B) Refactor CaptionStyleSpec to support REAL “Style Families”
+1) Add a required field: styleFamily
+   Allowed families:
+   - "tiktok_classic_pop"
+   - "subtitle_bar"
+   - "typewriter_cursor"
+   - "per_word_pill"
+   - "glass_pill"
+   - "marker_highlight"
+   - "neon_glow"
+   - "cinematic_plate"
+   - "kinetic_bounce"
+2) Keep existing color/font fields but expand spec to include:
+   - layout: position (top/center/bottom), align, maxLines, maxWidthPct, safeMarginPx
+   - highlight: mode + scale + activeColor + inactiveOpacity
+   - background: bar/plate/pill settings
+   - motion: lineIn + wordPop + stagger + typewriter
+   - depth: stroke/shadow/glow/double-layer offsets
+3) Use Zod to validate and clamp ranges and whitelist fonts.
+
+C) Implement a Spec-Driven Remotion Caption Renderer with family switching
+1) Create src/captions/CaptionRenderer.tsx (or update existing)
+2) It must:
+   - Take props: captions (word timestamps), styleSpec (CaptionStyleSpec)
+   - Find active line by time
+   - Render words individually as inline-block spans (no connected underline bar unless family is subtitle_bar)
+   - Apply different rendering behaviors based on styleFamily:
+     1) tiktok_classic_pop:
+        - centered
+        - thick outline + shadow
+        - active word scales (spring) + active color
+     2) subtitle_bar:
+        - bottom
+        - full-width rounded rectangle bar behind entire line
+        - no per-word pop (optional subtle color emphasis)
+     3) typewriter_cursor:
+        - top or center
+        - progressive reveal by words (or chars fallback)
+        - blinking cursor block
+     4) per_word_pill:
+        - only active word has pill background
+        - active word optionally scales slightly
+     5) glass_pill:
+        - like per_word_pill but with “glass” look:
+          - semi-transparent background
+          - blur effect (backdrop-filter) for preview; graceful fallback for render if blur unsupported
+     6) marker_highlight:
+        - active word gets a “marker stroke” behind it (rounded rectangle behind word with slight tilt)
+     7) neon_glow:
+        - text glow + thin stroke
+        - active word glow pulses subtly
+     8) cinematic_plate:
+        - smaller font
+        - soft plate behind whole line
+        - subtle fadeUp line-in
+     9) kinetic_bounce:
+        - each word bounces in with stagger
+        - active word gets mild emphasis
+3) Ensure renderer is deterministic and works in export.
+
+D) Upgrade Style Library generation (NOT just palette swaps)
+1) Replace current generator so it generates:
+   - A small set of “base specs” per family (8–12 bases)
+   - Then creates variants inside each family (fonts + colors + minor params)
+   - Ensure 500 styles include multiple families, not all in one.
+2) Enforce distribution:
+   - at least 40 styles per family if targeting ~500
+3) Add a “family” filter in UI chips:
+   All, TikTok, Bar, Typewriter, Pills, Marker, Neon, Cinematic, Kinetic
+
+E) UI changes (minimal)
+1) Style selection grid should show:
+   - style name
+   - family label
+2) Selecting a style must update the styleSpec and instantly change the preview.
+3) Add a debug badge in UI (dev only):
+   “Remotion Active: YES/NO” + “Family: <styleFamily>”.
+
+F) Word timestamps requirement
+1) Ensure caption data includes word-level timestamps for real per-word behaviors:
+   - If currently using SRT only, update transcription pipeline to output words (verbose_json + timestamp_granularities:["word"])
+   - If word timestamps are unavailable, provide fallback:
+     - distribute word times evenly across line duration (best-effort) so pop/typewriter still works
+
+ACCEPTANCE CRITERIA
+- Remotion is installed and verified active.
+- Preview and export use Remotion captions (not ffmpeg burned SRT).
+- At least 8 style families exist and look visually distinct (not just colors).
+- The “500 styles” include multiple families (distribution enforced).
+- Typewriter cursor, subtitle bar, neon glow, marker highlight, and cinematic plate styles are clearly different.
+
+IMPLEMENTATION ORDER
+1) Verify Remotion install + active compositions + rendering path.
+2) Add/extend CaptionStyleSpec with styleFamily and Zod validation.
+3) Implement family-based CaptionRenderer in Remotion.
+4) Update style generator to output family-diverse styles.
+5) Update UI filters and debug badge.
+
+START NOW
+- Inspect my repo, locate caption code, style library code, and the export pipeline.
+- Identify whether Remotion is used today.
+- Implement the above changes cleanly with minimal breaking changes.
+- After changes, include a short “How to test” section:
+  - how to run preview
+  - how to run export
+  - how to confirm Remotion is active
+  - how to visually confirm different families

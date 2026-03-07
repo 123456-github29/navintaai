@@ -1,0 +1,203 @@
+REPLIT PROMPT — Implement Stripe “Manage Billing” via Customer Portal + rock-solid tier syncing + feature gating (Navinta AI)
+
+Goal
+- Remove/ignore any in-app cancellation logic (it’s unreliable).
+- Replace it with a single “Manage Billing” flow that opens Stripe Customer Portal.
+- Make tiers + plan status reflect correctly everywhere in the app (dashboard, director mode, export gating).
+- Stripe is the source of truth; Supabase stores a cached entitlement row per user that updates via webhooks.
+- Ensure production security: Stripe secret key ONLY on server/edge functions. Webhooks verify raw body signature.
+
+Assumptions / Stack
+- Frontend: React + Vite (or similar)
+- Auth: Supabase Auth
+- Backend: Supabase Edge Functions OR a Node/Express API (use whichever exists; if both exist, prefer Supabase Edge Functions consistently)
+- DB: Supabase Postgres
+
+Environment Variables
+- Frontend (safe):
+  - VITE_SUPABASE_URL
+  - VITE_SUPABASE_ANON_KEY
+  - VITE_APP_URL (e.g. https://navinta.org)
+- Backend/Edge ONLY (secrets):
+  - STRIPE_SECRET_KEY (sk_live_…)
+  - STRIPE_WEBHOOK_SECRET (whsec_…)
+  - STRIPE_PORTAL_RETURN_URL = https://navinta.org/settings/billing (or /app/settings/billing)
+  - STRIPE_SUCCESS_URL = https://navinta.org/billing/success
+  - STRIPE_CANCEL_URL = https://navinta.org/pricing
+  - OPTIONAL: STRIPE_PRICE_STARTER_MONTHLY, STRIPE_PRICE_STARTER_YEARLY, STRIPE_PRICE_PRO_MONTHLY, etc. (Price IDs, NOT product IDs)
+
+Important: Product IDs you provided earlier are not enough to create subscriptions in Checkout. We MUST use Stripe Price IDs. If code currently uses product IDs, replace with price IDs mapping.
+
+Database: user_entitlements
+Create (or confirm) a table user_entitlements:
+- user_id uuid primary key references auth.users(id) on delete cascade
+- plan text not null default 'free'  -- enum-like: free|starter|pro|studio
+- status text not null default 'inactive' -- active|trialing|past_due|canceled|incomplete|inactive
+- current_period_end timestamptz null
+- cancel_at_period_end boolean default false
+- stripe_customer_id text null unique
+- stripe_subscription_id text null unique
+- interval text null -- monthly|yearly
+- updated_at timestamptz default now()
+
+Enable RLS:
+- Users can select their own entitlement row
+- Users can NOT update entitlements directly (only service role / webhook updates)
+
+Create a view or helper RPC (optional):
+- get_my_entitlement() returns plan/status/current_period_end for auth.uid()
+
+Tier Model (Source of Truth)
+- The entitlement row is the only thing the frontend trusts for plan gating.
+- The entitlement row is updated ONLY via webhooks + occasional “sync” call.
+
+Stripe Webhook: raw-body verification (CRITICAL)
+Fix current webhook error: “Webhook payload must be provided as raw string or Buffer…”
+- Ensure webhook handler reads raw request body bytes and passes them into stripe.webhooks.constructEvent(rawBody, sigHeader, STRIPE_WEBHOOK_SECRET)
+- Do NOT JSON-parse before signature verification.
+- After event verification, parse event.data.object.
+
+Events to Handle (minimum)
+- checkout.session.completed
+- customer.subscription.created
+- customer.subscription.updated
+- customer.subscription.deleted
+- invoice.paid
+- invoice.payment_failed
+
+For each relevant event:
+1) Determine Stripe customer id, subscription id, current_period_end, cancel_at_period_end, status
+2) Determine plan + interval from the subscription’s line item price id
+3) Upsert user_entitlements for the correct user_id
+
+Linking Stripe to Supabase user_id (CRITICAL)
+- When creating Checkout session, include metadata:
+  - metadata: { supabase_user_id: <auth user id>, plan: <plan>, interval: <monthly|yearly> }
+- Also set client_reference_id to supabase_user_id.
+- In webhook, prefer metadata.supabase_user_id, else fall back to looking up customer->our mapping.
+
+Stripe Checkout Creation Endpoint (server/edge)
+Implement POST /api/stripe/checkout (or supabase function stripe-checkout):
+- Requires authenticated user (valid Supabase JWT)
+- Accepts payload: { plan: 'starter'|'pro'|'studio', interval: 'monthly'|'yearly' }
+- Validate plan+interval against allowed map of PRICE IDs
+- Create or reuse Stripe customer:
+  - If user_entitlements has stripe_customer_id, reuse
+  - Else create stripe customer with email (if available), set metadata.supabase_user_id
+  - Save stripe_customer_id into user_entitlements immediately
+- Create Stripe Checkout Session (mode=subscription) with line_items: [{ price: PRICE_ID, quantity: 1 }]
+- Set success_url and cancel_url
+- Return { url: session.url }
+Frontend redirects window.location.href = url
+
+Stripe Customer Portal Endpoint (Manage Billing)
+Implement POST /api/stripe/billing-portal (or supabase function stripe-billing-portal):
+- Requires authenticated user
+- Ensure stripe_customer_id exists; if not, return a friendly error: “No billing account yet. Please subscribe first.”
+- Create portal session:
+  - stripe.billingPortal.sessions.create({
+      customer: stripe_customer_id,
+      return_url: STRIPE_PORTAL_RETURN_URL
+    })
+- Return { url }
+Frontend opens url (same tab).
+
+Frontend UI Changes
+1) Remove/disable in-app cancel buttons (or keep them but change action to “Manage Billing”).
+2) Add “Manage Billing” button in:
+   - Settings > Billing
+   - Account menu
+   - Anywhere subscription status is shown
+   Behavior:
+   - If plan === 'free' or stripe_customer_id null: show “Upgrade” and route to /pricing
+   - Else call billing-portal endpoint and redirect to returned url
+
+Entitlement Fetching + Real-Time Updates
+Implement a single hook useEntitlement():
+- On app load after auth is ready:
+  - Fetch user_entitlements row for user_id (Supabase select)
+- Also provide refreshEntitlement() to refetch after returning from Stripe success_url
+- In /billing/success route:
+  - show “Finalizing subscription…”
+  - call refreshEntitlement() every 1s up to 10s until plan != free OR status==active
+  - then route to dashboard
+  - if not updated, show “We’re syncing—click refresh” and keep a “Sync now” button that triggers backend sync endpoint
+
+Optional Sync Endpoint (helps webhooks delays)
+Implement POST /api/stripe/sync (authenticated):
+- Fetch stripe_customer_id for user
+- If exists, list active subscriptions for that customer
+- Pick latest subscription, compute plan/status, upsert entitlements
+- Return entitlements
+
+Feature Gating (Server-Side + UI)
+Define capabilities per plan:
+- free:
+  - can record + preview
+  - export: allowed ONLY with watermark + 720p max + limited count
+  - AI B-roll: preview only (watermarked overlay or low-res)
+- starter:
+  - export 720p no watermark? (your choice) OR keep watermark removed only from pro+
+  - limited exports/month
+- pro:
+  - export 1080p, no watermark
+  - AI B-roll enabled
+- studio:
+  - highest limits + priority + advanced templates
+
+Implement “capabilities” in one shared module (frontend + backend):
+- getCapabilities(entitlement) -> { canExportHD, watermarkRequired, monthlyExportLimit, canUseBroll, etc }
+Frontend:
+- show locked states and upgrade prompts
+Backend:
+- any protected endpoint (export, b-roll rendering, etc) checks entitlement before running.
+- If not allowed, return 402/403 with reason.
+
+Fix “existing users before payments”
+- Everyone defaults to plan=free unless entitlements say otherwise.
+- If they had access to premium features earlier, gate those routes now:
+  - If plan==free, redirect from premium pages to /pricing or show upgrade modal.
+- On login, always fetch entitlements and enforce.
+
+Security Requirements
+- Never put STRIPE_SECRET_KEY in frontend.
+- Webhook uses raw body verification.
+- Idempotency:
+  - Store processed stripe event ids in a table stripe_events(event_id primary key, processed_at)
+  - In webhook, if event_id exists, return 200 early.
+- Validate JWT on all edge functions:
+  - Supabase Edge Functions must require Authorization: Bearer <access_token>
+  - Frontend must send the session access token.
+- Ensure CORS configured correctly for your domain.
+
+Debugging / Logging
+Add structured logs for:
+- checkout creation: user_id, plan, interval, stripe_customer_id, session_id
+- billing portal creation: user_id, stripe_customer_id
+- webhook: event.type, event.id, user_id, subscription_id, plan/status
+
+UI Requirements
+- “Manage Billing” is the only cancellation path.
+- “Current Plan” display MUST come from user_entitlements.
+- Pricing page buttons call checkout endpoint and redirect to Stripe Checkout immediately (no embeds).
+- After successful checkout, user returns to /billing/success and sees status update within seconds.
+
+Deliverables
+- Implement/repair:
+  1) Webhook handler with raw body signature verification + event idempotency
+  2) Checkout session endpoint using PRICE IDs, metadata linking, stripe customer creation/reuse
+  3) Billing portal endpoint (Manage Billing)
+  4) user_entitlements schema + RLS rules + default free rows on first login (optional)
+  5) Frontend: Pricing subscribe buttons redirect to checkout; Settings page includes Manage Billing; remove in-app cancellation
+  6) Entitlements hook + gating in UI and server endpoints
+  7) /billing/success sync experience
+
+Acceptance Criteria
+- Clicking “Subscribe” ALWAYS opens Stripe Checkout for the selected plan/interval.
+- Clicking “Manage Billing” ALWAYS opens Stripe Customer Portal.
+- Canceling in portal updates app plan status via webhook within <30s (or via sync endpoint).
+- Dashboard shows correct plan after checkout and after cancel.
+- Free users cannot export premium outputs without watermark; backend enforces this.
+- No secrets exposed to frontend; webhook signature verification passes.
+
+Implement now. If any required Stripe Price IDs are missing, add a temporary admin page that lists configured price ids and prints a clear error when not configured, but do not block the build.

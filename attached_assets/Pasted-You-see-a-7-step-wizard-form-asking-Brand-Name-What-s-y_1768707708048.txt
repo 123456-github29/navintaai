@@ -1,0 +1,94 @@
+You see a 7-step wizard form asking:
+
+Brand Name - What's your business called?
+Business Type - What do you do? (e.g., "fitness coaching", "bakery")
+Target Audience - Who are your customers? (e.g., "busy professionals 25-45")
+Content Goals - What do you want to achieve? (checkboxes: "Build awareness", "Drive sales", etc.)
+Platforms - Where will you post? (checkboxes: TikTok, Instagram, YouTube)
+Posting Frequency - How often? (dropdown: "2-3/week", "4-5/week", "Daily")
+Tone - What vibe? (dropdown: "Professional", "Fun", "Motivational")
+Brand Colors - Pick your primary color
+When you click "Submit":
+
+System creates your project
+System creates your brand kit
+System calls Google Gemini AI to generate 4 weeks of video ideas
+System saves all the posts to database
+You're redirected to Dashboard
+Step 2: Dashboard (Calendar View)
+What you see:
+
+A calendar showing Week 1, Week 2, Week 3, Week 4
+Each week shows the scheduled video posts as cards
+Each card shows:
+Video title (e.g., "Morning Routine Tips")
+Platform icon (TikTok/Instagram/YouTube)
+Progress indicator (e.g., "0/4 shots recorded")
+Music badge (shows trending song that matches)
+What you can do:
+
+Click any post card → Goes to Director Mode
+Step 3: Director Mode (Recording)
+What you see:
+
+Full-screen camera preview (your front camera)
+Current shot info card showing:
+"Shot 1 of 5"
+Instruction: "Look into camera and introduce yourself"
+Camera angle: "Eye level"
+Framing: "Medium shot"
+What to say: "Hey everyone, welcome back!"
+Duration: "8 seconds"
+Big red "Record" button
+Progress bar at top
+Recording flow:
+
+Click "Record" → Camera starts recording, timer shows
+Record yourself following the instructions
+Click "Stop" → Recording stops
+You see a preview of what you just recorded
+Two buttons: "Retake" or "Save"
+Click "Save" → Clip is saved, moves to next shot
+Repeat for all shots
+When all shots done:
+
+Success popup appears
+Option to "Go to Editor" or "Back to Dashboard"
+Step 4: Editor
+What you see:
+
+All your recorded clips listed in order
+Preview of each clip
+Options:
+Music style dropdown (Upbeat, Calm, Inspirational, etc.)
+Captions toggle (on/off)
+"Export Video" button
+When you click "Export Video":
+
+Loading spinner appears
+System merges all clips together
+System adds background music (mixed at 20% volume)
+System encodes to MP4 format
+When done → Video appears in your Library
+Step 5: Generate Captions (Optional)
+On a finished video, you can:
+
+Click "Generate Captions" button
+System:
+Extracts audio from video
+Sends to OpenAI Whisper for transcription
+Gets exact word-by-word timing
+Rewrites text to be more "viral" using GPT
+Highlights power words (in yellow)
+Saves caption data
+Result:
+
+Video player now shows animated captions
+Words appear one at a time synced to speech
+Highlight words pop in yellow
+Step 6: Library
+What you see:
+
+All your recorded clips
+All your finished videos
+Delete buttons to remove anything

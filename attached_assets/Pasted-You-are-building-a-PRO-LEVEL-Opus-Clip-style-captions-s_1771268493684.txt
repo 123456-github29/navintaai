@@ -1,0 +1,142 @@
+You are building a PRO-LEVEL “Opus Clip style” captions system in a Next.js (App Router) + TypeScript project on Replit.
+
+GOAL
+Implement word-by-word “karaoke” captions with multiple professional styles (Opus Clip-like), where words appear/highlight exactly as they are spoken. It must support:
+- word-level timestamps
+- animated per-word reveal + highlight
+- style presets (10+)
+- exportable captions overlay for video preview (in-browser) AND optional final render pipeline (Remotion)
+
+IMPORTANT QUALITY BAR
+This cannot look like a basic subtitle component. It must feel like a polished creator tool:
+- crisp typography
+- perfect timing
+- smooth animations
+- multiple preset styles
+- responsive for 9:16, 1:1, 16:9
+- minimal UI but professional controls
+
+STACK
+- Next.js (App Router) + React + TypeScript
+- TailwindCSS
+- Framer Motion for animations
+- Zustand (or Context) for state
+- Optional: Remotion for rendering/export
+- For transcription: provide a stub that accepts “words[]” with timestamps; include an adapter that can ingest Whisper JSON format later (do not hardcode OpenAI keys).
+
+DATA MODEL
+Create a canonical transcript format:
+
+type Word = {
+  id: string
+  text: string
+  start: number // seconds
+  end: number   // seconds
+  confidence?: number
+}
+
+type CaptionSegment = {
+  id: string
+  start: number
+  end: number
+  words: Word[]
+}
+
+Implement:
+- A parser to convert Whisper-style output to Word[]
+- A segmenter that groups words into readable segments (max words per line, max duration, punctuation-aware, avoid single-word lines)
+- A timeline engine that, given currentTime, returns active segment + active word index + progress within word
+
+UI / PAGES
+Create /captions playground page with:
+LEFT: video player (use a local sample mp4 in /public/sample.mp4) with controls (play/pause, scrub, speed)
+RIGHT: caption style panel:
+- preset dropdown (at least 10 styles)
+- font size slider
+- line count (1 or 2 lines)
+- position (top/middle/bottom)
+- safe margins slider
+- highlight mode: “current word highlight”, “word pop-in”, “underline sweep”
+- background mode: none / pill / box / blurred glass
+- emphasis: uppercase toggle, stroke toggle, shadow toggle
+
+Create a “CaptionPreviewOverlay” component that overlays captions on top of the playing video.
+
+TIMING REQUIREMENTS
+- Captions must sync to current video time (requestAnimationFrame loop or timeupdate with smoothing)
+- Word highlight must move smoothly and exactly at word boundaries.
+- Support “rolling reveal”: words become visible as they are spoken, and earlier words de-emphasize.
+
+ANIMATION REQUIREMENTS (PRO)
+Implement these animation primitives:
+1) Word Pop: active word scales 1.0 → 1.12 then settles; inactive words slightly dim
+2) Highlight Sweep: animated underline bar that travels across active word as progress within word
+3) Pill Glow: active word gets pill background with subtle glow; background animates in/out
+4) Line Transition: when segment changes, the whole caption block transitions with a subtle slide + fade (no jump)
+5) Karaoke Fill: optional style where text fill increases left-to-right based on progress
+
+STYLES (CREATE AT LEAST 10 PRESETS)
+Make a presets file: src/lib/captionPresets.ts
+Each preset defines:
+- fontFamily (use CSS fallback stacks; optionally load 1-2 Google fonts)
+- fontWeight
+- textTransform
+- textColor
+- strokeColor + strokeWidth
+- shadow
+- background mode + colors
+- word spacing
+- animation type
+- highlight type
+Examples of presets (implement):
+- “Opus Clean”
+- “Bold Pop”
+- “Karaoke Underline”
+- “Glass Pill”
+- “Minimal Lower Third”
+- “High Contrast”
+- “Soft Gradient”
+- “Neon Outline”
+- “Caption Pro”
+- “Documentary”
+
+ENGINEERING
+- Keep code modular:
+  /src/lib/transcript/parseWhisper.ts
+  /src/lib/transcript/segmenter.ts
+  /src/lib/transcript/timeline.ts
+  /src/components/captions/CaptionOverlay.tsx
+  /src/components/captions/CaptionLine.tsx
+  /src/components/captions/Word.tsx
+  /src/components/captions/ControlsPanel.tsx
+  /src/app/captions/page.tsx
+
+- Ensure performance: avoid re-rendering the entire overlay every frame; only update when active word/segment changes. Use memoization. Use requestAnimationFrame to update time in a ref, and update React state at 30fps or only on changes.
+
+EXPORT (OPTIONAL BUT DESIRED)
+Implement a toggle:
+- “Preview Mode” (overlay on HTML video)
+- “Render Mode” using Remotion:
+  - Create a Remotion composition “CaptionedVideo”
+  - It takes video src + Word[] and renders the same captions frame-accurately
+  - Provide a script/README steps for rendering on local machine (Replit may not render in cloud).
+If Remotion is too heavy for Replit, still scaffold the folder and components so it works locally.
+
+ASSETS
+- Add /public/sample.mp4 placeholder and a sample transcript JSON in /public/sample-transcript.json using the Word[] format.
+
+DELIVERABLES
+1) Fully working /captions page where captions animate word-by-word like Opus Clip
+2) 10+ style presets selectable live
+3) Clean code + README with:
+   - how to add your own transcript
+   - how to convert Whisper output
+   - how to tune segmenting
+   - how to render via Remotion locally
+
+DO NOT
+- Do not use a basic <track> VTT solution only
+- Do not make the UI generic
+- Do not ignore word-level timestamps
+
+Now implement everything. Start by creating the transcript engine, then the overlay component, then the style presets and controls UI, and finally the export scaffolding.

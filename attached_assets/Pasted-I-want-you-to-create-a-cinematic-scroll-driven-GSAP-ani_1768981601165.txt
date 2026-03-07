@@ -1,0 +1,95 @@
+I want you to create a cinematic, scroll-driven GSAP animation for the hero section
+using a film clapperboard as the main visual metaphor.
+
+This should feel like Apple / GSAP / A24 / premium software, NOT playful or flashy.
+
+CONCEPT:
+Navinta is an AI director.
+The hero animation should visually show “direction” starting.
+
+MAIN SCENE:
+- A minimal, monochrome clapperboard (black + white only)
+- It orbits / twirls slowly around the word “Navinta”
+- As the user scrolls, the clapperboard rotates, opens, closes, and transforms
+- Each motion represents a stage of filmmaking
+
+SCROLL STORY (VERY IMPORTANT):
+The hero section is pinned while this story plays out.
+
+Scene 1 (scroll start):
+- Large text: “Navinta”
+- Clapperboard floats gently, slow rotation
+- Calm, expensive motion (no bounce)
+- Slight camera parallax (3D feel)
+
+Scene 2:
+- Text morphs to: “AI-powered directing”
+- Clapperboard rotates to face camera
+- The top slate opens slightly (like preparing to roll)
+- Soft shadow and depth added
+
+Scene 3:
+- Text morphs to: “Lights”
+- Subtle glow / vignette
+- Clapperboard rotates 90 degrees
+- Motion eases slowly
+
+Scene 4:
+- Text morphs to: “Camera”
+- Clapperboard snaps shut ONCE (clean, no sound)
+- That snap is the transition moment
+- Screen briefly dips to black for 150ms
+
+Scene 5:
+- Text morphs to: “Action”
+- Clapperboard breaks apart into clean UI lines
+- Those lines subtly transform into:
+  - timeline
+  - cuts
+  - captions
+  - b-roll markers
+- These lines fade into the page as the hero releases scroll
+
+END STATE:
+- Hero animation finishes
+- User scrolls naturally into the app preview or content plan section
+
+VISUAL STYLE:
+- Black background
+- White text
+- No random colors
+- No gradients
+- No neon
+- Use light, shadow, scale, and motion only
+- Everything is slow and intentional
+
+TECH REQUIREMENTS:
+- Use GSAP + ScrollTrigger
+- Pin hero for ~400vh
+- Use timeline() to control all steps
+- Use transforms, opacity, rotateY, rotateZ
+- Use perspective: 1000px
+- Add subtle blur on transitions (gsap filter)
+- Respect prefers-reduced-motion
+- Works on mobile (simplify animation if needed)
+
+FILE STRUCTURE:
+- components/HeroAnimation.tsx
+- animations/heroClapper.ts
+- All GSAP logic isolated
+- Cleanup ScrollTrigger on unmount
+
+IMPORTANT:
+- This animation should feel like the app is being “started”
+- No fast movement
+- No playful easing
+- Use ease: power3.out / expo.out
+- Less is more
+- If unsure, remove motion instead of adding
+
+THINK LIKE:
+“Apple product reveal”
+not
+“marketing website animation”
+
+Be creative, but be restrained.

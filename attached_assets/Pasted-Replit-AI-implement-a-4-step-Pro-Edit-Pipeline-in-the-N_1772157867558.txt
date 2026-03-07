@@ -1,0 +1,244 @@
+Replit AI — implement a 4-step “Pro Edit Pipeline” in the Navinta AI app UI + backend job flow.
+
+GOAL
+When a user clicks “Auto Edit”, they should see (and the system should execute) these EXACT steps:
+1) Context analysis
+2) Storyboard creation
+3) Animation
+4) Integration (final render + download)
+
+This is NOT just text. It must map to real pipeline stages with real status/progress updates, and the final output must come from the Remotion/EDL render pipeline we already built.
+
+DO NOT redesign the whole app. Keep existing colors/fonts/layout. Only add the new pipeline UI, the data model, and the job orchestration so the feature feels enterprise-grade.
+
+--------------------------------------------
+A) DATA MODEL (DB) — PIPELINE RUNS + STAGES
+--------------------------------------------
+Create a new table to track pipeline runs and step statuses.
+
+Table: edit_runs
+- id (uuid, pk)
+- user_id (uuid)
+- video_id (uuid)
+- status (text) overall: queued | running | succeeded | failed
+- current_step (int) 1..4
+- step1_status (text): queued|running|succeeded|failed
+- step2_status (text): queued|running|succeeded|failed
+- step3_status (text): queued|running|succeeded|failed
+- step4_status (text): queued|running|succeeded|failed
+- step1_progress (int) 0..100
+- step2_progress (int) 0..100
+- step3_progress (int) 0..100
+- step4_progress (int) 0..100
+- step1_summary (text) optional
+- step2_summary (text) optional
+- step3_summary (text) optional
+- step4_summary (text) optional
+- edl_json (jsonb) final validated EDL payload (or separate table if preferred)
+- output_url (text) signed URL to rendered mp4
+- error (text)
+- created_at, updated_at
+
+RLS:
+- user can only read/write their own edit_runs
+- backend uses service role for updates
+
+--------------------------------------------
+B) UI — “AUTO EDIT” MODAL / PANEL WITH 4 STEPS
+--------------------------------------------
+Add a UI component that shows the 4-step pipeline exactly like this:
+
+Step 1 — Context analysis
+Text: “We process your video as a video editor would, analyzing everything from the contents of the script, to the lighting and framing of your video.”
+
+Step 2 — Storyboard creation
+Text: “We generate a storyboard tailored to your video with our video and transcript processing.”
+
+Step 3 — Animation
+Text: “Each canvas is animated element by element, just as an editor would do.”
+
+Step 4 — Integration
+Text: “We integrate all approved animations to your main video and you download it and post it =)”
+
+UI requirements:
+- Each step is a row/card with:
+  - Step title
+  - Description text above (exact meaning, can tweak grammar slightly but keep the same message)
+  - Status pill (Queued / Running / Done / Failed)
+  - Progress bar
+  - Optional “details” dropdown that shows step_summary (e.g. “Detected 7 long pauses; identified 3 hook moments”)
+
+When user clicks “Auto Edit”:
+- Create an edit_run via backend
+- Open this modal/panel automatically
+- Steps animate as they advance:
+  - Step 1 highlights, progress moves 0→100
+  - then Step 2, etc.
+- When Step 4 finishes:
+  - show “Download” button
+  - show “View in Library” button
+
+No random extra colors. Use existing typography and spacing. Make it feel premium and clean.
+
+--------------------------------------------
+C) BACKEND — REAL PIPELINE ORCHESTRATION
+--------------------------------------------
+Implement endpoints:
+
+1) POST /api/videos/:id/auto-edit
+Auth required.
+Creates edit_run row and starts processing (async).
+Returns: { runId }
+
+2) GET /api/edit-runs/:runId
+Auth required.
+Returns full step statuses + output_url if ready.
+
+3) Optional: GET /api/videos/:id/edit-runs/latest
+Auth required.
+Returns the latest run for quick UI refresh.
+
+--------------------------------------------
+D) IMPLEMENT REAL LOGIC FOR EACH STEP (MVP BUT REAL)
+--------------------------------------------
+Each step MUST do something real, even if v1 is “lightweight”.
+
+STEP 1 — Context analysis (REAL)
+Inputs:
+- video file URL
+- transcript (if available) or generate transcript via your existing pipeline
+Process:
+- Analyze transcript for:
+  - pause lengths (use word timestamps)
+  - hook intensity (first 2 seconds)
+  - sentence boundaries
+- Analyze video for:
+  - face presence (basic heuristic is OK if no CV model: “assume talking head” unless we have data)
+  - brightness/contrast estimate (ffmpeg metadata or basic frame sample)
+- Output:
+  - a structured “analysis” object saved into step1_summary and/or a JSON column:
+    - avg_pause_ms, num_long_pauses, recommended_cut_aggressiveness, brightness_score, etc.
+
+Update edit_runs:
+- step1_status running → succeeded
+- step1_progress updates as you go
+
+STEP 2 — Storyboard creation (REAL)
+This should produce a “storyboard” that maps to an EDL plan (not the final EDL yet).
+Process:
+- Use the analysis from Step 1 + transcript to create:
+  - segment boundaries (clips)
+  - which segments need emphasis zoom
+  - placeholders for b-roll inserts (optional)
+- Output:
+  - storyboard JSON:
+    - segments: [{startFrame, endFrame, intent: 'hook'|'body'|'cta', zoomTarget}]
+  - save as step2_summary and storyboard json (new column or store in edl_json draft)
+
+STEP 3 — Animation (REAL)
+Goal: Create animation “instructions” that Remotion will apply.
+Process:
+- Choose:
+  - caption style pack (existing)
+  - transition pack (crossfade etc.)
+  - overlays (optional: clapperboard or emoji reactions as overlays ONLY if you already have assets; if not, keep as TODO)
+- Implement:
+  - Convert storyboard → full EDL with:
+    - clips array
+    - captions track (word-chunking already exists)
+    - transitions (4-frame crossfades)
+    - camera motions (zoomTarget)
+- Output:
+  - EDL JSON validated by Zod
+  - save to edl_json
+
+STEP 4 — Integration (FINAL RENDER + EXPORT)
+Process:
+- Call RendererService to render EDL into mp4
+- Upload mp4 to storage and produce signed URL
+- Update edit_runs with output_url
+- Mark step4_status succeeded and status succeeded
+
+If any step fails:
+- mark that step failed, status failed, store error message
+- UI shows retry button “Retry from Step X”
+
+--------------------------------------------
+E) JOB QUEUE / WORKER
+--------------------------------------------
+Do NOT run the entire pipeline inside the request thread.
+Implement background processing using:
+- BullMQ + Redis if available, OR
+- A simple in-process queue as fallback with clear TODO to move to BullMQ (but do BullMQ if you already have Redis).
+
+Worker flow:
+processAutoEdit(runId):
+  step1()
+  step2()
+  step3()
+  step4()
+
+Send progress updates to DB after each milestone (at least 5 updates per step).
+
+--------------------------------------------
+F) FRONTEND INTEGRATION
+--------------------------------------------
+Where to trigger:
+- In Director Mode (or Library video view) add “Auto Edit” button.
+Behavior:
+- POST /auto-edit
+- open modal
+- poll GET /edit-runs/:runId every 1.5s while running
+- stop polling on succeeded/failed
+- on succeeded show download button (link to output_url)
+
+Also add a “See what we did” link that shows:
+- the storyboard segments list
+- the cut points
+- the caption style used
+(keep it simple and readable)
+
+--------------------------------------------
+G) COPY (TEXT) — USE THESE EXACT STEPS IN UI
+--------------------------------------------
+Use the exact user-facing step titles:
+- Context analysis
+- Storyboard creation
+- Animation
+- Integration
+
+Use descriptions based on what I provided, lightly cleaned:
+Step 1 description:
+“We process your video like a real editor would — analyzing your script, pacing, lighting, and framing.”
+
+Step 2 description:
+“We generate a storyboard tailored to your video using transcript + visual processing.”
+
+Step 3 description:
+“Each canvas is animated element-by-element — captions, transitions, and motion — the way a professional editor would.”
+
+Step 4 description:
+“We integrate the approved animations into your video, render the final export, and you download it to post.”
+
+Keep the tone premium (avoid cringe, but you can keep the friendly “post it =)“ as an optional tiny line after completion).
+
+--------------------------------------------
+H) SECURITY / RELIABILITY
+--------------------------------------------
+- All endpoints must require auth
+- Validate video_id belongs to user
+- Validate EDL using Zod before rendering
+- Do not expose service role keys in frontend
+- Store output in private bucket and serve via signed URL
+- Add idempotency: if a run is already running for a video, return that runId instead of creating duplicates (unless user chooses “new run”)
+
+--------------------------------------------
+DELIVERABLE
+Implement:
+- DB migration + RLS
+- backend routes
+- worker/queue
+- UI modal/panel with 4 steps + progress
+- integration with existing Remotion renderer
+
+Do not touch site colors/fonts. Do not redesign pages. Only add these features cleanly.

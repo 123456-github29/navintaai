@@ -1,0 +1,165 @@
+You are a senior security engineer and backend architect.
+
+Your task is to harden this application to production-grade security standards so it can safely handle thousands of users and protect user data.
+
+DO NOT change app functionality or user experience.
+DO NOT remove any existing features.
+ONLY add security, validation, limits, and safe handling.
+
+Apply OWASP Top 10 best practices across the entire app.
+
+You must implement ALL of the following:
+
+========================
+1. RATE LIMITING (CRITICAL)
+========================
+- Add global rate limiting (IP + user-based) for all /api routes
+- Strict rate limits for:
+  - /api/login
+  - /api/auth/*
+  - upload endpoints
+  - video processing endpoints
+- Use sliding window or token bucket strategy
+- Return clear 429 errors
+- Prevent brute force and abuse
+
+========================
+2. STRICT INPUT VALIDATION & SANITIZATION
+========================
+- Validate ALL request bodies, params, and queries
+- Reject unknown fields (whitelist only)
+- Use schema validation (zod / joi / yup)
+- Sanitize:
+  - text inputs
+  - filenames
+  - captions
+  - titles
+  - descriptions
+  - prompts
+- Prevent:
+  - SQL injection
+  - XSS
+  - command injection
+  - path traversal
+  - JSON poisoning
+- Never trust client input
+
+========================
+3. FILE UPLOAD SECURITY
+========================
+- Validate file type (MIME + magic bytes)
+- Enforce max file size limits
+- Block executable uploads
+- Store files with generated safe names
+- Never trust original filename
+- Scan uploads for invalid content
+- Prevent directory traversal
+- Limit concurrent uploads per user
+
+========================
+4. API KEY & SECRET HANDLING (CRITICAL)
+========================
+- Ensure NO API keys are accessible on client
+- All OpenAI / Gemini calls must be server-only
+- Read secrets ONLY from environment variables
+- Never log secrets
+- Mask secrets in logs
+- Add startup validation that fails if secrets missing
+- Prevent accidental exposure in error messages
+
+========================
+5. AUTH & SESSION SECURITY
+========================
+- Ensure JWT cookies are:
+  - HttpOnly
+  - SameSite=Lax (or Strict)
+  - Secure in production
+- Prevent token reuse
+- Prevent auth replay attacks
+- Add token expiration enforcement
+- Add logout token invalidation
+- Protect all private routes with auth middleware
+- Ensure no route leaks user data
+
+========================
+6. CORS & HEADERS (OWASP)
+========================
+- Lock CORS to known domains only
+- Enable credentials securely
+- Set security headers:
+  - CSP
+  - HSTS
+  - X-Frame-Options
+  - X-Content-Type-Options
+  - Referrer-Policy
+- Block iframe embedding
+- Block cross-site data leaks
+
+========================
+7. DOS & ABUSE PROTECTION
+========================
+- Limit:
+  - request size
+  - JSON payload size
+  - concurrent requests per user
+  - concurrent video jobs
+- Add timeout protection
+- Add queue protection
+- Prevent resource exhaustion
+- Gracefully reject overload
+
+========================
+8. ERROR HANDLING & LOGGING
+========================
+- Never leak stack traces to clients
+- Sanitize all error messages
+- Use safe generic error responses
+- Log detailed errors server-side only
+- Add request IDs for tracing
+- Ensure logs do not include PII
+
+========================
+9. DATABASE SECURITY
+========================
+- Enforce parameterized queries only
+- Never use raw SQL with string interpolation
+- Add row-level access enforcement
+- Prevent users from accessing other users' data
+- Validate ownership on every query
+- Add safe defaults and constraints
+
+========================
+10. PRODUCTION SAFETY CHECKS
+========================
+- Add startup security validation
+- Fail fast if misconfigured
+- Add health checks
+- Add readiness checks
+- Ensure app cannot boot in unsafe mode
+- Add environment separation (dev vs prod)
+- Ensure secure defaults
+
+========================
+11. SECURITY TESTING
+========================
+- Add basic tests for:
+  - rate limiting
+  - auth enforcement
+  - validation failures
+  - file upload abuse
+- Ensure test coverage for security boundaries
+
+========================
+FINAL REQUIREMENTS
+========================
+- Use clear, readable code
+- Add comments explaining security decisions
+- Do not break existing features
+- Ensure compatibility with Replit deployment
+- Ensure the app can safely support thousands of users
+- Assume this app handles sensitive user data
+
+When done:
+- Output a summary of all security protections added
+- List any remaining risks
+- Confirm OWASP Top 10 coverage

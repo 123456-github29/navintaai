@@ -1,0 +1,152 @@
+CRITICAL BUG FIX — STRIPE CHECKOUT FAILING (401 Invalid JWT)
+
+Context:
+Stripe checkout is NOT working.
+When user clicks Subscribe, the request to Supabase Edge Function `/functions/v1/stripe-checkout` fails with:
+401 Invalid JWT
+No checkout URL is returned, so users are redirected back into the app instead of Stripe.
+
+This is NOT a Stripe issue.
+This is a Supabase auth issue.
+
+Root cause:
+The frontend is calling the Edge Function WITHOUT forwarding the user's Supabase session access token.
+Supabase Edge Functions are protected by default and REQUIRE the Authorization header.
+Right now, the function receives no valid JWT → Supabase rejects request.
+
+Your task:
+Fix authentication end-to-end so Stripe checkout works immediately, securely, and correctly.
+
+========================
+REQUIRED FIXES (DO ALL)
+========================
+
+1. FRONTEND — send Authorization header
+------------------------------------
+
+Wherever checkout is triggered (pricing page / subscribe button):
+
+- Get current user session using:
+  supabase.auth.getSession()
+
+- Extract session.access_token
+
+- Send request to edge function with headers:
+  Authorization: Bearer <access_token>
+  Content-Type: application/json
+
+- Body must include:
+  plan (starter / pro / studio)
+  interval (monthly / yearly)
+
+If session is missing, block checkout and show login modal.
+
+DO NOT use anon key
+DO NOT call edge function without Authorization header
+DO NOT store token anywhere persistent
+
+Example logic (conceptual):
+- user clicks subscribe
+- verify session exists
+- send authorized POST to edge function
+- receive checkoutUrl
+- window.location.href = checkoutUrl
+
+========================
+
+2. EDGE FUNCTION — validate JWT properly
+----------------------------------------
+
+Inside `/functions/v1/stripe-checkout`:
+
+- Create Supabase client using SERVICE ROLE key
+- Forward Authorization header from request
+- Call auth.getUser()
+- If no user → return 401
+- Use user.id as the customer identifier
+- NEVER trust frontend user id
+- NEVER create checkout without authenticated user
+
+========================
+
+3. EDGE FUNCTION — create checkout correctly
+--------------------------------------------
+
+When authenticated:
+
+- Map plan → Stripe Price ID
+- Create Stripe Checkout Session
+- Attach user.id in metadata
+- Attach email if available
+- Return checkout URL in JSON
+
+========================
+
+4. FRONTEND — redirect properly
+--------------------------------
+
+After successful response:
+- If checkoutUrl exists → redirect immediately
+- If missing → show error toast
+
+DO NOT route into app
+DO NOT swallow errors
+DO NOT silently fail
+
+========================
+
+5. SECURITY REQUIREMENTS (MANDATORY)
+------------------------------------
+
+- Never expose Stripe secret key
+- Never expose Supabase service role key
+- Never disable auth on edge function
+- Never trust frontend user id
+- Validate session on EVERY checkout request
+
+========================
+
+6. DEBUGGING & LOGGING
+----------------------
+
+Add logs to Edge Function:
+- when request starts
+- when user authenticated
+- when checkout created
+- when returning URL
+
+Add logs to frontend:
+- session exists?
+- token attached?
+- response received?
+- redirect happening?
+
+========================
+
+SUCCESS CRITERIA
+========================
+
+When fixed, the flow MUST be:
+
+1. User clicks Subscribe
+2. Authorized request hits edge function
+3. Stripe checkout session created
+4. Stripe checkout URL returned
+5. Browser redirects to Stripe
+6. Stripe dashboard shows new checkout session
+7. Supabase webhook later updates entitlements
+
+If ANY step fails, surface error clearly.
+
+========================
+
+IMPORTANT
+========================
+
+Do NOT add Stripe embed
+Do NOT use pricing table
+Do NOT use redirect inside app
+Do NOT change UI unless necessary
+This must work with custom UI and direct checkout redirect
+
+Fix this fully and safely.

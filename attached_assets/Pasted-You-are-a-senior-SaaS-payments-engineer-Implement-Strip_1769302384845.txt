@@ -1,0 +1,186 @@
+You are a senior SaaS payments engineer. Implement Stripe Checkout the PROFESSIONAL way (NO embeds, NO modals, NO pricing table UI from Stripe).
+
+GOAL:
+When user clicks "Subscribe" → immediately redirect to Stripe Checkout (full page) → after payment redirect back → unlock features.
+
+THIS MUST REPLACE all Stripe embeds everywhere.
+
+--------------------------------
+STEP 1: REMOVE EMBEDS
+--------------------------------
+Remove ALL usage of:
+- <stripe-pricing-table>
+- pricing-table.js
+- modals that show Stripe UI
+- any embedded Stripe elements
+
+Pricing page should only show MY UI cards.
+
+--------------------------------
+STEP 2: BACKEND CHECKOUT ENDPOINT
+--------------------------------
+Create backend endpoint:
+
+POST /api/stripe/checkout
+
+Input:
+{
+  plan: "starter" | "pro" | "studio",
+  billing: "monthly" | "yearly"
+}
+
+Map plans to PRICE IDS (DO NOT use product ids):
+
+starter:
+  monthly = PRICE_ID_STARTER_MONTHLY
+  yearly  = PRICE_ID_STARTER_YEARLY
+
+pro:
+  monthly = PRICE_ID_PRO_MONTHLY
+  yearly  = PRICE_ID_PRO_YEARLY
+
+studio:
+  monthly = PRICE_ID_STUDIO_MONTHLY
+  yearly  = PRICE_ID_STUDIO_YEARLY
+
+Create Stripe Checkout Session:
+
+- mode: "subscription"
+- payment_method_types: ["card"]
+- allow_promotion_codes: true
+- customer_email from logged-in user
+- metadata:
+    userId
+    plan
+    billing
+
+success_url = https://navinta.org/billing/success?session_id={CHECKOUT_SESSION_ID}
+cancel_url  = https://navinta.org/pricing
+
+Return session.url to frontend.
+
+--------------------------------
+STEP 3: FRONTEND REDIRECT
+--------------------------------
+When user clicks Subscribe:
+
+call POST /api/stripe/checkout
+receive session.url
+IMMEDIATELY redirect browser:
+
+window.location.href = session.url
+
+NO modals
+NO embeds
+NO intermediate UI
+
+--------------------------------
+STEP 4: WEBHOOK (CRITICAL)
+--------------------------------
+Update webhook to handle:
+
+checkout.session.completed
+customer.subscription.created
+customer.subscription.updated
+customer.subscription.deleted
+invoice.paid
+invoice.payment_failed
+
+On checkout.session.completed:
+- Read metadata.userId
+- Create or update user_entitlements
+- Set plan + active = true
+- Store stripe_customer_id
+- Store stripe_subscription_id
+
+--------------------------------
+STEP 5: FEATURE GATING (IMPORTANT)
+--------------------------------
+Before export / AI / pro features:
+
+check user_entitlements.plan
+
+Free:
+- watermark
+- no export
+- limited AI
+
+Starter:
+- export 720p
+- limited AI
+
+Pro:
+- export 1080p
+- b-roll
+- captions
+- no watermark
+
+Studio:
+- export 4K
+- all AI
+- priority processing
+- no watermark
+
+If not allowed → show upgrade modal (your UI only)
+
+--------------------------------
+STEP 6: BILLING PORTAL
+--------------------------------
+Create endpoint:
+
+POST /api/stripe/billing-portal
+
+Use stripe.billingPortal.sessions.create
+Redirect user to portal.url
+
+Add "Manage Billing" button in app settings.
+
+--------------------------------
+STEP 7: SUCCESS PAGE
+--------------------------------
+Create /billing/success page:
+- show loading state
+- call backend to verify session
+- refresh entitlements
+- redirect user back into app
+
+--------------------------------
+STEP 8: SECURITY REQUIREMENTS (MANDATORY)
+--------------------------------
+- Stripe secret key ONLY in backend env
+- Webhook signature verification REQUIRED
+- Idempotency for webhook processing
+- Never trust frontend for plan status
+- Always check backend entitlements
+- Do not expose price IDs in frontend
+- Attach userId in metadata ALWAYS
+
+--------------------------------
+STEP 9: UX REQUIREMENTS
+--------------------------------
+- Clicking Subscribe feels instant
+- No popups
+- No Stripe UI inside app
+- Full-page Stripe Checkout only
+- On return → features unlocked
+- Upgrade feels magical
+
+--------------------------------
+FINAL RESULT:
+--------------------------------
+Navinta AI uses the SAME flow as:
+- Opus Clip
+- Notion
+- Linear
+- Framer
+- Webflow
+- Stripe itself
+
+Clean
+Fast
+Professional
+High-conversion
+Zero friction
+Production-ready
+
+Implement ALL of this now.

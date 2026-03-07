@@ -1,0 +1,104 @@
+FIX TRANSCRIPTION BYTESTRING ERROR (THIS IS THE REAL FIX)
+
+PROBLEM:
+Caption generation fails with:
+"Cannot convert argument to a ByteString (char 8232)"
+
+CAUSE:
+Transcription text contains Unicode line/paragraph separators
+(U+2028, U+2029) which break Buffer / ffmpeg / JSON
+
+GOAL:
+Make transcription pipeline UTF-8 safe WITHOUT removing emojis or unicode
+
+----------------------------------
+STEP 1 — CREATE ONE SINGLE SANITIZER
+----------------------------------
+
+Create utils/utf8Safe.ts
+
+export function utf8Safe(text: string): string {
+  if (!text) return "";
+
+  return text
+    .normalize("NFC")
+    .replace(/[\u2028\u2029]/g, "\n") // LINE + PARAGRAPH separators
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ""); // control chars only
+}
+
+----------------------------------
+STEP 2 — FIX TRANSCRIPTION PIPELINE
+----------------------------------
+
+Find:
+transcribeVideo(...)
+or
+transcriptionService.ts
+
+Before ANY of these:
+- Buffer.from
+- JSON.stringify
+- storage.createTranscription
+- ffmpeg input
+- response.json
+
+DO THIS:
+
+result.captions = result.captions.map(c => ({
+  ...c,
+  text: utf8Safe(c.text)
+}));
+
+result.fullText = utf8Safe(result.fullText);
+
+----------------------------------
+STEP 3 — FIX DB SAVE (CRITICAL)
+----------------------------------
+
+Before saving transcription:
+
+const safeCaptions = captions.map(c => ({
+  ...c,
+  text: utf8Safe(c.text)
+}));
+
+----------------------------------
+STEP 4 — FIX JSON RESPONSE
+----------------------------------
+
+When returning transcription:
+
+res.json({
+  ...transcription,
+  captions: transcription.captions.map(c => ({
+    ...c,
+    text: utf8Safe(c.text)
+  }))
+});
+
+----------------------------------
+STEP 5 — REMOVE OLD SANITIZERS
+----------------------------------
+
+DO NOT use:
+- sanitizeText
+- ensureByteSafe
+- deepSanitize for transcription
+
+Only use utf8Safe for transcription text.
+
+----------------------------------
+STEP 6 — RESTART APP
+----------------------------------
+Hard restart Replit
+Clear browser cache
+Retry caption generation
+
+----------------------------------
+RESULT:
+- No 500 error
+- Captions generate
+- Emojis work
+- Unicode works
+- No data loss
+- Production-safe

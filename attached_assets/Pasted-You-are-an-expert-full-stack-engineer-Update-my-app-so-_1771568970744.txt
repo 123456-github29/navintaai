@@ -1,0 +1,104 @@
+You are an expert full-stack engineer. Update my app so “Finish Video” shows a Caption Template Library (like Opus Clip) and uses Remotion to render animated captions.
+
+GOAL
+1) Replace the current “Light / Medium / Bold” caption selector with a grid library of caption templates (thumbnail preview + name). Each template has a different caption graphic/animation style.
+2) Use Remotion for caption rendering in the export pipeline. Captions must support word-by-word timing (karaoke highlight) when timestamps exist, otherwise line-based.
+
+ASSUMPTIONS
+- The project is a web app with a “Finish Video” step/modal/page and an existing export button.
+- Captions already exist as either:
+  A) SRT/VTT, OR
+  B) JSON from Whisper: [{ start, end, text, words: [{ start, end, word }] }]
+If neither exists, create a placeholder mock transcript for UI dev so the library renders.
+
+DELIVERABLES
+A) FRONTEND UI
+- In the “Finish Video” step, replace the 3-style selector with a “Caption Templates” panel:
+  - Grid layout: 2 columns mobile, 3–4 columns desktop.
+  - Each tile shows:
+    - a thumbnail preview (static image or mini live preview)
+    - template name (e.g., “Magazine”, “Cove”, “Neon Pop”, etc.)
+  - Clicking a tile selects it (highlight border + checkmark).
+  - Add a search input and category filter (Minimal / Bold / Neon / Outline / Karaoke / Classic).
+  - Persist selection in the project state (store templateId + settings).
+  - Keep existing basic controls (font size, position, safe margins) but the template drives styling/animation.
+
+B) TEMPLATE SYSTEM
+- Create a template registry file with at least 12 templates:
+  src/captions/templates/index.ts
+  Export:
+    - templateId
+    - displayName
+    - category
+    - thumbnailUrl (or generated preview component)
+    - defaultSettings (font, stroke, shadow, colors, padding, bg shape, animation type)
+    - rendererComponent (Remotion caption component)
+
+Example template IDs:
+- minimal-white
+- bold-yellow
+- magazine
+- cove-glow
+- neon-outline
+- bubble-pop
+- subtitle-bar
+- karaoke-highlight
+- kinetic-scale
+- typewriter
+- marker-highlight
+- caption-card
+
+C) REMOTION INTEGRATION
+- Add Remotion to the project (if not present) and create a Remotion composition for the final video:
+  remotion/Root.tsx
+  remotion/VideoComp.tsx
+
+- VideoComp must:
+  1) Render the base video
+  2) Overlay captions using the selected template renderer
+  3) Use word timestamps for karaoke highlight when available
+
+- Captions must support:
+  - Position presets: bottom, center, top
+  - Safe margins
+  - Line wrapping and max lines
+  - Font loading (use Google fonts or local fonts; ensure it works in deploy)
+
+D) EXPORT PIPELINE
+- When user clicks “Export / Finish Video”:
+  - Frontend sends payload: transcript + templateId + templateSettings + videoUrl + trim/crop params.
+  - Backend triggers Remotion render (use @remotion/renderer or remotion lambda if already set up).
+  - Return progress and final downloadable video URL.
+
+If my app currently exports using FFmpeg only, keep FFmpeg for trimming/cropping if needed, but captions overlay must be done by Remotion composition render.
+
+IMPLEMENTATION STEPS (DO THESE)
+1) Install deps:
+   - remotion
+   - @remotion/renderer
+   - optional: remotion-google-fonts
+2) Create template registry and 12 templates with unique looks.
+3) Build the “Caption Template Library” UI grid and wire it into existing state.
+4) Implement Remotion caption overlay:
+   - Parse transcript into caption cues
+   - Render per frame using Remotion (interpolate for animations)
+   - Implement word highlight for karaoke template
+5) Update export handler to pass templateId/settings and transcript to Remotion render.
+6) Add a “Preview captions” button that shows a short 3–5 second Remotion preview in-app (or a lightweight preview canvas) using the selected template (optional if time).
+7) Ensure deploy works:
+   - no hardcoded localhost paths
+   - assets accessible
+   - thumbnails load
+
+ACCEPTANCE CRITERIA
+- “Finish Video” shows a template grid library, not 3 buttons.
+- Selecting a template changes caption styling instantly in preview.
+- Exported video contains captions styled/animated per the selected template.
+- At least 12 templates exist with noticeably different visuals.
+
+IMPORTANT
+- Do not remove existing features; refactor cleanly.
+- Keep code organized: templates isolated, Remotion isolated.
+- Add inline comments explaining the caption timing + karaoke highlight logic.
+
+Start by finding the existing “Finish Video” UI component and the export handler, then implement the steps above.

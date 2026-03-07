@@ -1,0 +1,254 @@
+6) Run the Python service in Replit
+
+From python-autoedit/: uvicorn app:app --host 0.0.0.0 --port 8000
+
+Test is from another shell:curl -X POST http://localhost:8000/autoedit \
+  -H "Content-Type: application/json" \
+  -d '{"video_url":"YOUR_SIGNED_VIDEO_URL","fps":30}'
+7) Wire Node backend → Python AutoEdit
+
+In your Node backend, create a function:
+	•	call http://localhost:8000/autoedit with the signed URL
+	•	receive EDL
+	•	send EDL into your Remotion render endpoint
+
+Key points:
+	•	Use signed URLs (Supabase Storage signed URL)
+	•	Do not download big videos in Node
+	•	Python downloads, analyzes, returns EDL
+
+⸻
+
+8) Make it “enterprise stable” (minimum required)
+
+A) Put jobs in a queue
+
+If you already use BullMQ/Redis:
+	•	enqueue “autoedit job”
+	•	worker calls python service
+	•	store EDL + render job
+
+B) Store outputs
+	•	Save EDL JSON in DB (or storage)
+	•	Save final MP4 in storage
+	•	Return signed URL to user
+
+C) Don’t run heavy work on the web thread
+	•	Node API should return 202 Accepted + jobId
+	•	frontend polls job status
+
+⸻
+
+9) Getting higher quality immediately (no training)
+
+Once the pipeline is running, you’ll get a huge jump by:
+	1.	switch whisper from small → medium (better timing + word segmentation)
+	2.	reduce silence threshold from 500ms → 350ms for more aggressive cuts
+	3.	add “minimum clip duration” rule (avoid jitter)
+	4.	use crossfade transitions in Remotion (you already started that)
+
+⸻
+
+10) Optional add-ons (after the base works)
+
+A) Video enhancement
+
+Add:
+	•	Real-ESRGAN (upscale)
+	•	GFPGAN (faces)
+
+This will improve “quality” more than any prompt ever will.
+
+B) CLIP embeddings for B-roll relevance
+
+Use later to match:
+	•	transcript segments → visual concepts → Pexels search terms
+
+
+For each “final video render” request:
+	1.	Node receives: videoId + list of clipStoragePaths[]
+	2.	Node verifies the user owns those clips (DB check)
+	3.	Node generates signed URLs for each clip
+	4.	Node calls Python AutoEdit with signed URL(s)
+	5.	Python returns an EDL (frame-accurate timeline decisions)
+	6.	Node sends EDL to your Remotion render endpoint / service
+	7.	Render produces MP4 → upload to Storage
+	8.	Node returns {jobId} then {signedDownloadUrl}
+
+This keeps Replit safe + scalable later.
+2) Add these env vars (securely)
+
+Node backend env:
+	•	SUPABASE_URL
+	•	SUPABASE_SERVICE_ROLE_KEY  ✅ backend only
+	•	AUTOEDIT_SERVICE_URL (example: http://localhost:8000 or hosted URL)
+	•	REMOTION_RENDER_URL (if separate; if same backend you can call internal service)
+	•	VIDEO_BUCKET=videos
+	•	CLIPS_BUCKET=clips
+
+Python env (optional):
+	•	nothing required if it only receives signed URLs
+
+Important security rule:
+Frontend only gets the Supabase anon key. Backend uses service role for signing URLs + DB checks.
+
+3) Create a “clips ownership” DB check (non-negotiable)
+
+Before signing any URL, your Node backend should validate:
+	•	clips.user_id === auth.user.id
+	•	video.user_id === auth.user.id
+
+If you skip this, users can request signed URLs to other people’s files.
+
+⸻
+
+4) Node endpoint: “Create AutoEdit Job”
+
+You need an endpoint like:
+	•	POST /api/videos/:id/autoedit
+
+Request body
+	•	clipPaths: string[] (Supabase storage paths, not URLs)
+	•	aspectRatio: "9:16" | "1:1" | "16:9"
+	•	optional stylePackId
+
+Response
+	•	{ jobId } (202 accepted)
+
+What this endpoint does internally
+	1.	Verify session JWT
+	2.	Verify ownership
+	3.	Create a job row: render_jobs with status=queued
+	4.	Kick worker/async job runner
+
+⸻
+
+5) Worker step A — Generate signed URLs (Supabase)
+
+For each clip path, create a signed URL:
+	•	expiry: 10–30 minutes is enough
+	•	never store signed URLs permanently, regenerate on demand
+
+If you have multi-clip videos, you’ll either:
+	•	analyze each clip individually (better)
+	•	or stitch to a temporary concat mp4 for analysis (easier, but extra work)
+
+Best route for quality: analyze each clip individually, then merge EDL.
+
+⸻
+
+6) Worker step B — Call the Python “AutoEdit” service
+
+Python endpoint
+	•	POST /autoedit
+
+Payload (recommended)
+	•	fps
+	•	clips: [{ url, id }]
+	•	goalHints (optional: “fast pacing”, “talking head”, etc.)
+
+Return
+	•	EDL JSON (all frames as integers)
+
+This EDL becomes your single “source of truth” for Remotion.
+
+⸻
+
+7) Worker step C — Render via Remotion (using your EDL)
+
+You already have the Remotion contract approach. Use it like:
+	•	Validate EDL with Zod schema in Node (before rendering)
+	•	Render MP4
+	•	Upload MP4 to Supabase storage, store final path in DB
+
+If you render inside Node:
+	•	do NOT block the request thread
+	•	always do it in the job worker
+
+⸻
+
+8) Job status endpoint (frontend polling)
+
+Create:
+	•	GET /api/render-jobs/:jobId
+
+Return:
+	•	{ status: queued | processing | finished | failed, progress, downloadUrl? }
+
+When finished:
+	•	generate a signed download URL for the output MP4
+	•	return it
+
+⸻
+
+9) The exact Supabase Storage layout that won’t break later
+
+Use predictable paths:
+
+Clips (input)
+
+clips/{userId}/{clipId}.mp4
+
+Final videos (output)
+
+renders/{userId}/{videoId}/{jobId}.mp4
+
+This makes ownership checks trivial.
+
+⸻
+
+10) Fix the “Replit folder too large” problem (the right way)
+
+Don’t store videos in Replit at all (except temporary during analysis).
+	•	Storage = Supabase Storage (or S3 later)
+	•	Worker downloads only temporarily for inference
+	•	Delete temp files after each job
+
+This keeps Replit small and stable even with 10k users.
+
+⸻
+
+11) Security + anti-abuse (must do)
+
+A) JWT verification
+
+Every “create job” call must:
+	•	read Authorization: Bearer <supabase_access_token>
+	•	validate via Supabase server client
+
+B) Rate-limit expensive endpoints
+
+At least:
+	•	max renders per user per hour
+	•	max clip size
+	•	max duration
+
+C) Signed URL TTL
+
+10–30 minutes. Never longer.
+
+D) Input validation
+	•	clipPaths are strings
+	•	limit number of clips (ex: <= 12)
+	•	enforce max duration per clip (ex: <= 90s)
+
+E) Background worker only
+
+Never render on the API request thread.
+
+⸻
+
+12) Why your results will improve immediately (even before training)
+
+Once this is wired, “professional” jumps mostly come from:
+	•	Whisper + VAD: dead air removal
+	•	frame-accurate EDL: no drift
+	•	crossfades: no audio pops
+	•	subtle zoom motion + color polish: perceived quality
+	•	chunked captions: readability
+
+
+
+
+
+

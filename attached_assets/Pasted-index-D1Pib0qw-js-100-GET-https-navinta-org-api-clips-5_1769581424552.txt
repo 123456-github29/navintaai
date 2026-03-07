@@ -1,0 +1,101 @@
+index-D1Pib0qw.js:100 
+ GET https://navinta.org/api/clips 500 (Internal Server Error)
+(anonymous)	@	index-D1Pib0qw.js:100
+await in (anonymous)		
+a	@	index-D1Pib0qw.js:57
+v	@	index-D1Pib0qw.js:57
+start	@	index-D1Pib0qw.js:57
+fetch	@	index-D1Pib0qw.js:57
+Yf	@	index-D1Pib0qw.js:57
+setOptions	@	index-D1Pib0qw.js:57
+(anonymous)	@	index-D1Pib0qw.js:57
+Um	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+va	@	index-D1Pib0qw.js:48
+OD	@	index-D1Pib0qw.js:48
+XD	@	index-D1Pib0qw.js:48
+Wy	@	index-D1Pib0qw.js:48
+kT	@	index-D1Pib0qw.js:48
+Bm	@	index-D1Pib0qw.js:48
+KD	@	index-D1Pib0qw.js:48
+jT	@	index-D1Pib0qw.js:48
+_T	@	index-D1Pib0qw.js:48
+BD	@	index-D1Pib0qw.js:48
+tR	@	index-D1Pib0qw.js:48
+U	@	index-D1Pib0qw.js:17
+index-D1Pib0qw.js:100 [queryFn] Response for /api/clips: 500
+index-D1Pib0qw.js:511 [library] Clips state: 
+{isLoading: false, error: '500: ', count: 0, isAuthenticated: true, clips: undefined}
+clips
+: 
+undefined
+count
+: 
+0
+error
+: 
+"500: "
+isAuthenticated
+: 
+true
+isLoading
+: 
+false
+[[Prototype]]
+: 
+Object
+﻿

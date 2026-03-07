@@ -1,0 +1,90 @@
+You are a senior production engineer. My app is stuck in an infinite login loop and sometimes shows a blank white screen after deploy. This is a production app and must be fixed fully, not partially.
+
+ROOT CAUSE (confirmed from console logs): Content Security Policy (CSP) is blocking Supabase requests, specifically https://.supabase.co/auth/v1/. This prevents sessions from being set, causing infinite login redirects and blank pages.
+
+YOUR TASKS (DO ALL, DO NOT SKIP ANY STEP):
+	1.	FIX CONTENT SECURITY POLICY (CRITICAL)
+Find every place where CSP is defined (Helmet, Express middleware, Next.js headers, Replit config, custom headers, etc). Update connect-src so Supabase is allowed. The final connect-src MUST include:
+connect-src ‘self’ https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com
+Do not weaken other CSP rules. Fix all CSP definitions if more than one exists.
+	2.	FIX AUTH LOGIN LOOP (MANDATORY)
+Fix the OAuth flow so it works exactly once and never loops.
+On OAuth callback:
+
+	•	Read session from URL hash
+	•	Call supabase.auth.setSession()
+	•	Await completion
+	•	Clear URL hash
+	•	Persist session
+	•	Redirect only after session exists
+Ensure React Strict Mode does not double-run auth logic.
+Never redirect if a session already exists.
+Add protection so callback logic runs once per page load.
+
+	3.	FIX BLANK WHITE SCREEN
+Add a global error boundary and loading fallback.
+If auth is loading, show a spinner.
+If auth fails, show an error UI with retry.
+If app crashes, show an error screen instead of blank white page.
+	4.	FIX DOMAIN AUTH ISSUES (navinta.org + www)
+Ensure auth works on:
+
+	•	navinta.org
+	•	www.navinta.org
+	•	Replit preview domain
+Cookies must be:
+sameSite: ‘lax’
+secure: true
+Do not use localhost logic in production.
+
+	5.	FIX SUPABASE CONFIG (REQUIRED)
+Verify:
+
+	•	Supabase URL is correct
+	•	Public anon key is used in frontend
+	•	Service role key is NEVER exposed to browser
+	•	Session persistence is enabled
+	•	Session auto refresh is enabled
+	•	Auth state change listener works
+
+	6.	FIX CSP FOR ALL ENVIRONMENTS
+Ensure CSP works in:
+
+	•	Replit deploy
+	•	Custom domain
+	•	OAuth redirect
+	•	Preview URL
+
+	7.	ADD PRODUCTION SAFETY
+Add:
+
+	•	Auth retry protection
+	•	One-time OAuth handler
+	•	Logging for auth state changes
+	•	Graceful failure (no infinite redirects)
+	•	Safe fallback route if auth fails
+
+	8.	VERIFY EVERYTHING
+Before finishing, confirm:
+
+	•	Login works once
+	•	No infinite loop
+	•	Page loads correctly
+	•	Refresh keeps session
+	•	Logout works
+	•	Re-login works
+	•	No CSP errors in console
+	•	No blocked Supabase requests
+	•	No blank screens
+	•	Domain works with and without www
+
+	9.	DO NOT ASK ME QUESTIONS
+You have enough information. Fix everything directly in code.
+
+SECURITY REQUIREMENTS:
+Keep CSP strict, follow OWASP, do not expose secrets, do not weaken security to make it work.
+
+FINAL STATE REQUIRED:
+App loads normally, login works once, session persists, domain works, no console errors, no white screen, no redirect loop.
+
+This is a production system. Fix it completely.

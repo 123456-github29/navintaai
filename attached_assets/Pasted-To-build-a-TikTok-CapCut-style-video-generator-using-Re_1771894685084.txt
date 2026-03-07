@@ -1,0 +1,145 @@
+To build a TikTok/CapCut-style video generator using Remotion, you need to perfectly sync your animations to the video's frames.
+
+Unlike standard web animations (which use milliseconds and run whenever they load), Remotion uses Frames and FPS (Frames Per Second). To make this work on the first try, we must drop Framer Motion and use Remotion’s built-in spring and interpolate functions, which guarantee perfectly timed, downloadable exports.
+
+Here is the exact, copy-pasteable blueprint to build this in your app.
+
+Step 1: The Data Structure (Your Blueprint)
+You need your caption data formatted with exact start and end times (in seconds). Pass this data into your Remotion component as a prop.
+
+// Example data structure
+const transcript = [
+  { text: "Building", start: 0.0, end: 0.5 },
+  { text: "apps", start: 0.5, end: 1.0 },
+  { text: "is", start: 1.0, end: 1.2 },
+  { text: "awesome!", start: 1.2, end: 2.0 }
+];
+const popups = [
+  { emoji: "🚀", time: 0.5 },
+  { emoji: "🔥", time: 1.2 }
+];
+Step 2: The Main Composition Component
+This is the "Stage." It holds the background video and layers the captions on top using <AbsoluteFill>.
+
+import { AbsoluteFill, Video, useCurrentFrame, useVideoConfig } from "remotion";
+import { AnimatedCaptions } from "./AnimatedCaptions";
+import { Popups } from "./Popups";
+export const MainVideoScene = ({ transcript, popups, videoUrl }) => {
+  // 1. Get the current frame and FPS from Remotion
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  // 2. Convert the current frame into seconds (Crucial for syncing!)
+  const currentTimeInSeconds = frame / fps;
+  return (
+    <AbsoluteFill style={{ backgroundColor: "black" }}>
+      {/* 3. The Background Video */}
+      <Video src={videoUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      {/* 4. The Overlay Animations */}
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+        <Popups popups={popups} currentTime={currentTimeInSeconds} frame={frame} fps={fps} />
+        <AnimatedCaptions transcript={transcript} currentTime={currentTimeInSeconds} frame={frame} fps={fps} />
+      </AbsoluteFill>
+    </AbsoluteFill>
+  );
+};
+Step 3: The "CapCut" Captions Component
+Here is how you get that bouncy, word-by-word highlight effect. We map through every word, check if the current time has passed the word's start time, and use Remotion's spring to pop it in.
+
+import { spring } from "remotion";
+export const AnimatedCaptions = ({ transcript, currentTime, frame, fps }) => {
+  return (
+    <div style={{ 
+      display: "flex", 
+      flexWrap: "wrap", 
+      justifyContent: "center", 
+      gap: "15px",
+      padding: "40px",
+      position: "absolute",
+      bottom: "20%" // Position near the bottom like TikTok
+    }}>
+      {transcript.map((word, index) => {
+        // 1. Calculate exactly what frame this word starts on
+        const wordStartFrame = Math.round(word.start * fps);
+        
+        // 2. Is the video currently playing this specific word?
+        const isCurrentlySpoken = currentTime >= word.start && currentTime <= word.end;
+        
+        // 3. Has the video passed this word entirely?
+        const hasBeenSpoken = currentTime > word.end;
+        // 4. Create a bouncy spring animation that starts exactly on the wordStartFrame
+        const scale = spring({
+          fps,
+          frame: frame - wordStartFrame, // Animation starts at 0 when we hit this frame
+          config: { damping: 12, stiffness: 200 }, // Bouncy physics
+        });
+        // 5. Hide the word if we haven't reached its start time yet
+        if (frame < wordStartFrame) return null;
+        return (
+          <span
+            key={index}
+            style={{
+              fontSize: "80px",
+              fontWeight: "900",
+              fontFamily: "Inter, sans-serif",
+              textTransform: "uppercase",
+              // The active word scales up slightly and turns yellow. Old words stay white.
+              transform: `scale(${isCurrentlySpoken ? scale * 1.1 : 1})`,
+              color: isCurrentlySpoken ? "#FBBF24" : "white",
+              textShadow: "4px 4px 0px rgba(0,0,0,0.8)", // Thick stroke for readability
+              transition: "color 0.1s ease-out"
+            }}
+          >
+            {word.text}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+Step 4: Adding "Cool Animations" (B-Roll & Emojis)
+To make emojis or images pop up dynamically based on the video timeline, we use interpolate to animate them in and out.
+
+import { spring, interpolate } from "remotion";
+export const Popups = ({ popups, frame, fps }) => {
+  return (
+    <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+      {popups.map((popup, index) => {
+        const popupStartFrame = Math.round(popup.time * fps);
+        const popupEndFrame = popupStartFrame + (fps * 2); // Stay on screen for 2 seconds
+        // Don't render if it's not time yet, or if its time has passed
+        if (frame < popupStartFrame || frame > popupEndFrame) return null;
+        // Spring in
+        const scale = spring({
+          fps,
+          frame: frame - popupStartFrame,
+          config: { damping: 10, stiffness: 150 },
+        });
+        // Fade out at the end
+        const opacity = interpolate(
+          frame,
+          [popupEndFrame - 10, popupEndFrame], // Fade out over the last 10 frames
+          [1, 0],
+          { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+        );
+        return (
+          <div
+            key={index}
+            style={{
+              position: "absolute",
+              fontSize: "150px",
+              transform: `scale(${scale}) translateY(-100px)`,
+              opacity: opacity,
+            }}
+          >
+            {popup.emoji}
+          </div>
+        );
+      })}
+    </AbsoluteFill>
+  );
+};
+Why this works flawlessly:
+Math over Magic: By converting seconds * fps, we tell React exactly which frame to trigger the animation on.
+frame - startFrame: Passing frame - wordStartFrame into Remotion's spring function tells the animation physics to start calculating from 0 the exact millisecond the word is
+spoken.
+3. Deterministic Rendering: Because this relies on the frame integer instead of a computer's CPU clock, when you run Remotion's server-side renderer to export the MP4, every single word will pop perfectly in sync with the audio, guaranteed.

@@ -1,0 +1,193 @@
+You are a senior product designer + frontend engineer working on a professional AI video creation app called Navinta.
+
+Your task is to redesign the recording page UI to look and feel like a premium professional creative tool (Runway, CapCut Pro, Final Cut, Opus Clip, ReformHQ-level polish). This is NOT a basic UI cleanup — it must feel like a director’s studio.
+
+DO NOT change backend logic or break existing functionality.
+ONLY restructure layout, UI, components, and add UI-only placeholders for AI tools.
+
+====================
+GOAL
+====================
+Transform the current vertical stacked layout into a professional 3-panel studio interface with clear hierarchy:
+
+LEFT   = AI Tools panel (creative actions)
+CENTER = Camera preview / playback stage (main focus)
+RIGHT  = Director notes (instructions + script)
+BOTTOM = Shot timeline (storyboard style)
+
+====================
+STEP 1 — PAGE LAYOUT (CRITICAL)
+====================
+
+Replace the current layout with a grid:
+
+- Top bar (fixed)
+- Main grid with 3 columns
+- Bottom timeline panel
+
+Use CSS Grid or Tailwind Grid.
+
+Structure:
+
+┌──────────────────────────────────────────────┐
+│ TOP BAR (exit, title, progress, finish)       │
+├────────────┬────────────────────┬────────────┤
+│ AI TOOLS   │ CAMERA STAGE        │ DIRECTOR   │
+│ (left)     │ (center, big)       │ NOTES      │
+├────────────┴────────────────────┴────────────┤
+│ SHOT TIMELINE (horizontal)                    │
+└──────────────────────────────────────────────┘
+
+Camera preview must be the largest element on screen.
+
+====================
+STEP 2 — LEFT PANEL (AI TOOLS)
+====================
+
+Create a vertical left rail with icon buttons (collapsible).
+
+Title at top: “AI Director”
+
+Buttons (UI only, no logic yet):
+- Generate Captions
+- AI Voiceover
+- Generate B-roll
+- Apply Color Grade
+- Add Music
+- Smooth Transitions
+- Enhance Audio
+- Rewrite Script
+- Auto Edit Shot
+- Add Emphasis
+
+Each button opens a right-side drawer or floating panel (UI only placeholder).
+
+Use Lucide icons.
+Style: minimal, muted, professional, subtle hover glow.
+
+====================
+STEP 3 — CENTER PANEL (CAMERA STAGE)
+====================
+
+This is the “stage” — make it cinematic.
+
+Enhancements:
+- Larger camera preview
+- Rounded corners
+- Subtle border glow when recording
+- Soft vignette overlay
+- Shot name overlay (top-left)
+- Recording timer + red dot (top-right)
+- Dark background behind stage
+- No clutter
+
+When playing recordedBlob, it should feel like a playback monitor.
+
+====================
+STEP 4 — RIGHT PANEL (DIRECTOR NOTES)
+====================
+
+Rename right panel title to: “Director Notes”
+
+Split into sections:
+
+1. Shot Info
+   - Shot number
+   - Duration
+   - Camera angle
+   - Framing
+
+2. Instruction
+   - Bold instruction text
+   - Short, readable
+   - Looks like a director’s note
+
+3. Script
+   - Editable text area
+   - Buttons:
+     - Rewrite with AI
+     - Shorten
+     - Expand
+     - Change tone
+
+4. Performance Tips (small text)
+   - Eye line
+   - Emotion
+   - Pauses
+
+This panel should feel like guidance, not documentation.
+
+====================
+STEP 5 — BOTTOM PANEL (SHOT TIMELINE)
+====================
+
+Replace vertical shot list with horizontal storyboard timeline.
+
+Each shot card shows:
+- Shot number
+- Duration
+- Completion status (✔)
+- Active highlight
+
+Layout:
+[ Shot 1 ] — [ Shot 2 ] — [ Shot 3 ]
+
+Click = jump to shot
+Active shot = blue glow
+Completed = green
+Future = muted
+
+This is a timeline, not a list.
+
+====================
+STEP 6 — TOP BAR
+====================
+
+Top bar contains:
+- Exit button (left)
+- Project title
+- Progress indicator (shots completed)
+- Primary CTA: Finish Video (right)
+
+Sticky, subtle blur background.
+
+====================
+STEP 7 — VISUAL STYLE
+====================
+
+Use premium styling:
+- Dark theme
+- Soft shadows
+- No harsh borders
+- Consistent spacing
+- Clear visual hierarchy
+- Minimal gradients only for emphasis
+- Smooth transitions (150–250ms)
+
+Avoid “AI-generated” look.
+This must feel hand-designed and intentional.
+
+====================
+STEP 8 — DO NOT
+====================
+
+❌ Do NOT add new backend logic  
+❌ Do NOT break recording  
+❌ Do NOT remove existing features  
+❌ Do NOT change APIs  
+❌ Do NOT overanimate  
+
+This is a professional UI refactor ONLY.
+
+====================
+FINAL RESULT
+====================
+
+When done, the page should feel like:
+- A real video studio
+- A director’s control panel
+- A $100/month product
+- A tool creators trust
+- Something Apple-level designers would approve
+
+Implement now.

@@ -1,0 +1,107 @@
+CRITICAL BUG FIX: STRIPE CHECKOUT NOT REDIRECTING
+
+You are now debugging a production payments bug.
+Stripe is working, backend is working.
+Frontend is hijacking navigation.
+
+Fix this EXACTLY as instructed.
+
+===============================
+ROOT CAUSE
+===============================
+Subscribe buttons are triggering app navigation instead of redirecting to Stripe.
+
+We must:
+- prevent all default navigation
+- prevent router from running
+- force full browser redirect
+
+===============================
+MANDATORY FRONTEND FIX
+===============================
+
+FOR EVERY Subscribe button (pricing page, upgrade modal, paywall):
+
+1. Button MUST be a plain <button>
+   NOT Link
+   NOT wrapped in Link
+   NOT inside clickable card
+   NOT inside form
+
+2. onClick handler MUST:
+   - stop propagation
+   - prevent default
+   - be async
+   - do ONLY checkout redirect
+
+Example behavior (conceptual, not code):
+- click
+- call /api/stripe/checkout
+- receive session.url
+- window.location.replace(session.url)
+
+NO router.push
+NO setLocation
+NO navigate
+NO modal
+NO state change
+NO UI transition
+
+===============================
+FORCE HARD REDIRECT
+===============================
+Use:
+window.location.replace(session.url)
+
+NOT:
+router.push
+router.replace
+Link
+navigate
+history.push
+
+===============================
+BACKEND CHECK (REQUIRED)
+===============================
+Verify backend returns:
+{ url: session.url }
+
+NOT:
+{ sessionId }
+NOT:
+{ success: true }
+
+Frontend must use the URL directly.
+
+===============================
+BLOCK APP NAVIGATION
+===============================
+If Subscribe button is inside a card:
+
+- remove onClick from card
+- make only button clickable
+
+===============================
+DEBUGGING (ADD LOGS)
+===============================
+Add logs in frontend:
+
+console.log("SUBSCRIBE CLICKED")
+console.log("SESSION URL:", session.url)
+console.log("REDIRECTING TO STRIPE")
+
+If you do not see these logs → button is not firing
+
+===============================
+FINAL CHECK
+===============================
+After fix:
+Click Subscribe → instant full-page redirect to Stripe Checkout
+NO app navigation
+NO intermediate screen
+NO modal
+NO embed
+
+This must behave EXACTLY like Notion / Opus / Framer checkout.
+
+Fix this now.

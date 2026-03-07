@@ -1,0 +1,148 @@
+Paste this to Replit AI exactly as-is:
+
+⸻
+
+You are refactoring the AI content plan generation logic for Navinta.
+
+The current content plans are not useful because:
+	•	shots are always over-generated
+	•	scripts are too short
+	•	videos that should be single-shot are forced into multi-shot
+	•	the AI does not reason about video structure before writing
+
+Your task is to implement intelligent video planning.
+
+⸻
+
+STEP 1: ADD A VIDEO MODE CLASSIFIER
+
+Before generating any content, run a reasoning step:
+
+Decide video_mode based on:
+	•	user role
+	•	content goal
+	•	platform
+	•	topic
+	•	video length
+	•	brand tone
+
+video_mode must be ONE of:
+	•	“single-shot”
+	•	“minimal-shots”
+	•	“multi-shot”
+	•	“cinematic”
+
+Save this value and use it to control everything else.
+
+⸻
+
+STEP 2: SHOT GENERATION RULES
+
+If video_mode = single-shot:
+	•	generate ONLY 1 shot
+	•	camera: eye level
+	•	framing: medium or medium-close
+	•	no b-roll
+	•	no camera changes
+
+If video_mode = minimal-shots:
+	•	generate 1–2 shots max
+	•	only add second shot if it adds meaning
+
+If video_mode = multi-shot:
+	•	generate 3–5 shots
+	•	each shot must have a visual purpose
+
+If video_mode = cinematic:
+	•	generate 4–7 shots
+	•	allow b-roll, cutaways, transitions
+
+DO NOT generate extra shots “for variety”.
+
+⸻
+
+STEP 3: SCRIPT LENGTH ENFORCEMENT
+
+Script length must match duration:
+
+15s → 50–70 words
+30s → 100–130 words
+45s → 160–200 words
+60s → 220–260 words
+90s → 350–450 words
+
+Reject generation if script is shorter than required.
+
+⸻
+
+STEP 4: HUMAN SCRIPT STYLE
+
+Scripts must:
+	•	sound spoken, not written
+	•	include natural pauses
+	•	include thinking language
+	•	include emphasis and repetition
+	•	build ideas over time
+	•	feel like a person talking to camera
+
+Example structure:
+Hook → Context → Insight → Example → Takeaway → Soft CTA
+
+DO NOT use:
+	•	generic motivational tone
+	•	one-liners
+	•	tweet-style sentences
+	•	marketing copy voice
+
+⸻
+
+STEP 5: OUTPUT STRUCTURE
+
+Return content plan in this order:
+	1.	video_mode
+	2.	total duration
+	3.	full script (long, human, spoken)
+	4.	shot list (only if video_mode requires it)
+	5.	performance notes
+	6.	optional b-roll suggestions (only if relevant)
+
+⸻
+
+STEP 6: VALIDATION
+
+If:
+	•	video_mode is single-shot AND shot count > 1 → regenerate
+	•	script length < required → regenerate
+	•	shots don’t add meaning → regenerate
+
+Quality > speed.
+
+⸻
+
+FINAL RULE:
+
+Navinta is a director.
+The AI must think like a director before writing like a writer.
+
+⸻
+
+🔥 THIS WILL IMMEDIATELY FIX:
+	•	useless shot lists
+	•	awkward recordings
+	•	short scripts
+	•	“why am I recording this?” feeling
+	•	amateur vibe
+
+⸻
+
+🧠 WHY THIS WORKS (important)
+
+You just turned Navinta from:
+
+“AI video generator”
+
+into:
+
+“AI director that understands when to shut up and let the creator talk”
+
+That’s what Opus, CapCut, etc. still don’t do.

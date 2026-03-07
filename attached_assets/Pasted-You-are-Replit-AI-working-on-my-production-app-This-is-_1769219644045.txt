@@ -1,0 +1,339 @@
+You are Replit AI working on my production app. This is a **global brand + legal compliance update**.
+
+The company/app name MUST be **Navinta AI** everywhere. “Navinta” alone must not appear anywhere (UI, legal text, SEO, emails, copy, code comments that ship to client, marketing pages, etc.). Domain remains navinta.org.
+
+CRITICAL CONSTRAINTS
+- All user-facing brand references must be exactly: **Navinta AI**
+- Never show “Navinta” by itself anywhere
+- Do NOT change domain, API routes, database table names, Supabase project IDs, or Stripe keys
+- Implement changes and verify with a repo-wide search
+
+===========================================================
+PART A — IMPLEMENT A FULL APP-WIDE RENAME (EVERY NOOK/CRANNY)
+===========================================================
+
+1) GLOBAL SEARCH + REPLACE (SAFE AND REVIEWED)
+- Perform a full repository search for these tokens and replace appropriately:
+  - "Navinta" → "Navinta AI"
+  - "Welcome to Navinta" → "Welcome to Navinta AI"
+  - "Made with Navinta" → "Made with Navinta AI"
+  - "navinta" (lowercase in text/copy) → "navinta ai" where it is human-facing copy ONLY
+  - "NAVINTA" → "NAVINTA AI" where it is human-facing copy ONLY
+- IMPORTANT: Do NOT rename:
+  - domains (navinta.org)
+  - package names unless required
+  - internal IDs, table names, schema identifiers, API routes
+
+2) FRONTEND UI (ALL PAGES)
+Update all occurrences (including edge states):
+- Landing/Marketing: hero, subhero, CTAs, features, how-it-works, testimonials placeholders, pricing, FAQ, footer, navbar
+- Auth screens / private beta screens / access code screens
+- Onboarding screens & question prompts
+- Dashboard, Director Mode, Library
+- Tooltips, button labels, form labels, placeholders, toast messages, error messages, empty states, loading states
+- Modals/dialog titles and descriptions
+- Any “share”, “export”, “download” copy
+- Any “watermark” text
+
+3) ANIMATIONS / CANVAS / THREE.JS / GSAP
+- Update any text inside GSAP timelines, ScrollTrigger labels, canvas overlays, three.js text meshes, SVG text layers
+- Update “clapperboard” animation text to show “Navinta AI”
+- Make sure animation timing does not break after text length changes
+
+4) SEO / META / SOCIAL CARDS
+Update:
+- document title to “Navinta AI”
+- meta description (ensure it mentions “Navinta AI”)
+- OpenGraph + Twitter meta tags
+- JSON-LD structured data “name”: “Navinta AI”
+- Any sitemap/robots references that include brand name in labels
+
+5) EMAIL + SUPPORT
+- Everywhere that shows a “from” brand name or support copy: “Navinta AI”
+- Support email should remain: support@navinta.org
+- Replace any “Navinta Support” etc → “Navinta AI Support”
+- If the app sends transactional emails, update templates and headers
+
+6) STRIPE BILLING UI COPY (IF PRESENT)
+- If you show product names/descriptions client-side: “Navinta AI”
+- Checkout description text: “Navinta AI”
+- Billing portal links text: “Manage your Navinta AI plan”
+
+7) BACKEND MESSAGES
+- Any returned messages that are displayed to users should use “Navinta AI”
+- Any logs that are shipped to client (e.g., console logs in frontend) should not say “Navinta”
+
+8) FINAL VERIFICATION (MANDATORY)
+- Run a full repo search for:
+  - Navinta
+  - NAVINTA
+  - navinta
+- Ensure the ONLY remaining occurrences are domain URLs like navinta.org (allowed)
+- Confirm the marketing site, app shell, dashboard, and legal pages visually show “Navinta AI”
+
+===========================================================
+PART B — ADD / REPLACE FULL LEGAL PAGES (DETAILED, REALISTIC)
+===========================================================
+
+Create two public pages and link them in the footer and any signup/checkout UI:
+- /privacy  (Privacy Policy)
+- /terms    (Terms of Service)
+
+Also add:
+- A lightweight “Legal” section in footer with links: Privacy, Terms
+- If there is a signup/paywall flow, add a checkbox/inline text: “By continuing you agree to Navinta AI Terms and Privacy Policy” (no extra friction; link to pages)
+
+IMPORTANT:
+- The legal text below is a template and must be displayed exactly as written.
+- Add a disclaimer banner at top of each page: “This document is provided for informational purposes and may need review by qualified counsel for your jurisdiction.” (Do NOT say “loophole proof” or guarantee.)
+- Make the pages readable, nicely formatted, and consistent with site typography/colors.
+
+-----------------------------------------
+PRIVACY POLICY (FULL TEXT TO ADD)
+-----------------------------------------
+
+# Navinta AI Privacy Policy
+**Effective Date:** [SET_DATE]
+**Last Updated:** [SET_DATE]
+
+This Privacy Policy explains how **Navinta AI** (“Navinta AI,” “we,” “us,” or “our”) collects, uses, discloses, and safeguards information when you visit or use our website at **navinta.org**, our applications, and related services (collectively, the “Services”).
+
+By using the Services, you agree to the practices described in this Privacy Policy.
+
+## 1) Who We Are
+Navinta AI provides an AI-assisted content planning and video creation workflow that helps users plan, record, compile, and export videos. We may process user inputs, uploaded media, and generated outputs to deliver the Services.
+
+## 2) Information We Collect
+We collect information in the following categories:
+
+### A. Information You Provide Directly
+- **Account information:** name, email address, authentication identifiers (e.g., Google sign-in), and profile details you provide.
+- **Onboarding and brand inputs:** brand name, target audience, goals, tone, preferences, video length preferences, and any other free-text information you submit.
+- **Customer support communications:** messages and attachments you send to support@navinta.org or via in-app support.
+
+### B. Content You Upload or Create Using the Services
+- **User-generated content:** scripts, shot lists, content plans, captions, and other text you create or generate.
+- **Media you record or upload:** video clips, audio, images, and any associated metadata.
+- **Generated outputs:** compiled videos, captions files, thumbnails, and project artifacts.
+
+### C. Automatically Collected Information
+- **Device and usage information:** IP address, browser type, device identifiers, pages/screens viewed, features used, clickstream data, and timestamps.
+- **Log data and diagnostics:** crash logs, performance metrics, and error reports.
+- **Cookies and similar technologies:** we may use cookies/local storage to maintain session state, preferences, and analytics.
+
+### D. Payment Information
+If you purchase a subscription, payment processing is handled by **Stripe** or another payment provider. We generally do **not** store full payment card numbers. We may store:
+- subscription status, plan tier, and entitlement flags
+- Stripe customer IDs and subscription IDs
+- billing history metadata needed to provide the Services
+
+## 3) How We Use Information
+We use information to:
+- **Provide and operate the Services** (authentication, content generation workflows, exports, and storage)
+- **Personalize your experience** (brand settings, preferences, project continuity)
+- **Improve and debug** (security monitoring, quality improvements, performance)
+- **Communicate with you** (service updates, support responses, transactional emails)
+- **Billing and account management** (subscriptions, entitlements, fraud prevention)
+- **Compliance and safety** (enforce policies, prevent abuse, comply with legal obligations)
+
+## 4) AI and Content Processing
+Navinta AI may use third-party AI providers (e.g., Gemini, OpenAI, or others configured by the Services) to process your prompts and content to generate plans, scripts, captions, or other outputs.
+- We send only the information needed to fulfill your request.
+- AI outputs may be incorrect, incomplete, or inappropriate; you are responsible for reviewing outputs before publishing or relying on them.
+- We do not guarantee that AI outputs are unique or free of third-party rights.
+
+## 5) How We Share Information
+We may share information with:
+- **Service providers** who help operate the Services (hosting, databases, logging, analytics, storage, video processing, email delivery).
+- **Payment processors** (e.g., Stripe) for billing and subscription handling.
+- **AI providers** when you request AI features.
+- **Legal and safety**: where required by law, subpoena, or to protect rights, safety, and security.
+- **Business transfers**: if we are involved in a merger, acquisition, financing, or sale of assets.
+
+We do not sell your personal information in the traditional sense. If “sale” is defined broadly under certain laws, we will honor applicable opt-out rights where required.
+
+## 6) Data Retention
+We retain personal information and content as long as necessary to:
+- provide the Services
+- comply with legal requirements
+- resolve disputes and enforce agreements
+
+You may request deletion of your account and associated data subject to legal and operational constraints (e.g., billing records, security logs, legal obligations).
+
+## 7) Security
+We use reasonable administrative, technical, and physical safeguards designed to protect your information. However, no method of transmission or storage is 100% secure, and we cannot guarantee absolute security.
+
+## 8) Your Choices and Rights
+Depending on your location, you may have rights to:
+- access your personal data
+- correct inaccurate data
+- delete your data
+- object to or restrict certain processing
+- data portability
+- opt out of certain disclosures/uses where applicable
+
+To make a request, contact **support@navinta.org**. We may verify your identity before fulfilling requests.
+
+## 9) International Data Transfers
+If you access the Services from outside the country where our systems are located, your data may be transferred and processed in other countries with different data protection laws.
+
+## 10) Children’s Privacy
+The Services are not intended for children under 13 (or the minimum age in your jurisdiction). We do not knowingly collect personal data from children.
+
+## 11) Third-Party Links and Integrations
+The Services may link to third-party sites or use third-party APIs. We are not responsible for their privacy practices. Please review third-party policies.
+
+## 12) Updates to This Policy
+We may update this Privacy Policy from time to time. The “Last Updated” date will change. Material changes may be communicated via the Services.
+
+## 13) Contact Us
+Questions or requests:
+**Navinta AI Support**  
+Email: support@navinta.org  
+Website: navinta.org
+
+-----------------------------------------
+TERMS OF SERVICE (FULL TEXT TO ADD)
+-----------------------------------------
+
+# Navinta AI Terms of Service
+**Effective Date:** [SET_DATE]
+**Last Updated:** [SET_DATE]
+
+These Terms of Service (“Terms”) govern your access to and use of the Services provided by **Navinta AI** (“Navinta AI,” “we,” “us,” or “our”). The “Services” include navinta.org, our apps, APIs, and related functionality.
+
+By accessing or using the Services, you agree to these Terms. If you do not agree, do not use the Services.
+
+## 1) Eligibility and Account
+You must be at least 13 years old (or the minimum age in your jurisdiction) to use the Services. You are responsible for:
+- maintaining the confidentiality of your account
+- all activity under your account
+- providing accurate information
+
+We may suspend or terminate accounts for violations of these Terms or for security reasons.
+
+## 2) Subscriptions, Billing, and Trials
+Some features may require a paid subscription.
+- Prices, plan features, and billing intervals are displayed in the Services.
+- Billing is handled by our payment processor (e.g., Stripe).
+- Taxes may apply.
+- If a payment fails, we may suspend paid features until resolved.
+
+### Watermarks and Feature Gating
+Free or lower-tier plans may include limitations (e.g., watermarks, export restrictions, AI feature limits). You may preview features, but exporting certain results may require an upgrade.
+
+## 3) User Content and Licenses
+“You Content” includes any text, media, and other materials you upload, record, or generate using the Services.
+
+You retain ownership of Your Content. By using the Services, you grant Navinta AI a limited, worldwide, non-exclusive license to host, store, reproduce, process, adapt, and display Your Content solely to:
+- operate and provide the Services
+- generate outputs you request
+- maintain and improve reliability and safety
+
+## 4) Acceptable Use
+You agree not to:
+- violate laws or third-party rights
+- upload content you do not have rights to use
+- attempt to bypass paywalls, entitlements, or security controls
+- reverse engineer, scrape, or abuse the Services
+- interfere with or disrupt the Services
+- use the Services to generate or distribute harmful or illegal content
+
+We may remove content, restrict features, or suspend accounts to enforce these Terms.
+
+## 5) AI Outputs and Disclaimers
+The Services may generate scripts, plans, captions, or other outputs using AI. You acknowledge:
+- outputs may be inaccurate, incomplete, or unsuitable
+- you must review outputs before use
+- you are responsible for compliance with laws, platform policies, and third-party rights
+- Navinta AI does not guarantee results, virality, engagement, or revenue outcomes
+
+## 6) Intellectual Property
+Navinta AI and its software, designs, and branding are owned by Navinta AI or its licensors. You may not copy, modify, distribute, or create derivative works except as allowed by law or with written permission.
+
+## 7) Third-Party Services
+The Services may rely on third-party providers (e.g., hosting, AI services, storage, payment processors). Navinta AI is not responsible for third-party outages or changes. Third-party terms may apply.
+
+## 8) Privacy
+Your use of the Services is also governed by the Navinta AI Privacy Policy.
+
+## 9) Termination
+You may stop using the Services at any time. We may suspend or terminate access if you violate these Terms or if we must do so for security, legal, or operational reasons.
+
+Upon termination, your access to paid features stops. Certain sections of these Terms survive (e.g., disclaimers, limitations of liability).
+
+## 10) Disclaimers
+THE SERVICES ARE PROVIDED “AS IS” AND “AS AVAILABLE.”
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, NAVINTA AI DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+We do not warrant uninterrupted or error-free operation.
+
+## 11) Limitation of Liability
+TO THE MAXIMUM EXTENT PERMITTED BY LAW:
+NAVINTA AI WILL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, REVENUE, DATA, OR GOODWILL.
+
+OUR TOTAL LIABILITY FOR ANY CLAIM RELATED TO THE SERVICES IS LIMITED TO THE AMOUNT YOU PAID TO NAVINTA AI IN THE 12 MONTHS BEFORE THE EVENT GIVING RISE TO THE CLAIM, OR $100 IF YOU HAVE NOT PAID.
+
+Some jurisdictions do not allow certain limitations; in that case, liability is limited to the greatest extent permitted.
+
+## 12) Indemnification
+You agree to indemnify and hold harmless Navinta AI from claims arising out of:
+- Your Content
+- your use of the Services
+- your violation of these Terms
+- your violation of third-party rights or laws
+
+## 13) Changes to Services or Terms
+We may modify the Services and these Terms. Changes take effect when posted. If you continue using the Services after changes, you accept the updated Terms.
+
+## 14) Governing Law; Disputes
+These Terms are governed by the laws of [SET_JURISDICTION], without regard to conflict of law principles. Disputes will be resolved in the courts located in [SET_VENUE], unless applicable law requires otherwise.
+
+## 15) Contact
+Questions about these Terms:
+**Navinta AI Support**  
+support@navinta.org  
+navinta.org
+
+===========================================================
+PART C — ADD DATES AND JURISDICTION PLACEHOLDERS
+===========================================================
+
+Implement a simple config file or constants so I can easily set:
+- SET_DATE (effective + last updated)
+- SET_JURISDICTION (state/country)
+- SET_VENUE (county/city)
+Default values can be:
+- SET_DATE: today’s date
+- SET_JURISDICTION: “California, United States”
+- SET_VENUE: “Santa Clara County, California”
+But make them easy to edit.
+
+===========================================================
+PART D — UX: WHERE TO LINK LEGAL
+===========================================================
+
+1) Footer links on every page:
+- Privacy Policy → /privacy
+- Terms of Service → /terms
+
+2) On sign-in / private beta entry:
+- show a subtle line: “By continuing you agree to Navinta AI Terms and Privacy Policy.” (Terms and Privacy are links)
+
+3) On Stripe pricing / checkout area:
+- show the same line under plan selection
+
+===========================================================
+PART E — VERIFY EVERYTHING (MANDATORY)
+===========================================================
+
+- After implementation, run:
+  - ripgrep / search: "Navinta"
+  - ripgrep / search: "NAVINTA"
+  - ripgrep / search: "navinta"
+- Only allow “navinta.org” domain occurrences to remain.
+- Confirm the legal pages render and are linked.
+- Confirm the hero/animations show “Navinta AI”.
+- Confirm inside-app dashboard, director mode, onboarding show “Navinta AI”.
+
+Do it now with careful attention to detail.

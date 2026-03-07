@@ -1,0 +1,184 @@
+GOAL  
+Build a premium AI-powered short-form video editor using REMOTION for final rendering.  
+The output must look like a professionally edited social video (TikTok/Reels/YouTube Shorts), NOT robotic.
+
+The system must intelligently handle:
+- caption alignment with speech  
+- smooth cinematic zooms  
+- context-aware silence trimming  
+- premium transitions & audio smoothing  
+- high-quality export (no glitches or lag)
+
+------------------------------------
+
+CORE ARCHITECTURE
+
+1) TRANSCRIBE VIDEO FIRST  
+- Generate word-level timestamps using Whisper / WhisperX or equivalent.  
+- Store transcript as:
+  [
+    { word, start, end, confidence }
+  ]
+
+- ALL later edits must reference this timing source of truth.
+
+------------------------------------
+
+2) SMART PAUSE / SILENCE SYSTEM (CONTEXT-AWARE CUTTING)
+
+Problem: removing every pause makes video robotic.
+
+Required system:
+
+A) Detect candidate silence gaps using:
+- Voice activity detection (VAD)
+- Audio amplitude threshold
+- Minimum gap > 200ms
+
+B) For each silence gap:
+- Extract transcript window:
+  - 3–5 seconds BEFORE gap
+  - 3–5 seconds AFTER gap
+
+C) Send context to Gemini API:
+
+Prompt Gemini:
+“Does this pause add emotional weight, comedic timing, emphasis, or natural speaking rhythm?
+Return:
+KEEP / SHORTEN / REMOVE
+If KEEP or SHORTEN, return recommended pause length in milliseconds.”
+
+D) Apply result:
+- KEEP → leave unchanged
+- SHORTEN → trim but keep emotional gap
+- REMOVE → cut fully
+
+E) When cutting:
+- Always apply:
+  - 2–4 frame video crossfade
+  - 5–10ms audio fade
+This prevents robotic hard cuts.
+
+------------------------------------
+
+3) CAPTION SYSTEM (MUST MATCH LIVE SPEECH EXACTLY)
+
+Requirements:
+- Word-level sync from transcript
+- Captions must NEVER drift after edits
+
+Caption segmentation:
+- 3–7 words per chunk
+- Avoid splitting phrases or names
+- Max 2 lines
+
+Visual style:
+- Large bold font
+- Stroke outline
+- Soft drop shadow
+- Safe-area positioning for TikTok UI
+
+Animation rules:
+- Words appear slightly ahead (~80ms) of spoken sound
+- Subtle pop-in scale (1.05 → 1.0)
+- Optional word highlight color change
+
+Implementation in Remotion:
+- Captions rendered as React component driven by timeline frame.
+- Each word visibility controlled by frame range derived from timestamps.
+
+------------------------------------
+
+4) CINEMATIC ZOOM SYSTEM (NOT LINEAR)
+
+Problem: current zooms feel mechanical.
+
+Required approach:
+
+A) Analyze transcript using Gemini:
+- Provide entire transcript.
+- Ask Gemini to return:
+  - emphasis moments
+  - emotional peaks
+  - important statements
+  - hooks / punchlines
+
+Output format:
+[
+  { startTime, endTime, intensity: low|medium|high }
+]
+
+B) Convert emphasis to zoom curves:
+
+Rules:
+- Use smooth easing only:
+  easeInOutCubic or bezier
+- No sudden zoom jumps
+- Duration: 0.6–2.0s ramp in/out
+
+Zoom behavior:
+low → 1.00 → 1.08
+medium → 1.00 → 1.15
+high → 1.00 → 1.22
+
+Camera feel:
+- Slight random micro drift (0.5–1% position)
+- Never static robotic zoom
+
+Implement via:
+Remotion interpolate(frame, ...)
+
+------------------------------------
+
+5) SMOOTH CUTTING + FLOW
+
+Cuts must feel human-edited.
+
+Required:
+- Micro crossfade between clips (3–6 frames)
+- Maintain audio continuity
+- Avoid cutting mid-word or mid-breath
+- Prefer cutting:
+  - after sentence completion
+  - before next phrase start
+
+Use transcript timing to choose safe cut frames.
+
+------------------------------------
+
+6) EXPORT QUALITY SETTINGS (CRITICAL)
+
+Video must NEVER be laggy, glitchy, or low quality.
+
+Render settings:
+
+Resolution: 1080x1920  
+FPS: 30  
+Codec: H.264 high profile  
+Pixel format: yuv420p  
+Bitrate target: 10–16 Mbps  
+
+Remotion renderMedia settings must:
+- use multi-thread encoding
+- disable low-quality preview rendering
+- use final production settings only
+
+Fonts must be embedded/available on server.
+
+------------------------------------
+
+7) FINAL OUTPUT EXPECTATION
+
+The video should:
+- feel like premium human editing
+- retain emotional pauses where needed
+- have smooth cinematic zooms
+- have perfectly synced captions
+- contain smooth transitions and clean audio
+
+If anything feels robotic, the system must favor naturalness over aggressive trimming.
+
+------------------------------------
+
+END GOAL:
+Create exports indistinguishable from professional short-form editors like Opus Clip, Descript, or Premiere Pro — but fully automated.

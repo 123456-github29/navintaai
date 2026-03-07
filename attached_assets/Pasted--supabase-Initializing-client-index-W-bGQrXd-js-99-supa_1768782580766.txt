@@ -1,0 +1,80 @@
+[supabase] Initializing client...
+index-W-bGQrXd.js:99 [supabase] URL: https://iqfrjomoggddxwteuigk.s...
+index-W-bGQrXd.js:99 [supabase] Key: set (eyJhbGciOiJIUzI1NiIs...)
+index-W-bGQrXd.js:388 [useAuth] Init: Object
+index-W-bGQrXd.js:388 [useAuth] Auth state changed: SIGNED_IN has session
+index-W-bGQrXd.js:388 [useAuth] Existing session: rushilbhavinshah@gmail.com
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: false session: false userId: undefined
+index-W-bGQrXd.js:432 [dashboard] debugData: undefined
+index-W-bGQrXd.js:432 [dashboard] contentPlan: undefined planLoading: false planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: undefined postsLoading: false postsError: undefined
+index-W-bGQrXd.js:388 [useAuth] Init: Object
+index-W-bGQrXd.js:388 [useAuth] Init: Object
+index-W-bGQrXd.js:388 [useAuth] Auth state changed: INITIAL_SESSION has session
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: false session: false userId: undefined
+index-W-bGQrXd.js:432 [dashboard] debugData: undefined
+index-W-bGQrXd.js:432 [dashboard] contentPlan: undefined planLoading: false planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: undefined postsLoading: false postsError: undefined
+index-W-bGQrXd.js:388 [useAuth] Existing session: rushilbhavinshah@gmail.com
+index-W-bGQrXd.js:388 [useAuth] Auth state changed: INITIAL_SESSION has session
+index-W-bGQrXd.js:388 [useAuth] Existing session: rushilbhavinshah@gmail.com
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: true session: true userId: edd163a1-0040-4d66-a687-60bf23c17207
+index-W-bGQrXd.js:432 [dashboard] debugData: undefined
+index-W-bGQrXd.js:432 [dashboard] contentPlan: undefined planLoading: true planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: undefined postsLoading: true postsError: undefined
+index-W-bGQrXd.js:388 [useAuth] Auth state changed: INITIAL_SESSION has session
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: true session: true userId: edd163a1-0040-4d66-a687-60bf23c17207
+index-W-bGQrXd.js:432 [dashboard] debugData: undefined
+index-W-bGQrXd.js:432 [dashboard] contentPlan: undefined planLoading: true planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: undefined postsLoading: true postsError: undefined
+index-W-bGQrXd.js:99 [queryFn] Fetching /api/debug/user-data, hasToken: true
+index-W-bGQrXd.js:99 [queryFn] Fetching /api/content-plan, hasToken: true
+index-W-bGQrXd.js:99 [queryFn] Fetching /api/posts, hasToken: true
+index-W-bGQrXd.js:99 [queryFn] Response for /api/content-plan: 200
+index-W-bGQrXd.js:99 [queryFn] Response for /api/posts: 200
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: true session: true userId: edd163a1-0040-4d66-a687-60bf23c17207
+index-W-bGQrXd.js:432 [dashboard] debugData: undefined
+index-W-bGQrXd.js:432 [dashboard] contentPlan: null planLoading: false planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: 0 postsLoading: false postsError: undefined
+index-W-bGQrXd.js:99 [queryFn] Response for /api/debug/user-data: 200
+index-W-bGQrXd.js:432 [onboarding] Submitting onboarding data: Object
+index-W-bGQrXd.js:432 [onboarding] Response received: 200
+index-W-bGQrXd.js:432 [onboarding] Success: Object
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: false session: false userId: undefined
+index-W-bGQrXd.js:432 [dashboard] debugData: Object
+index-W-bGQrXd.js:432 [dashboard] contentPlan: null planLoading: false planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: 0 postsLoading: false postsError: undefined
+index-W-bGQrXd.js:388 [useAuth] Init: Object
+index-W-bGQrXd.js:388 [useAuth] Init: Object
+index-W-bGQrXd.js:388 [useAuth] Existing session: rushilbhavinshah@gmail.com
+index-W-bGQrXd.js:388 [useAuth] Auth state changed: INITIAL_SESSION has session
+index-W-bGQrXd.js:388 [useAuth] Existing session: rushilbhavinshah@gmail.com
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: true session: true userId: edd163a1-0040-4d66-a687-60bf23c17207
+index-W-bGQrXd.js:432 [dashboard] debugData: Object
+index-W-bGQrXd.js:432 [dashboard] contentPlan: null planLoading: false planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: 0 postsLoading: false postsError: undefined
+index-W-bGQrXd.js:388 [useAuth] Auth state changed: INITIAL_SESSION has session
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: true session: true userId: edd163a1-0040-4d66-a687-60bf23c17207
+index-W-bGQrXd.js:432 [dashboard] debugData: Object
+index-W-bGQrXd.js:432 [dashboard] contentPlan: null planLoading: false planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: 0 postsLoading: false postsError: undefined
+index-W-bGQrXd.js:99 [queryFn] Fetching /api/debug/user-data, hasToken: true
+index-W-bGQrXd.js:99 [queryFn] Fetching /api/content-plan, hasToken: true
+index-W-bGQrXd.js:99 [queryFn] Fetching /api/posts, hasToken: true
+index-W-bGQrXd.js:99 [queryFn] Response for /api/posts: 200
+index-W-bGQrXd.js:99 [queryFn] Response for /api/content-plan: 200
+index-W-bGQrXd.js:99 [queryFn] Response for /api/debug/user-data: 200
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: true session: true userId: edd163a1-0040-4d66-a687-60bf23c17207
+index-W-bGQrXd.js:432 [dashboard] debugData: Object
+index-W-bGQrXd.js:432 [dashboard] contentPlan: null planLoading: false planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: 0 postsLoading: false postsError: undefined
+3index-W-bGQrXd.js:388 [useAuth] Auth state changed: SIGNED_IN has session
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: true session: true userId: edd163a1-0040-4d66-a687-60bf23c17207
+index-W-bGQrXd.js:432 [dashboard] debugData: Object
+index-W-bGQrXd.js:432 [dashboard] contentPlan: null planLoading: false planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: 0 postsLoading: false postsError: undefined
+3index-W-bGQrXd.js:388 [useAuth] Auth state changed: SIGNED_IN has session
+index-W-bGQrXd.js:432 [dashboard] isAuthenticated: true session: true userId: edd163a1-0040-4d66-a687-60bf23c17207
+index-W-bGQrXd.js:432 [dashboard] debugData: Object
+index-W-bGQrXd.js:432 [dashboard] contentPlan: null planLoading: false planError: undefined
+index-W-bGQrXd.js:432 [dashboard] posts: 0 postsLoading: false postsError: undefined

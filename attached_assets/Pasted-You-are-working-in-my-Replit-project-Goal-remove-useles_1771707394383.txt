@@ -1,0 +1,82 @@
+You are working in my Replit project. Goal: remove useless files from repeated pipeline rewrites while keeping EVERYTHING required for the app to run in production.
+
+CRITICAL RULES (do not violate):
+- Do NOT delete anything on the first pass.
+- Do NOT delete any file that is imported/referenced anywhere (including dynamic imports, environment-based imports, lazy routes, CLI scripts, build configs).
+- Do NOT delete: package.json, lockfiles, tsconfig, vite config, eslint/prettier configs, env example files, migration files, supabase files, any /api code, any auth/billing code, any rendering code, any Remotion code, any database schema.
+- If unsure, quarantine (move) instead of delete.
+
+PROCESS (must follow in this exact order):
+
+PHASE 1 — PROJECT INVENTORY
+1) Create a markdown report at: ./CLEANUP_REPORT.md containing:
+   - Detected framework(s): (Vite/React/Next/Express/etc.)
+   - Entry points: (e.g. src/main.tsx, src/App.tsx, server/index.ts, api routes)
+   - Current build commands from package.json
+   - Current runtime commands (dev/start)
+   - All directories in the repo with 1-line purpose guess
+
+2) Generate a full file map (tree) and include it in CLEANUP_REPORT.md.
+
+PHASE 2 — IMPORT + REFERENCE GRAPH
+3) Build a reference graph by scanning for:
+   - static imports: import ... from '...'
+   - require(...)
+   - dynamic imports: import('...')
+   - router-based lazy loading
+   - file path strings used in code (e.g. fs.readFile, path.join)
+   - Remotion composition registration
+   - Supabase edge function names and routes
+   - Express routes and middleware references
+
+4) In CLEANUP_REPORT.md, list:
+   - “Definitely used files” (directly reachable from entry points)
+   - “Possibly used files” (dynamic/indirect references)
+   - “Unreferenced files” (no references found)
+
+PHASE 3 — SAFE QUARANTINE (NO DELETION YET)
+5) Create a folder: ./__quarantine__/YYYY-MM-DD_cleanup/
+6) Move ONLY “Unreferenced files” into quarantine, preserving folder structure inside quarantine.
+   - Do NOT move anything inside:
+     - src/api, src/services, src/remotion, src/auth, src/billing, supabase/, migrations/, public/, assets/ (unless clearly unused)
+   - Do NOT move anything with “routes”, “schema”, “render”, “auth”, “billing”, “stripe”, “supabase”, “remotion”, “ffmpeg” in the path/name.
+
+7) After moves, update CLEANUP_REPORT.md with:
+   - list of moved files (old path -> new path)
+   - reason each was marked unreferenced
+
+PHASE 4 — VERIFY NOTHING BROKE
+8) Run:
+   - npm install (if needed)
+   - npm run build
+   - npm run test (if exists)
+   - npm run lint (if exists)
+   - start the dev server and ensure key pages load without errors:
+     - landing page
+     - login flow
+     - dashboard
+     - pricing/checkout page
+     - render endpoint still responds
+   - If there is a backend, hit /health or equivalent if present.
+
+9) If ANY error happens:
+   - stop and rollback the last moved batch
+   - document the file(s) required
+   - reclassify them as “Possibly used” and keep them out of quarantine
+
+PHASE 5 — FINAL DELETE (ONLY AFTER VERIFICATION)
+10) Only if build/tests pass AND core pages work:
+   - delete the quarantined files
+   - BUT keep the quarantine folder for 24 hours by renaming it to:
+     ./__quarantine__/SAFE_DELETE_READY/
+   - Add a final section to CLEANUP_REPORT.md:
+     - “Deleted files list”
+     - “Commands executed”
+     - “Verification results”
+
+QUALITY BAR:
+- The project must be faster to navigate and easier to maintain.
+- Remove duplicate/old pipelines, unused components, dead experiments, and leftover sample/demo files.
+- Keep production-critical code intact.
+
+Start now by generating CLEANUP_REPORT.md and the reference graph.

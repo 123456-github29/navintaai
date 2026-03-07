@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Video Website Template</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS Variables for easy theming */
+        :root {
+            --bg-color: #ffffff;
+            --text-main: #111111;
+            --text-muted: #666666;
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+            --radius-large: 24px;
+            --radius-pill: 9999px;
+            --button-bg: #1a1a1a;
+            --button-text: #ffffff;
+        }
+
+        /* Base Resets */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            font-weight: 500;
+            letter-spacing: -0.02em;
+        }
+
+        .serif-heading {
+            font-family: var(--font-serif);
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        /* Layout & Utility */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .section-padding {
+            padding: 100px 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            padding: 12px 24px;
+            border-radius: var(--radius-pill);
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid #ddd;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 48px;
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Hero Splash (Image 1) */
+        .hero-splash {
+            height: 60vh;
+            margin: 24px 48px;
+            border-radius: var(--radius-large);
+            background: radial-gradient(circle at 20% 20%, #fff7d6, transparent 40%),
+                        radial-gradient(circle at 80% 80%, #ffc6b3, transparent 40%),
+                        radial-gradient(circle at 50% 50%, #f0f4ff, transparent 60%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+        }
+
+        .hero-logo-large {
+            font-size: 4rem;
+            font-weight: 600;
+            letter-spacing: -0.04em;
+        }
+
+        /* Logo Carousel */
+        .logo-carousel {
+            text-align: center;
+            padding: 60px 0;
+        }
+        
+        .logo-carousel p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+
+        .logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 60px;
+            flex-wrap: wrap;
+            opacity: 0.7;
+        }
+
+        /* Feature Section (Image 2 & 3) */
+        .feature-header {
+            max-width: 600px;
+            margin-bottom: 60px;
+        }
+
+        .feature-header h2 {
+            font-size: 3rem;
+            line-height: 1.1;
+            margin-bottom: 24px;
+        }
+
+        .feature-header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        .feature-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .card {
+            background: #f9f9f9;
+            border-radius: var(--radius-large);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-bg-gradient {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(180deg, #e0f2fe 0%, #a5f3fc 100%);
+            z-index: 1;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 2;
+            margin-top: auto;
+        }
+
+        .prompt-box {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 16px 24px;
+            border-radius: var(--radius-pill);
+            backdrop-filter: blur(10px);
+            display: inline-block;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        /* Research Section (Image 4) */
+        .research-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: radial-gradient(circle at center, #dcfce7, transparent 70%);
+            padding: 120px 48px;
+            border-radius: var(--radius-large);
+            margin: 48px;
+        }
+
+        .research-section h2 {
+            font-size: 2.5rem;
+            max-width: 400px;
+            line-height: 1.2;
+        }
+
+        .research-card {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        }
+
+        /* Video Culture Section (Image 5) */
+        .culture-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 48px;
+        }
+
+        .culture-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+
+        .culture-header p {
+            color: var(--text-muted);
+            max-width: 500px;
+        }
+
+        .video-grid {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            padding-bottom: 24px;
+        }
+
+        .video-thumb {
+            min-width: 250px;
+            height: 400px;
+            background-color: #eee;
+            border-radius: 16px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        /* Centered CTA with Serif (Images 6, 7, 9) */
+        .serif-cta {
+            text-align: center;
+            padding: 160px 24px;
+            background: radial-gradient(circle at 80% 50%, #e0f2fe, transparent 40%),
+                        radial-gradient(circle at 20% 50%, #ffedd5, transparent 40%);
+            margin: 48px;
+            border-radius: var(--radius-large);
+        }
+
+        .serif-cta h2 {
+            font-size: 4rem;
+            margin-bottom: 24px;
+            color: var(--text-main);
+        }
+
+        .serif-cta p {
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 0 auto 32px auto;
+        }
+
+        /* Overlapping UI Section (Image 8) */
+        .split-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+        }
+
+        .mockup-container {
+            position: relative;
+            height: 500px;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            border-radius: var(--radius-large);
+        }
+
+        /* Stats Section (Image 10) */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            text-align: center;
+            gap: 32px;
+            padding: 80px 0;
+        }
+
+        .stat-item h3 {
+            font-size: 3rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .stat-item p {
+            font-size: 1.5rem;
+            color: #ccc;
+        }
+
+        /* Responsive Tweaks */
+        @media (max-width: 768px) {
+            .feature-cards, .split-section {
+                grid-template-columns: 1fr;
+            }
+            .research-section {
+                flex-direction: column;
+                gap: 48px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .nav-links {
+                display: none;
+            }
+            .serif-cta h2 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            Mirage
+        </div>
+        <div class="nav-links">
+            <a href="#">Products ⌄</a>
+            <a href="#">Solutions ⌄</a>
+            <a href="#">Research</a>
+            <a href="#">Resources ⌄</a>
+        </div>
+        <a href="#" class="btn btn-outline">Get started</a>
+    </nav>
+
+    <section class="hero-splash">
+        <div class="hero-logo-large">
+            Mirage
+        </div>
+    </section>
+
+    <div class="container">
+        <section class="logo-carousel">
+            <p>Trusted by the world's fastest-growing companies.</p>
+            <div class="logos">
+                <h3>COMPASS</h3>
+                <h3>InStyle</h3>
+                <h3>FOX</h3>
+                <h3>HARVARD</h3>
+            </div>
+        </section>
+
+        <section class="section-padding">
+            <div class="feature-header">
+                <h2>Create videos you're proud to share with Captions.</h2>
+                <p>Videos are now as easy as typing. Use <a href="#" style="text-decoration: underline;">our app</a> to generate a new video from scratch, then use simple text prompts to edit. You won't need to record live footage or hire editors again.</p>
+            </div>
+
+            <div class="feature-cards">
+                <div>
+                    <div class="card">
+                        <div class="card-bg-gradient"></div>
+                        <div class="card-content">
+                            <div class="prompt-box">a brunette woman speaking expressively ⚪</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 24px;">
+                        <h3 style="margin-bottom: 8px;">Generate new videos</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;">Just describe your idea, and our AI will generate the footage you need. Make videos from selfies or generate an AI actor to do the talking for you.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card" style="background-image: url('https://images.unsplash.com/photo-1516280440503-625ee96fa9e0?auto=format&fit=crop&q=80'); background-size: cover; background-position: center;">
+                        <div class="card-content">
+                            <div class="prompt-box" style="margin-left: 40px;">Add a zoom and a transition</div><br>
+                            <div class="prompt-box">Thinking...</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 24px;">
+                        <h3 style="margin-bottom: 8px;">Edit like a pro</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;">Use simple commands to direct your edits. Change pacing, add transitions, or add graphics—all with text. It's like having an editor on call, 24/7.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section class="research-section">
+        <h2>Engaging videos, made possible by frontier research.</h2>
+        <div class="research-card">
+            <p style="font-size: 0.95rem; margin-bottom: 24px;">Our proprietary foundation models are trained specifically on the fast-paced language of social video. This gives our models a native understanding of pacing and engagement, resulting in content that feels authentic, not artificial.</p>
+            <a href="#" class="btn">Learn more &rarr;</a>
+        </div>
+    </section>
+
+    <div class="container section-padding">
+        <div class="culture-header">
+            <div>
+                <h2>Video at the speed of culture.</h2>
+                <p>Make a steady stream of high-quality videos that look and feel native to platforms like TikTok, Instagram, and YouTube.</p>
+            </div>
+            <a href="#" class="btn">Get Captions &rarr;</a>
+        </div>
+        
+        <div class="video-grid">
+            <div class="video-thumb" style="background-color: #e5e5e5;"></div>
+            <div class="video-thumb" style="background-color: #d4d4d4;"></div>
+            <div class="video-thumb" style="background-color: #c9ebd4;"></div> <div class="video-thumb" style="background-color: #d4d4d4;"></div>
+        </div>
+    </div>
+
+    <section class="serif-cta">
+        <h2 class="serif-heading">Talk to our team</h2>
+        <p>We'll partner with you to develop a custom package for your team's goals and video workflow. To get started, <a href="#" style="text-decoration: underline;">book a demo</a>.</p>
+    </section>
+
+    <div class="container section-padding">
+        <div class="split-section">
+            <div class="mockup-container">
+                </div>
+            <div>
+                <div style="display: flex; gap: 16px; margin-bottom: 24px; font-size: 0.9rem; border-bottom: 1px solid #eee; padding-bottom: 16px;">
+                    <strong>Performance marketing</strong>
+                    <span style="color: #999;">Social assets</span>
+                    <span style="color: #999;">Thought leadership</span>
+                    <span style="color: #999;">SEO</span>
+                </div>
+                <h2 style="font-size: 2.5rem; margin-bottom: 16px;">Test more, win more.</h2>
+                <p style="color: var(--text-muted);">Don't let production bottlenecks limit your results. In Captions, you can generate hundreds of video variations in the time it'd usually take to brief a single one. It's easy to adjust details like hooks and backgrounds to iterate fast.</p>
+            </div>
+        </div>
+    </div>
+
+    <section class="serif-cta" style="background: radial-gradient(circle at 70% 80%, #ffedd5, transparent 50%), radial-gradient(circle at 30% 20%, #e0f2fe, transparent 50%);">
+        <h2 class="serif-heading" style="font-size: 5rem;">Your next video is<br>ready.</h2>
+        <a href="#" class="btn" style="margin-top: 24px;">Get Captions</a>
+    </section>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <h3>100K+</h3>
+                <p>Daily users</p>
+            </div>
+            <div class="stat-item">
+                <h3>20M</h3>
+                <p>Creators and<br>businesses</p>
+            </div>
+            <div class="stat-item">
+                <h3>3M+</h3>
+                <p>Monthly videos</p>
+            </div>
+        </div>
+
+        <section class="logo-carousel" style="padding-top: 0;">
+            <p style="font-size: 0.9rem; margin-bottom: 24px;">As seen in:</p>
+            <div class="logos" style="gap: 40px; justify-content: space-around;">
+                <h4>CNBC</h4>
+                <h4 style="font-family: 'Playfair Display', serif; font-style: italic;">The New York Times</h4>
+                <h4>AXIOS</h4>
+                <h4>Bloomberg</h4>
+                <h4>TechCrunch</h4>
+            </div>
+        </section>
+    </div>
+
+</body>
+</html>

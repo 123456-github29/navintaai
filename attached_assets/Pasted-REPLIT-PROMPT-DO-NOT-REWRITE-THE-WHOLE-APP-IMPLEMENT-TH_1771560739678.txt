@@ -1,0 +1,345 @@
+REPLIT PROMPT (DO NOT REWRITE THE WHOLE APP — IMPLEMENT THIS CLEANLY AND PRODUCTION-GRADE)
+
+Goal:
+Make Navinta AI’s new Remotion-based rendering pipeline FULLY WORKING end-to-end in the existing app:
+User records clips → clips stored in Supabase Storage → backend generates an EditDecisionJSON (EDL) → preview render (fast) → user tweaks style → final export render (HQ) → video saved to Library with signed download URL.
+All gating must be enforced server-side based on Stripe plan entitlements. Must be secure and scalable.
+
+Hard requirements:
+- Keep current UI fonts/colors as-is. Do not redesign UI.
+- Do NOT store video blobs/base64 in the database anymore. Store files in Supabase Storage (or existing storage) and store metadata + storage path.
+- Rendering must be async (job queue). No long requests that time out.
+- Remotion bundle must be cached and reused.
+- All “Pro/Studio” features must be enforced on backend (never frontend-only).
+- Provide a Preview Edit step before Export so captions/styles can be changed BEFORE final render.
+- Add watermark to preview for free tier, and block HQ export unless user has paid plan.
+- Use signed URLs for playback/download; update CSP if needed.
+- Ensure webhooks verify raw body for Stripe.
+
+Deliverables:
+1) Data model + storage changes
+2) New endpoints + worker queue for rendering
+3) CinematographerAgent v1 (rules-based EDL generator)
+4) Preview UI flow and style-tuning controls
+5) Server-side plan gating + watermark
+6) Comprehensive logging + error handling
+
+================================================================================
+A) STORAGE + DB (CLIPS AND VIDEOS)
+================================================================================
+
+1) Create/confirm Supabase Storage buckets:
+- bucket: clips (private)
+- bucket: renders (private)
+- optional: thumbs (public or private)
+
+2) Update Clip saving flow:
+Frontend: when user clicks Save Shot, upload the recorded Blob directly to Supabase Storage.
+- Use a unique path: clips/{userId}/{postId}/{clipId}.webm
+- Save clip record in DB with:
+  - id (uuid)
+  - user_id
+  - post_id
+  - shot_id
+  - duration_seconds
+  - storage_bucket = "clips"
+  - storage_path = "clips/{userId}/{postId}/{clipId}.webm"
+  - mime_type
+  - created_at
+
+Remove legacy base64 videoData column usage. If it exists, keep for backward compatibility but stop writing to it.
+
+3) Update Videos table:
+Store rendered output metadata:
+- id
+- user_id
+- post_id
+- title
+- storage_bucket = "renders"
+- storage_path = "renders/{userId}/{videoId}.mp4"
+- duration_seconds
+- aspect_ratio
+- created_at
+- status: queued|rendering|ready|failed
+- last_error (nullable)
+- edl_json (nullable, JSONB) store final EDL for reproducibility
+
+================================================================================
+B) AUTH + SIGNED URL HELPERS (SECURE PLAYBACK)
+================================================================================
+
+Implement backend utilities:
+- getSignedClipUrl(userId, storage_path): returns short-lived signed URL (e.g., 10 minutes)
+- getSignedRenderUrl(userId, storage_path): same
+
+Security:
+- Never expose service role key to frontend.
+- Frontend uses supabase anon for uploading clips with RLS policies.
+- Backend uses service role to sign URLs.
+
+Fix CSP:
+Update site CSP to allow media-src for Supabase signed URLs:
+media-src 'self' blob: data: https://*.supabase.co;
+connect-src add https://*.supabase.co;
+(Do this only if current CSP blocks playback.)
+
+================================================================================
+C) PLAN ENTITLEMENTS (STRIPE → DB → BACKEND GATING)
+================================================================================
+
+1) Confirm entitlements table:
+user_entitlements:
+- user_id (pk)
+- plan (free|starter|pro|studio)
+- status (active|past_due|canceled|trialing)
+- current_period_end
+- updated_at
+
+2) Ensure Stripe webhook updates entitlements:
+Handle events:
+- checkout.session.completed
+- customer.subscription.created
+- customer.subscription.updated
+- customer.subscription.deleted
+- invoice.paid  (IMPORTANT)
+- invoice.payment_failed
+
+3) CRITICAL: Fix webhook raw body verification
+In Express:
+- Use express.raw({ type: 'application/json' }) ONLY for webhook route
+- Do not JSON parse before stripe.webhooks.constructEvent
+
+4) Backend gating rules:
+Define entitlement capabilities:
+- free:
+  - preview render allowed (watermarked, lower bitrate, limited styles)
+  - HQ export blocked
+- starter:
+  - HQ export allowed
+  - basic caption packs
+- pro:
+  - HQ export allowed
+  - all caption packs + better transitions + higher bitrate
+- studio:
+  - HQ export allowed
+  - all packs + multi-aspect exports + priority render queue
+
+Enforce at endpoints (server-side):
+- /api/render/preview : allowed for all logged-in users, but watermarked for free
+- /api/render/export : allowed only if plan != free and status == active/trialing
+Also enforce limits (daily render caps) server-side.
+
+================================================================================
+D) JOB QUEUE + WORKER (ASYNC RENDER)
+================================================================================
+
+Implement BullMQ (Redis) or any supported queue in this project.
+
+1) Create jobs:
+RenderJob payload:
+- jobId
+- userId
+- postId
+- videoId (for export) OR previewId
+- mode: "preview" | "export"
+- edl: EditDecisionJSON
+- aspectRatio: 9:16 | 1:1 | 16:9
+- watermark: boolean
+- qualityPreset: "preview" | "hq"
+
+2) New endpoints:
+POST /api/posts/:postId/preview
+- Requires auth
+- Loads clips for postId
+- Generates EDL via CinematographerAgent v1
+- Applies default style packs
+- Enforces plan: free => watermark true + preview quality
+- Enqueue job
+- Returns { jobId }
+
+POST /api/posts/:postId/export
+- Requires auth
+- Checks entitlements (must be paid + active/trialing)
+- Loads latest EDL from DB (or regenerates if missing)
+- Enqueue HQ export job
+- Returns { jobId }
+
+GET /api/render-jobs/:jobId
+- Requires auth
+- Returns { status, progress, signedUrl? , error? }
+
+3) Worker responsibilities:
+- Bundle Remotion once (cached)
+- Render with Remotion using inputProps { edl, assetMap, packs }
+- For preview: lower resolution/bitrate/faster
+- For export: HQ settings (1080x1920, high bitrate, AAC audio, etc.)
+- If watermark true: add watermark overlay layer in Remotion composition
+- Upload mp4 to Supabase Storage renders bucket at storage_path
+- Update videos table status + error fields
+- Emit progress updates to queue (progress %)
+
+================================================================================
+E) CINEMATOGRAPHERAGENT V1 (RULE-BASED “PRO EDITS” NOW)
+================================================================================
+
+Create src/agents/cinematographerAgent.ts that produces EditDecisionJSON from real clips.
+
+Input:
+- clips[]: each has storage_path, duration_seconds, shot metadata
+- post: includes title, shotList, musicVibe, etc.
+- userStyle: aspect ratio target and style selections
+
+Output:
+- EditDecisionJSON that:
+  1) Auto-trims buffer:
+     - trimStartFrames = 0.25s * fps
+     - trimEndFrames = 0.25s * fps (implemented by shortening endFrame)
+  2) Adds subtle camera motion per segment:
+     - talking-head: slow-zoom-in with intensity 0.15–0.25
+  3) Adds smooth transitions:
+     - crossfade or blur-dissolve 8–12 frames
+  4) Adds basic color preset per plan:
+     - free/starter: "clean"
+     - pro/studio: allow "vivid" or "cinematic"
+  5) Captions:
+     - Use existing transcription pipeline OR placeholder for now:
+       - If transcript exists: generate caption chunks 2–6 words each
+       - If not: still allow rendering without captions
+     - Use karaoke highlight style for pro/studio; simple pop-in for free/starter
+
+Important:
+- Validate output against EditDecisionJSONSchema
+- Return deterministic, consistent results (no randomness unless seeded)
+
+Asset Map:
+- Build assetMap { assetId: signedUrl } for each clip
+- assetId should be stable: clip.id
+
+================================================================================
+F) REMOTION COMPOSITION LAYERS (MAKE IT ACTUALLY VISIBLE)
+================================================================================
+
+Implement these Remotion components fully:
+
+1) MainComposition:
+- Map tracks.video into layered <Video /> segments:
+  - Use <Sequence from startFrame durationInFrames=...> for each segment
+  - Apply trimStart by using startFrom in Remotion Video or by cutting via Remotion props
+  - Apply camera motion (scale/translate) via CSS transform based on frame
+  - Apply color preset via CSS filter (or LUT approach later)
+
+2) TransitionLayer:
+- At each transition.atFrame:
+  - Crossfade between segments OR blur dissolve (simple CSS opacity + blur)
+  - Must not look jarring.
+
+3) CaptionTrack:
+- Render captions word-by-word or chunk-by-chunk
+- Respect stylePackId:
+  - Use presets.ts packs
+  - Add shadow, outline, animation types
+- Karaoke: highlight current word by time mapping (frame-based)
+- Ensure captions are within safe area for all aspect ratios.
+
+4) OverlayLayer:
+- For now implement watermark overlay and simple decorative overlays
+- Watermark: “Navinta AI” bottom-right with low opacity, non-intrusive but visible
+- Later: emoji overlays and b-roll tracks (keep placeholders but structured)
+
+================================================================================
+G) FRONTEND FLOW (PREVIEW EDIT → EXPORT)
+================================================================================
+
+Add a “Preview Edit” step in the app:
+- After user finishes recording shots, show button: “Preview Edit”
+- Clicking it calls POST /api/posts/:postId/preview
+- Show a render progress UI that polls GET /api/render-jobs/:jobId
+- When ready, play the preview video with signed URL
+
+Add style tuning controls on Preview page:
+- Caption style dropdown (limited by plan)
+- Caption size slider
+- Transition dropdown
+- Color preset dropdown
+- “Trim pauses more/less” slider (maps to trim values for v1)
+
+When user changes settings:
+- regenerate EDL with new style selection
+- enqueue another preview render (debounced)
+
+Export:
+- “Export HQ” button calls POST /api/posts/:postId/export
+- If free plan: show upgrade modal and block
+- If allowed: show progress → once ready, route to Library and show the finished video card.
+
+Library:
+- Display video cards with signed URLs
+- Ensure CSP allows playback
+- Add “Download” button hitting backend endpoint that returns a signed download link.
+
+================================================================================
+H) FIX KNOWN BUGS / RELIABILITY
+================================================================================
+
+1) Fix “Invalid JWT” on Supabase Edge Function checkout:
+- Ensure frontend includes Authorization: Bearer <access_token> when calling functions
+- Ensure supabase.functions.invoke() uses the current session token
+- Add retry logic if token refresh happens
+
+2) Fix “video playback error / corrupted”:
+- Ensure recorder uses supported mimeType and file extension matches:
+  - if webm then .webm
+- Ensure uploaded blob is complete:
+  - wait for MediaRecorder.onstop to finish before enabling Save
+- On server, never “base64 decode to file” for new clips.
+
+3) Add robust logging:
+- Add request IDs
+- Log job lifecycle with userId/postId/videoId
+- Capture render errors and store in DB last_error
+
+================================================================================
+I) SECURITY CHECKLIST (IMPLEMENT)
+================================================================================
+
+- Do not expose Supabase service role key to frontend
+- Only anon key in EXPO_PUBLIC / VITE public envs
+- RLS enabled for clips metadata and storage objects:
+  - Users can only read/write their own clip records
+  - Storage policies restrict clip object access by user folder prefix
+- Signed URLs generated server-side for playback
+- Stripe webhook verifies raw body + signature secret
+- Rate limit render endpoints and uploads
+- Validate all EDL payloads with zod schema
+- Sanitize strings in captions and overlays to prevent injection
+- Ensure CORS is locked down to navinta.org
+
+================================================================================
+J) FINAL ACCEPTANCE TESTS (MUST PASS)
+================================================================================
+
+1) Record a clip → Save Shot:
+- clip uploads to Supabase Storage
+- DB record contains storage_path and NOT base64 video
+
+2) Preview Edit:
+- preview job created
+- job completes
+- preview video plays in browser
+- free plan has watermark
+
+3) Style changes:
+- changing caption style triggers new preview render
+- captions visibly change
+
+4) Export HQ:
+- free plan blocked
+- paid plan exports HQ and saves to Library
+- playback works
+- download works
+
+5) Stripe events:
+- subscription upgrade updates dashboard plan label within 5 seconds (via refetch)
+- cancel subscription updates entitlements and blocks export
+
+Implement all the above with clean code, minimal changes to existing UI styles, and do not remove existing features unless they conflict with this pipeline. Make sure the app is stable and scalable.

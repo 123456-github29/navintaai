@@ -1,0 +1,175 @@
+ROLE
+You are a world-class creative director, motion designer, and frontend engineer.
+You are designing a cinematic, Apple-level, GSAP-powered experience for navinta.org.
+You have full creative freedom, but every animation must serve meaning and clarity.
+Nothing should feel gimmicky, random, or AI-generated.
+
+⸻
+
+CORE CONCEPT
+Navinta is an AI-powered director.
+The site should feel like a film being directed in real time.
+The user is not browsing a site — they are entering a studio.
+
+Use animation to communicate:
+	•	intention
+	•	control
+	•	flow
+	•	confidence
+	•	professionalism
+
+⸻
+
+GLOBAL RULES
+	•	Use GSAP + ScrollTrigger everywhere
+	•	No neon, no gradients, no glow
+	•	No random colors
+	•	No greys
+	•	Use black, white, and the existing Navinta palette only
+	•	Motion > color
+	•	Spacing > decoration
+	•	Rhythm > speed
+	•	Everything should breathe
+	•	If unsure, make it slower and more subtle
+	•	Prefer depth, parallax, and timing over effects
+
+⸻
+
+ADD A CINEMATIC CLAPPERBOARD INTRO (DO NOT REPLACE HERO)
+
+Create a full-screen overlay that plays ONCE per session:
+	1.	Screen loads → silence, stillness, focus
+	2.	Minimal SVG clapperboard fades in center
+	3.	Clapper arm opens slowly (precision, weight)
+	4.	As user scrolls or after 1.5s:
+	•	arm closes with a crisp snap
+	•	micro camera shake (1–2px)
+	•	subtle soundless impact moment
+	5.	Overlay dissolves into thin lines / particles
+	6.	Underlying hero animates in as if the scene just started
+
+This is the “Action!” moment of the site.
+
+Remove overlay from DOM after animation completes.
+
+⸻
+
+HERO SECTION ANIMATION (VERY IMPORTANT)
+
+Make hero feel alive:
+	•	NAVINTA letters subtly drift in from different depths
+	•	Letters slightly twist and align into perfect form
+	•	Subtitle text (“AI-powered director”) types in slowly
+	•	As user scrolls:
+	•	hero compresses vertically like a film frame
+	•	text moves to top corner like a director slate
+	•	phone / UI elements begin to appear
+
+⸻
+
+SCROLL EXPERIENCE (MOST IMPORTANT PART)
+
+As user scrolls:
+	•	information slides in from sides like scene cards
+	•	text enters like film credits (slow, elegant)
+	•	images reveal through masks (like editing timeline)
+	•	sections snap into place like cuts in editing software
+	•	use subtle motion blur for transitions
+	•	use staggered animation to create rhythm
+
+Every section should feel like a new scene.
+
+⸻
+
+THREE.JS / VISUAL MOMENTS (OPTIONAL BUT RECOMMENDED)
+
+Add 1–2 wow moments only:
+
+Example ideas:
+	•	Phone wireframe that morphs into timeline
+	•	Clips flying into place on scroll
+	•	Text turning into edit cuts
+	•	UI assembling itself from particles
+	•	A clapperboard arm rotating in 3D space on section transitions
+
+Use these sparingly. They are accents, not the meal.
+
+⸻
+
+MICROINTERACTIONS
+
+Every button:
+	•	responds with subtle scale + shadow
+	•	feels like physical object
+	•	slight delay before hover animation completes
+
+Every card:
+	•	lifts on hover
+	•	reveals depth
+	•	never flashes or jumps
+
+⸻
+
+SPACING & LAYOUT (FIX ALL CRAMPING)
+	•	Increase vertical spacing everywhere
+	•	Add breathing room between sections
+	•	Nothing touches edges
+	•	Use max-width consistently
+	•	Center content intentionally
+	•	Fix left-heavy layouts
+	•	Notes, side panels, controls MUST use full width of screen
+
+If something looks crowded, it is wrong.
+
+⸻
+
+CLEANUP PASS (IMPORTANT)
+
+Remove:
+	•	technical clutter
+	•	dev-looking elements
+	•	unnecessary labels
+	•	anything that feels like a dashboard
+
+Replace with:
+	•	simple hierarchy
+	•	confident typography
+	•	intentional silence (white space)
+
+⸻
+
+QUALITY BAR
+
+If it looks like:
+	•	Replit generated it → redo
+	•	Tailwind demo → redo
+	•	AI template → redo
+	•	Startup landing page → redo
+
+Target:
+	•	Apple
+	•	Linear
+	•	Stripe
+	•	Framer
+	•	GSAP homepage quality
+
+⸻
+
+IMPLEMENTATION
+	•	Use GSAP timelines (not inline animations)
+	•	Use reusable animation helpers
+	•	Use ScrollTrigger for all sections
+	•	Respect prefers-reduced-motion
+	•	Ensure animations never block usability
+	•	Test on mobile and desktop
+
+⸻
+
+FINAL FEELING TEST
+
+If a user lands on navinta.org:
+They should feel:
+“I’m about to make something great.”
+
+Not:
+“I’m using a tool.”

@@ -1,0 +1,34 @@
+I need to fix my payment flow and add a 'Cancel Plan' feature. IMPORTANT: Do not change or rename any existing environment variables or database column names. >
+
+Audit: First, read my .env file and my Supabase schema to identify my current Stripe keys and User table columns. Use these exact names in all new code.
+
+Fix Buttons: Move the checkout logic from the Pricing page into a reusable component called PaymentButton.tsx. It should call a server-side API so that the payment cards work on any page of the site.
+
+The 'Cancel' Feature: Implement a route /api/portal that uses the Stripe Billing Portal. This will allow users to cancel or manage their plans. Add a 'Manage Subscription' button to the dashboard.
+
+Fix State Sync: Ensure that my /api/webhooks/stripe route (or create one) updates my Supabase table using my existing column names whenever a payment succeeds or a subscription is canceled.
+
+Force UI Update: Update the frontend to fetch the user's tier directly from Supabase on every page load so the 'Pro' status shows up immediately after payment."
+
+Why your buttons are failing outside the pricing page
+The reason your buttons don't work elsewhere is likely a relative path or missing initialization issue.
+
+The Problem: Your pricing page probably has a script or a function that isn't being exported. When you copy the "card" to another page, the "Buy Now" button is essentially calling a function that doesn't exist in that page's scope.
+
+The Fix: By moving the logic to an API Route (like /api/checkout), the button only needs to know one thing: "Send this request to the server." The server handles the rest, regardless of what page the user is on.
+
+How "Cancel Plan" works with your existing setup
+Since you want to keep your current variables, we will use the Stripe Billing Portal. It’s the easiest way to add a "Cancel" button without building 10 new pages.
+
+The logic flow:
+User clicks "Manage Plan" in your app.
+
+Your Server sends their existing stripe_customer_id (from your database) to Stripe.
+
+Stripe generates a unique, temporary link.
+
+User is sent to that link, where they can click Cancel.
+
+Webhook (The "Sync"): Stripe sends a message back to your /api/webhooks saying "User X canceled."
+
+Supabase Update: Your code updates your existing tier column to 'free'.

@@ -1,0 +1,203 @@
+You are a world-class creative technologist + motion designer + product designer, hired to make Navinta’s landing page feel like a premium, cinematic, Apple-level product.
+
+Your goal is NOT to add clutter.
+Your goal is to add life, rhythm, presence, and intention.
+
+This is NOT a redesign.
+This is an elevation pass.
+
+⸻
+
+Core direction (very important)
+
+Navinta is an AI-powered director, not a tool.
+
+Everything on the page should feel like:
+	•	calm confidence
+	•	motion with purpose
+	•	subtle drama
+	•	cinematic pacing
+	•	intentional emptiness (negative space is allowed)
+	•	no vibe-coded gradients
+	•	no random colors
+	•	no childish motion
+	•	no over-decoration
+
+Think: Apple + Opus Clip + Linear + Stripe + GSAP showcase
+But adapted to video creation + directing
+
+⸻
+
+1. Hero Section (make it feel alive)
+
+Keep the existing hero structure, but:
+
+Add:
+	•	A clapperboard animation that subtly enters at page load
+	•	It can rotate once slowly
+	•	Then rest near the logo or headline
+	•	When scrolling, it should slightly parallax or tilt
+	•	Animate the main headline text:
+	•	Letters slightly separate on load
+	•	Then gently settle into place
+	•	On scroll, text morphs into:
+“AI-Powered Directing”
+	•	Add subtle film-grain overlay (very faint)
+	•	Add slow ambient motion (background particles or light noise, NOT obvious)
+
+Motion rules:
+	•	Everything eases
+	•	No bounce
+	•	No spring
+	•	No flashy effects
+	•	Smooth GSAP timelines only
+	•	Everything should feel like a film opening
+
+⸻
+
+2. Scroll Experience (VERY important)
+
+As the user scrolls:
+	•	Each section should feel like a scene change
+	•	Use:
+	•	fade + slide
+	•	slight scale-in
+	•	directional motion
+	•	No section should appear instantly
+	•	Use GSAP ScrollTrigger for everything
+
+⸻
+
+3. “How It Works” Section (make it cinematic)
+
+Replace static cards with animated sequence blocks:
+
+Step 1: Plan
+	•	Text slides in from left
+	•	Icons fade up from blur
+	•	Subtle background motion
+
+Step 2: Record
+	•	Phone frame animates in
+	•	Recording ring pulses once
+	•	Camera UI subtly animates
+
+Step 3: Edit
+	•	Clips visually “snap together”
+	•	Captions slide in line by line
+	•	B-roll flashes for 1–2 seconds
+
+Step 4: Publish
+	•	Video frame zooms slightly
+	•	Export animation
+	•	Calm confirmation motion
+
+Each step should feel like a short scene, not a box.
+
+⸻
+
+4. Add “Human Proof” (this is why site feels empty)
+
+Add a section called:
+“Made by real people, not editors”
+	•	Use Pexels stock video
+	•	Show people recording themselves
+	•	Show hands holding phones
+	•	Show creators smiling at camera
+	•	Animate these clips in staggered entry
+	•	Mix video frames: 16:9, 9:16, 1:1
+	•	Each frame should float slightly (micro motion)
+
+This makes the site feel alive and real.
+
+⸻
+
+5. Add a “Director Mindset” Section
+
+This is emotional, not technical:
+
+Use 3–4 large lines of text:
+	•	“You don’t need to edit.”
+	•	“You don’t need to plan.”
+	•	“You don’t need to think like a filmmaker.”
+	•	“Navinta does that for you.”
+
+Animate each line:
+	•	Fade in
+	•	Slight upward motion
+	•	One line per scroll
+
+⸻
+
+6. Add Subtle Color (VERY important)
+
+Right now blue makes it feel vibe-coded. Fix this by:
+	•	Keeping base black / white
+	•	Add very faint color glows behind sections
+	•	deep indigo
+	•	muted teal
+	•	warm neutral highlight
+	•	Use opacity 5–8%
+	•	Never solid colors
+	•	Never gradients across entire sections
+	•	Color should feel like lighting, not paint
+
+⸻
+
+7. Buttons (make them feel premium)
+	•	Buttons should animate on hover:
+	•	slight glow
+	•	slight lift
+	•	slow ease
+	•	Primary button should feel like:
+“this is the only button that matters”
+	•	Secondary buttons fade back
+
+⸻
+
+8. Footer (make it feel complete)
+
+Right now the site ends abruptly.
+
+Add:
+	•	slow fade
+	•	soft background motion
+	•	final message:
+“Built for creators who don’t want to edit.”
+	•	calm, confident close
+
+⸻
+
+9. Global Animation Rules
+
+Use GSAP for:
+	•	all scroll animations
+	•	all entrances
+	•	all transitions
+	•	all text motion
+
+Do NOT:
+	•	use CSS-only animations
+	•	add random effects
+	•	add playful motion
+	•	over-animate icons
+
+Everything should feel like a film, not a website.
+
+⸻
+
+10. Final goal
+
+When someone lands on navinta.org, they should think:
+
+“This is not a startup.
+This is a product.
+This feels expensive.
+This feels intentional.
+This feels like Apple designed it.”
+
+Make it alive, not loud.
+Make it cinematic, not flashy.
+Make it premium, not trendy.
+
+Be creative. You have full freedom.

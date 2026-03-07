@@ -1,0 +1,65 @@
+ROLE:
+You are a world-class frontend engineer and motion designer. Your task is to transform navinta.org into a cinematic, intentional, Apple-level experience using GSAP, ScrollTrigger, and light Three.js usage. This must feel like a directed film sequence, not a website with random animations.
+
+CORE RULES:
+	•	Use GSAP for all motion (no CSS-only animations)
+	•	Use ScrollTrigger to connect sections into one continuous scene
+	•	Animations must explain, guide, and connect the story
+	•	No vibe-coded UI
+	•	No random colors
+	•	No greys
+	•	Use only Navinta brand colors
+	•	Everything must feel intentional, cinematic, premium
+	•	Fix all spacing, alignment, and layout bugs sitewide
+	•	No element should feel accidental or cramped
+	•	All motion must be smooth, elegant, and purposeful
+
+ANIMATION PHILOSOPHY:
+This is not a fade-in website. Each section is a scene. Each scroll is a camera move. Each animation tells the story of how Navinta works.
+
+HERO SECTION (OPENING SCENE):
+Animate the word NAVINTA so letters appear as points of light that connect into letterforms. Letters slightly twist in 3D as the user scrolls. Subtext fades in from depth saying “Your AI-powered director”. Use GSAP timeline. Subtle Y-axis rotation and parallax. No harsh motion.
+
+SCENE 2 – THE PROBLEM:
+As user scrolls, headline slides in from left, supporting lines slide from right. They collide and lock together. Background slightly darkens. Thin lines draw themselves under text. Small dots animate into place.
+
+SCENE 3 – HOW IT WORKS:
+Create a vertical timeline spine. A thin line grows as user scrolls. Each step appears as a node. Each node animates from a different direction (left, right, bottom, depth). Nodes scale from 0.9 to 1, fade from 0 to 1, slight Y movement, soft easing power2.out.
+
+SCENE 4 – PHONE TO EDITOR TRANSFORMATION:
+Create a central phone mockup. As user scrolls, phone rotates slightly, UI morphs into editing interface, clips slide in, timeline grows, captions animate in. This must visually show record → cut → caption → export. Use GSAP transforms, not heavy Three.js.
+
+SCENE 5 – AI POWER MOMENT:
+Text elements slide in from different edges: AI Script, AI Cuts, AI B-roll, AI Captions. Each locks into a grid. Use magnetic easing, slight overshoot, smooth timing.
+
+SCENE 6 – CINEMATIC DETAIL:
+Add subtle floating particles, slow moving background dots, line reveals, soft glow accents, slight camera push on scroll. Keep elegant, not flashy.
+
+MICRO-INTERACTIONS (EVERYWHERE):
+Buttons lift slightly on hover, icons rotate 5–8 degrees, cards scale to 1.02, text underlines draw themselves. Everything should feel alive and touchable.
+
+LAYOUT FIXES:
+Fix spacing issues. Fix crowded sections. Add proper margins. Balance left/right whitespace. Ensure record button is never covered. Use consistent grid system. Nothing should feel accidental.
+
+SCROLL SHOULD FEEL LIKE MUSIC:
+Scroll should feel rhythmic and cinematic. Use scrub: 1 and ease: power2.out on all scroll animations.
+
+DESIGN TONE:
+Elegant. Calm. Confident. Premium. Intentional. No chaos. No clutter. No AI-looking UI.
+
+TECH REQUIREMENTS:
+	•	GSAP + ScrollTrigger only
+	•	Reusable animation hooks
+	•	Clean DOM structure
+	•	No layout shift
+	•	Mobile responsive
+	•	No performance jank
+
+CREATIVE DIRECTION:
+Invent animations related to directing, filming, editing, storytelling. Use clapperboards, frames, timelines, transitions abstractly and elegantly. Everything must visually explain what Navinta does.
+
+GOAL:
+User should think: “This feels like a serious, premium product built by experts.”
+Never: “This looks AI-generated.”
+
+Start implementing now.

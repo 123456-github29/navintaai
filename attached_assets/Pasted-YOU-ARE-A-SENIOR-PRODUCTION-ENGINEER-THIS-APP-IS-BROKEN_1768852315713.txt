@@ -1,0 +1,188 @@
+YOU ARE A SENIOR PRODUCTION ENGINEER.
+THIS APP IS BROKEN BECAUSE VIDEO UPLOAD IS ARCHITECTURALLY WRONG.
+FIX IT PROPERLY, NOT WITH PATCHES.
+
+GOAL:
+Make video recording, saving, playback, and FFmpeg processing work like CapCut / Opus Clip.
+
+RULES:
+- NO base64 video storage anywhere
+- NO video data in JSON
+- NO video data in Postgres
+- ALL videos must be uploaded as real files
+- Use multipart/form-data
+- Store videos in Supabase Storage
+- DB stores only URLs / paths
+- FFmpeg reads real files only
+- Playback uses real URLs
+- This must handle thousands of users
+
+-------------------------
+STEP 1 — FRONTEND FIX
+-------------------------
+
+Replace ALL base64 logic.
+
+In DirectorMode:
+- REMOVE FileReader
+- REMOVE readAsDataURL
+- REMOVE videoData JSON
+
+Instead:
+
+When saving a shot:
+1. Create FormData
+2. Append the Blob directly
+3. POST multipart/form-data
+
+EXACT behavior:
+
+const form = new FormData();
+form.append("file", recordedBlob);
+form.append("postId", postId);
+form.append("shotId", shotId);
+form.append("duration", recordingTime);
+
+await fetch("/api/clips/upload", {
+  method: "POST",
+  body: form,
+});
+
+DO NOT set headers manually.
+Browser will set correct boundary.
+
+-------------------------
+STEP 2 — BACKEND UPLOAD ROUTE
+-------------------------
+
+Create a new endpoint:
+
+POST /api/clips/upload
+
+Use multer memory storage:
+
+- Accept multipart/form-data
+- Require auth
+- Validate fields
+- Reject if no file
+
+Then:
+- Upload file.buffer to Supabase Storage
+- Generate unique filename (uuid)
+- Store ONLY the storage path in DB
+- NEVER store raw video bytes in DB
+
+Example path:
+clips/{userId}/{uuid}.webm
+
+-------------------------
+STEP 3 — SUPABASE STORAGE
+-------------------------
+
+Create bucket: clips
+Set:
+- private bucket
+- signed URLs for playback
+
+Upload with contentType from file.mimetype.
+
+Return:
+{
+  clipUrl,
+  clipPath
+}
+
+-------------------------
+STEP 4 — DATABASE FIX
+-------------------------
+
+Update clips table:
+
+REMOVE:
+- videoData
+- base64
+- bytea
+
+ADD:
+- videoPath TEXT
+- videoUrl TEXT
+
+Migrate existing data safely (ignore old broken clips).
+
+-------------------------
+STEP 5 — PLAYBACK FIX
+-------------------------
+
+When showing clips:
+- Fetch signed URL from Supabase
+- Set video src to URL
+- NEVER use base64 or blob URLs for saved clips
+
+<video src={signedUrl} controls playsInline />
+
+-------------------------
+STEP 6 — FFMPEG FIX
+-------------------------
+
+Before processing:
+- Download file from Supabase Storage to temp folder
+- Verify file exists
+- Verify file size > 0
+- Only then run FFmpeg
+
+FFmpeg input MUST be real file paths.
+
+After processing:
+- Upload final video back to Supabase Storage
+- Store final video path in DB
+
+-------------------------
+STEP 7 — DELETE ALL OLD BASE64 CODE
+-------------------------
+
+Search and delete:
+- readAsDataURL
+- videoData
+- Buffer.from(base64)
+- sanitize video text
+- any base64 handling
+
+Base64 is FOR TEXT ONLY.
+Never video.
+
+-------------------------
+STEP 8 — ADD SAFETY
+-------------------------
+
+- Max upload size (100MB)
+- Validate mimetype video/*
+- Reject empty blobs
+- Rate limit upload route
+- Clean temp files after FFmpeg
+
+-------------------------
+STEP 9 — FINAL TESTS
+-------------------------
+
+After fix:
+- Record clip
+- Save shot
+- Reload page
+- Playback works
+- Export works
+- FFmpeg works
+- No 500 errors
+- No corrupted video
+- No memory leaks
+- No base64 anywhere
+
+-------------------------
+IMPORTANT
+-------------------------
+
+If you try to “patch” this instead of replacing it,
+it will keep breaking forever.
+
+This MUST be done fully.
+
+DO IT NOW.

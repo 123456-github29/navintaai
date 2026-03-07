@@ -1,0 +1,186 @@
+REPLIT PROMPT — FIX “NOT VIRAL” SCRIPTS + FIX SCRIPT READING UX (TELEPROMPTER)
+
+Context:
+Navinta AI currently generates content plans + scripts that feel generic and not optimized for average viewers / virality. Also, the script is shown on the side, forcing creators to look off-camera, which kills watch-time and trust.
+
+Goal:
+1) Make scripts “viral-ready” by upgrading the script-generation system to produce REAL hooks, pacing, pattern interrupts, payoff, and retention-focused structure (not one-liners).
+2) Fix the recording UX by adding a built-in teleprompter overlay (centered near camera) with smart scrolling, chunking, and “eyes-on-lens” behavior — WITHOUT redesigning the entire UI (keep current fonts/colors; only add necessary elements).
+
+================================================================================
+PART 1 — MAKE SCRIPTS VIRAL-READY (SYSTEM CHANGE)
+================================================================================
+
+A) Replace the current script prompt with a VIRAL SCRIPT ENGINE (structured + scored)
+Implement a “ScriptEngine” service with:
+- Input: onboarding answers + plan type + platform (Reels/TikTok/Shorts) + desired length + niche + offer + audience pain points + creator personality + examples (optional)
+- Output: a structured script object:
+  {
+    title,
+    hook,
+    hook_variations[3],
+    beats: [{type, text, on_screen, broll_hint, duration_sec}],
+    payoff,
+    CTA,
+    caption_lines (short),
+    suggested_shots: [{shot_id, shot_type, what_to_show, why}],
+    pacing: {avg_sentence_words, energy_curve},
+    “retention_tools_used”: [...]
+  }
+
+B) Add a SCRIPT QUALITY SCORER (automatic gating)
+Implement a scoring step AFTER script generation. The app should NOT show a script unless it passes a minimum score.
+Create a “ScriptScore” out of 100 using heuristics (no ML training required yet):
+- Hook strength (curiosity gap / strong claim / contrarian opener) 0–20
+- Clarity & simplicity (8th-grade reading level, no jargon) 0–15
+- Pattern interrupts (beat changes every 2–4 seconds) 0–15
+- Payoff clarity (viewer knows why they should care) 0–15
+- Specificity (numbers, real examples, concrete outcomes) 0–15
+- Conversational “human” tone (no generic AI phrasing) 0–10
+- CTA relevance (not spammy) 0–10
+
+If score < 80:
+- auto-regenerate up to 3 times using “fix weaknesses” feedback from scorer
+- if still < 80, show user a lightweight “choose a hook angle” selector to guide it (only 1 step, not 12 questions).
+
+C) Add “Viral Hook Library” as selectable style (small UI addition)
+Add a small step in plan generation:
+“Pick your hook style”
+Options:
+- Curiosity gap (“Nobody tells you this…”)
+- Contrarian (“Stop doing X… do this instead”)
+- Fast value (“In 20 seconds, here’s…”)
+- Story (“I almost ruined X until…”)
+- Proof (“I got X result in Y days…”)
+
+This improves first-try quality without long onboarding.
+
+D) Make scripts longer and timed (fix one-liners)
+Enforce length rules based on user-selected video length:
+- 15s: 45–75 words
+- 30s: 90–140 words
+- 45s: 140–200 words
+- 60s: 200–260 words
+
+Also enforce beat structure:
+- Hook: first 1.0–2.0 seconds
+- Body beats: 3–6 beats
+- Payoff: last 20–30% of runtime
+- CTA: final 2–4 seconds
+
+E) Anti-AI voice cleanup (must implement)
+Create a “HumanizePass” that rewrites:
+- removes “In today’s video…”
+- removes “Let’s dive in…”
+- removes over-formality
+- adds contractions + spoken rhythm
+- adds micro-pauses cues (…)
+- uses short sentences + emphasis
+
+Do NOT rely on a single rewrite prompt. Use a checklist-based pass.
+
+F) Add “Average viewer” targeting
+Adjust the prompt to assume the viewer:
+- has low attention
+- is skeptical
+- wants fast proof
+- needs simple language
+
+Always include:
+- one “proof element” (number, example, result, mistake avoided)
+- one “relatable line” (common frustration)
+- one “pattern interrupt” line (short punchy sentence)
+
+================================================================================
+PART 2 — FIX SCRIPT READING ISSUE (TELEPROMPTER OVERLAY)
+================================================================================
+
+Problem:
+Script on the side makes the creator look away. This kills retention and feels unprofessional.
+
+Solution:
+Implement a “Teleprompter Mode” inside Director/Record screen:
+- Centered overlay near the camera (top-center or center)
+- Large readable text
+- Adjustable speed
+- Auto-scroll synced to speaking pace (v1 = manual speed + tap-to-advance)
+- Chunk-based display (2–3 lines max) to reduce eye movement
+- Mirror option (for front camera)
+- Highlight current line
+- Hands-free controls via keyboard shortcuts (space = pause/play, arrows = next/prev)
+- Mobile-friendly: swipe up/down to advance, tap to pause
+
+A) UI changes (minimal, keep current theme)
+Add:
+- “Teleprompter” toggle button on Director Mode toolbar
+- When ON:
+  - script sidebar collapses OR becomes “Notes”
+  - teleprompter overlay appears on top of camera preview
+
+B) Script formatting for teleprompter
+Convert script beats into teleprompter “cards”:
+- Each beat becomes one card
+- Max 12–16 words per card
+- Add optional (Stage Direction) line in smaller text:
+  ex: “(show phone screen)” or “(pause)”
+
+C) Recording flow improvements
+Add “Eyes-on-Lens Assist”:
+- Put teleprompter text slightly BELOW the camera lens position (so eyes look centered)
+- Add a subtle “lens dot” indicator near the camera for where to look
+- Add “Auto-advance” mode (v1 = timed by expected beat duration)
+- Later: (optional) voice activity detection to auto-advance when silence > 400ms
+
+D) Export script as audio cues (optional but valuable)
+Add “Director Cue Track”:
+- During recording, show a thin progress bar per beat
+- Vibrate cue for mobile (if supported) at beat boundaries
+
+================================================================================
+PART 3 — WHERE TO IMPLEMENT (FILES / COMPONENTS)
+================================================================================
+
+Implement new services:
+- src/services/scriptEngine.ts
+- src/services/scriptScorer.ts
+- src/services/humanizePass.ts
+
+Update existing plan generation:
+- Replace current “generateScript” call with ScriptEngine.generate()
+- Save full structured script object per planned video in DB
+
+Update recording UI:
+- src/components/TeleprompterOverlay.tsx
+- Integrate into Director Mode page:
+  - toggle
+  - speed slider
+  - font size slider
+  - mirror toggle
+  - auto-advance toggle
+
+Update storage:
+- Store “beats” and “teleprompter_cards” so the recording page doesn’t need to re-parse every time.
+
+================================================================================
+PART 4 — ACCEPTANCE TESTS (MUST PASS)
+================================================================================
+
+1) Script quality:
+- For a 30s video, script is 90–140 words, has 3+ beats, a clear payoff, and a strong hook.
+- ScriptScore >= 80 is enforced (auto-regenerates if not).
+
+2) Virality structure:
+- Hook appears within first 2 seconds.
+- At least 1 proof element exists.
+- At least 1 pattern interrupt exists.
+
+3) Teleprompter:
+- Creator can record while looking straight at camera.
+- Script is readable, centered, chunked, and can be controlled with pause/next/prev.
+- Sidebar script no longer required during recording.
+
+4) UX:
+- No major redesign. Current colors/fonts remain unchanged.
+- Teleprompter overlay feels native and premium.
+
+Now implement these changes in the existing project carefully, without breaking current Director Mode, and keep everything secure and production-ready.

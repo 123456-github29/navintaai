@@ -1,0 +1,99 @@
+GET https://navinta.org/api/clips 500 (Internal Server Error)
+(anonymous)	@	index-D9JSSo9v.js:100
+await in (anonymous)		
+a	@	index-D9JSSo9v.js:57
+v	@	index-D9JSSo9v.js:57
+start	@	index-D9JSSo9v.js:57
+fetch	@	index-D9JSSo9v.js:57
+Gf	@	index-D9JSSo9v.js:57
+setOptions	@	index-D9JSSo9v.js:57
+(anonymous)	@	index-D9JSSo9v.js:57
+Mm	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+wa	@	index-D9JSSo9v.js:48
+DD	@	index-D9JSSo9v.js:48
+QD	@	index-D9JSSo9v.js:48
+Wy	@	index-D9JSSo9v.js:48
+j6	@	index-D9JSSo9v.js:48
+Um	@	index-D9JSSo9v.js:48
+XD	@	index-D9JSSo9v.js:48
+_6	@	index-D9JSSo9v.js:48
+x6	@	index-D9JSSo9v.js:48
+FD	@	index-D9JSSo9v.js:48
+rI	@	index-D9JSSo9v.js:48
+U	@	index-D9JSSo9v.js:17
+index-D9JSSo9v.js:100 [queryFn] Response for /api/clips: 500
+index-D9JSSo9v.js:502 [library] Clips state: 
+{isLoading: false, error: '500: ', count: 0, isAuthenticated: true, clips: undefined}
+clips
+: 
+undefined
+count
+: 
+0
+error
+: 
+"500: "
+isAuthenticated
+: 
+true
+isLoading
+: 
+false
+[[Prototype]]
+: 
+Object
+﻿
+

@@ -1,0 +1,237 @@
+ROLE: You are Replit AI working inside my Navinta AI repo. Implement a long-term, production-grade architecture for Auto-Edit using a job queue + worker model (Node API stays fast; Python ML runs async). This must be secure, scalable to thousands of users, and resilient to cold starts. DO NOT break the existing app. Only add/modify what’s needed.
+
+GOAL (HIGH LEVEL)
+1) Web/API (Node) remains the only process required for “Deploy” health checks.
+2) Auto-edit requests enqueue a job immediately and return 202 + jobId.
+3) A separate Worker (Python) consumes jobs from Redis, runs analysis (Whisper + timeline/EDL), writes output to storage (Supabase Storage or S3-compatible), and updates DB job status.
+4) Frontend polls job status and downloads the finished file via a signed URL.
+5) Strict auth: only logged-in users can create jobs and only access their own results.
+6) Implement idempotency and retries; never double-process a job.
+7) Clean separation of concerns: /api = orchestration only, /worker = compute.
+
+STACK / TOOLS
+- Node/TS backend: Express (already), add BullMQ for job queue.
+- Redis: Use Upstash Redis (recommended) OR Replit Redis if available. Prefer Upstash for production. Use URL via env var.
+- Python worker: FastAPI optional for health/debug, but primary is a BullMQ-compatible consumer is Node-based. HOWEVER: BullMQ is Node-only, so do this:
+  - Keep BullMQ in Node to enqueue
+  - Use a Node “worker-runner” (BullMQ Worker) that calls the Python service locally in the worker environment OR spawn Python in that worker container.
+  - Because I want long-term pro architecture, implement: 
+    A) Node “queue-service” (enqueue + status API)
+    B) Python “ml-service” (HTTP API) that does ML work
+    C) Node “worker” (BullMQ Worker) that pulls jobs, calls Python ml-service, updates DB
+- Storage: Supabase Storage bucket “renders” (or existing bucket). Use signed URLs. Do NOT expose service role key to client.
+- DB: Supabase Postgres with RLS enabled. Create tables with RLS policies.
+
+CRITICAL DEPLOYMENT CONSTRAINT
+- The main Replit deployment MUST start only the Node web server on port 5000 (or platform default). Do NOT start Python in the same “start” command.
+- Worker and ML service should be separate processes with separate deploy targets (can be separate Repls). But within this repo, create separate entrypoints and docs so I can deploy them as separate services cleanly.
+
+WHAT TO BUILD (DETAILED TASKS)
+
+A) DATABASE (Supabase)
+Create these tables + policies (SQL migrations or documented SQL in /supabase/migrations):
+1. autoedit_jobs
+   - id uuid pk default gen_random_uuid()
+   - user_id uuid not null references auth.users(id) on delete cascade
+   - status text not null check in ('queued','processing','succeeded','failed','canceled')
+   - progress int not null default 0
+   - input_asset_id text (or uuid) nullable
+   - input_video_url text nullable (store storage path, not signed url)
+   - output_video_path text nullable (storage path)
+   - output_metadata jsonb default '{}'::jsonb
+   - error text nullable
+   - created_at timestamptz default now()
+   - updated_at timestamptz default now()
+
+2. autoedit_assets (optional but preferred)
+   - id uuid pk default gen_random_uuid()
+   - user_id uuid not null
+   - type text check in ('clip','render','broll','audio')
+   - storage_path text not null
+   - mime_type text
+   - duration_ms int
+   - created_at timestamptz default now()
+
+RLS:
+- Enable RLS on both tables.
+- Policy: user can select/insert/update only rows where user_id = auth.uid()
+- Admin updates (worker) must use SERVICE_ROLE key on server side only.
+
+B) ENV VARS / SECRETS
+Add to Replit Secrets (never commit):
+- SUPABASE_URL
+- SUPABASE_ANON_KEY (frontend ok)
+- SUPABASE_SERVICE_ROLE_KEY (server/worker only; never in client build)
+- REDIS_URL (Upstash recommended)
+- REDIS_TOKEN (if separate) OR include in URL
+- AUTOEDIT_WORKER_SECRET (random strong string) used for worker->api auth if needed
+- ML_SERVICE_URL (private URL for ml service)
+- ML_SERVICE_TOKEN (shared secret for worker to call python)
+
+Make sure Vite/React only sees EXPO_PUBLIC_*/VITE_* keys. Ensure service role key is never exposed.
+
+C) NODE BACKEND: QUEUE + API
+1) Install deps:
+- bullmq
+- ioredis (or use built-in bullmq connection)
+- zod (already)
+- @supabase/supabase-js (already)
+- uuid
+
+2) Create /src/queue/redis.ts
+- create Redis connection using REDIS_URL
+- set sensible retryStrategy and keepAlive
+- export connection
+
+3) Create /src/queue/autoedit.queue.ts
+- BullMQ Queue: autoedit
+- default job options:
+  - attempts: 3
+  - backoff: exponential 10s
+  - removeOnComplete: { age: 3600, count: 1000 }
+  - removeOnFail: { age: 86400 }
+
+4) Create /src/api/autoedit.routes.ts
+Endpoints:
+- POST /api/autoedit/jobs
+  - Auth required (Supabase JWT from Authorization: Bearer)
+  - Body: { inputVideoPath: string, options?: { aspectRatio, captionStyle, intensity } }
+  - Validate with zod
+  - Insert row in autoedit_jobs with status='queued'
+  - Enqueue job with jobId = db row id (IMPORTANT: use jobId to ensure idempotency; BullMQ supports jobId)
+  - Return 202 { jobId }
+
+- GET /api/autoedit/jobs/:id
+  - Auth required
+  - Verify job belongs to user
+  - Return { status, progress, outputSignedUrl?, error? }
+  - If succeeded and output_video_path present, create signed URL server-side (service role) with short expiry (e.g. 10 min) and return it.
+
+- POST /api/autoedit/jobs/:id/cancel
+  - Auth required
+  - Mark canceled in DB; attempt to remove from queue if still queued.
+
+IMPORTANT: The API should never do heavy work. Only queue.
+
+5) Auth middleware:
+- Implement robust auth middleware for Node:
+  - Read Authorization header
+  - Verify JWT by calling supabase.auth.getUser(token) using SUPABASE_URL + SUPABASE_ANON_KEY
+  - Attach req.user = { id, email }
+- For DB writes that require service role, use a separate Supabase client with SERVICE_ROLE_KEY but ONLY in backend files and never imported in frontend.
+
+D) NODE WORKER SERVICE (BULLMQ WORKER)
+Create /src/worker/autoedit.worker.ts
+- BullMQ Worker listening to queue "autoedit"
+- Concurrency: start with 2 (configurable env AUTOEDIT_CONCURRENCY)
+- For each job:
+  1) Set DB status='processing', progress=5
+  2) Fetch job row from DB (service role), ensure not canceled
+  3) Construct a signed URL for inputVideoPath (or download it server-side)
+  4) Call Python ML service:
+     - POST { jobId, inputSignedUrl, options }
+     - Header Authorization: Bearer ML_SERVICE_TOKEN
+  5) ML returns { outputFilePathLocal OR outputBytes OR outputTempUrl, metadata, progress events optional }
+     - Prefer: ML returns a local file path in worker FS or returns bytes as stream.
+  6) Upload final MP4 to Supabase Storage bucket (e.g. renders/{userId}/{jobId}.mp4) using service role.
+  7) Update DB: status='succeeded', progress=100, output_video_path, output_metadata
+  8) On error: status='failed', error message (sanitized), progress stays.
+
+- Add idempotency:
+  - jobId equals db job id
+  - If DB already succeeded, return early (no re-run)
+  - If processing and job retries, ensure you don’t duplicate uploads (overwrite same path).
+
+- Add structured logging with jobId.
+
+E) PYTHON ML SERVICE (SEPARATE)
+Inside repo add /ml-service/ directory:
+- FastAPI app with:
+  - POST /autoedit
+    - Auth via ML_SERVICE_TOKEN
+    - Input: { jobId, inputSignedUrl, options }
+    - Downloads input video to /tmp/{jobId}.mp4
+    - Runs:
+      - whisper transcription with word timestamps (use faster-whisper recommended)
+      - DecisionEngine to generate EDL (the frame-accurate version you wrote)
+      - Optional: simple VAD using webrtcvad or silero-vad for better pause detection (if easy)
+    - Renders using Remotion:
+      - If Remotion is Node-only, keep rendering in the Node worker (preferred).
+      - Python should output EDL + transcript only. (THIS IS CLEAN LONG-TERM)
+    - So: ML service returns { edl, transcriptWords, detectedPauses, suggestedZoomTargets }
+  - This keeps Python CPU heavy but not browser/render heavy.
+
+IMPORTANT LONG-TERM CHOICE:
+- Rendering should stay in Node (Remotion) since you already have Remotion pipeline.
+- Python ML = analysis only. Node worker = render + upload.
+
+Therefore:
+- Python returns the computed EDL JSON (frame-accurate) and word timing.
+
+F) RENDER IN NODE WORKER
+- Node worker receives EDL from ML service
+- Calls your existing RendererService (Remotion bundle/render) to produce MP4
+- Upload MP4 to storage
+- Update DB
+
+G) FRONTEND CHANGES
+- In Director Mode, when user clicks “Auto Edit”:
+  - Call POST /api/autoedit/jobs with inputVideoPath for the latest compiled raw video
+  - Show “Processing…” UI with progress bar
+  - Poll GET /api/autoedit/jobs/:id every 2s then backoff to 5s after 20s.
+  - When succeeded, show “Download / Add to Library” button using signed URL returned.
+
+- Ensure free-tier gating still works: If user not paid, allow preview but watermark; export requires plan. Do NOT rely on frontend gating only. Backend export endpoint must check entitlements.
+
+H) SECURITY REQUIREMENTS
+- Never expose SUPABASE_SERVICE_ROLE_KEY or REDIS_URL to frontend.
+- JWT validation required for all /api/autoedit endpoints.
+- RLS enabled for tables.
+- Signed URLs short TTL.
+- Worker uses service role; keep it in worker env only.
+- ML service protected with token; never public without auth.
+- Sanitize errors returned to client (no stack traces, no secrets).
+
+I) PROJECT STRUCTURE (ADD WITHOUT BREAKING)
+Add:
+- src/queue/*
+- src/api/autoedit.routes.ts
+- src/worker/*
+- ml-service/*
+- docs/ARCHITECTURE_AUTOEDIT.md with:
+  - how to run locally (3 terminals)
+  - how to deploy as 2 services (web + worker + ml)
+  - required env vars
+  - troubleshooting
+
+J) LOCAL DEV COMMANDS
+Update package.json scripts:
+- "dev:web": start web server + Vite
+- "dev:worker": node tsx src/worker/autoedit.worker.ts
+- "dev:ml": cd ml-service && uvicorn app:app --port 8000 --reload
+- "dev": runs web only (avoid starting worker/ml automatically)
+
+K) DEPLOYMENT NOTES (IMPORTANT)
+- For Replit Deploy (web): run only "npm run start" for Node web on port 5000.
+- For Worker Deploy: create a second deployment target (separate repl recommended) that runs "npm run dev:worker" or "npm run start:worker".
+- For ML Deploy: third service (Railway/Fly/Render) running FastAPI.
+
+BUT: In this repo, just set it up cleanly so I can split deploys later without rewriting code.
+
+DELIVERABLE
+Implement all code, wiring, and minimal UI updates so:
+- Creating autoedit job works
+- Job status endpoint works
+- Worker processes job end-to-end (calls ML, renders, uploads)
+- User sees progress and can download final MP4
+
+DO NOT:
+- Change my site colors/fonts/UI theme.
+- Remove existing features.
+- Put secrets in client env.
+
+Finally, add a “Health” endpoint:
+- GET /api/health returns { ok: true }
+- Worker has its own log startup message and fails fast if REDIS_URL missing.
+
+Proceed to implement now.

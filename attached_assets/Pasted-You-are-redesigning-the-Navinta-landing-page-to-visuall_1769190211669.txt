@@ -1,0 +1,136 @@
+You are redesigning the Navinta landing page to visually and structurally match the design philosophy of vyro.com EXACTLY.
+
+This is not inspiration — this is a 1:1 translation of layout style, spacing, calmness, typography scale, color softness, and trust signals.
+
+GOAL:
+Make Navinta feel as professional, clean, calm, trustworthy, and high-status as vyro.com — while still explaining Navinta’s workflow.
+
+DESIGN RULES (CRITICAL):
+- Use a LIGHT theme (white + very soft gradient backgrounds)
+- No dark mode on landing page
+- No harsh contrast
+- No glow effects
+- No neon colors
+- No excessive borders
+- No card overload
+- No “AI vibes”
+- Everything must feel human, calm, and intentional
+- Use LOTS of whitespace
+- One idea per section only
+- Large typography, minimal copy
+- Smooth scroll
+- Slow, confident animations only (fade, slide, reveal)
+- No fast motion, no bouncing, no flashy effects
+
+COLOR SYSTEM:
+- Primary background: white
+- Section backgrounds: very soft blue / gray gradient (like vyro)
+- Accent color: one calm blue (same everywhere)
+- Text: black / soft gray
+- Buttons: blue only for primary action
+- Never introduce random colors
+
+TYPOGRAPHY:
+- Big headlines
+- Simple sans-serif (clean, modern, neutral)
+- Clear hierarchy: H1 → H2 → body
+- No fancy fonts
+- No gimmicky styles
+
+LAYOUT STRUCTURE (MATCH VYRO):
+
+SECTION 1 — HERO (VERY CLEAN)
+- Big headline centered
+- One clear message only:
+  “Your AI-powered director for effortless video creation”
+- Subtext: 1–2 lines max
+- Primary CTA: “Get Started”
+- Secondary CTA: “See how it works”
+- No clutter
+- No UI screenshots here
+- Calm background gradient
+
+SECTION 2 — SOCIAL PROOF
+- Row of real-looking creators / brands (use Pexels images)
+- “Trusted by creators, founders, and teams”
+- Keep it subtle and small
+
+SECTION 3 — HOW IT WORKS (3 steps)
+- Use same layout style as vyro’s “Auto import → Auto editing → Auto scheduling”
+- But adapt to Navinta:
+  1. Answer a few questions
+  2. Record with AI director
+  3. Publish everywhere
+- Each step:
+  - One image
+  - One sentence
+  - No paragraphs
+- Soft card background, rounded corners
+
+SECTION 4 — PRODUCT DEMO (SINGLE FOCUS)
+- One large phone frame
+- Scroll animation:
+  onboarding → recording → editing → export
+- Only one visual at a time
+- No overlapping UI
+- No clutter
+
+SECTION 5 — WHY NAVINTA IS DIFFERENT
+- 3 calm columns:
+  - Director thinking
+  - Shot-based structure
+  - Invisible editing
+- No icons explosion
+- Minimal text
+
+SECTION 6 — TRUST
+- “Used by founders, coaches, creators”
+- Add 3–5 testimonial-style quotes (fake but realistic)
+- Faces from Pexels
+- Very calm layout
+
+SECTION 7 — PRICING
+- Simple pricing
+- 2 plans only
+- No complexity
+- Big price text
+- Clear CTA
+
+SECTION 8 — FINAL CTA
+- Big calm section
+- One sentence
+- One button
+- End with confidence
+
+ANIMATION RULES:
+- Use GSAP
+- Only animate on scroll reveal
+- Fade in + slide up
+- Stagger elements
+- Slow timing (0.6s–1s)
+- No fancy transforms
+- No rotation
+- No scaling
+- Everything should feel like Apple + Stripe + Vyro
+
+IMPORTANT:
+DO NOT add features.
+DO NOT add extra sections.
+DO NOT show internal UI everywhere.
+DO NOT explain everything.
+DO NOT overdesign.
+
+This page should feel:
+- calm
+- confident
+- expensive
+- simple
+- intentional
+- professional
+- trustworthy
+
+If something feels “cool” but not calm, remove it.
+
+If something feels impressive but busy, simplify it.
+
+Make Navinta look like a company that already won.

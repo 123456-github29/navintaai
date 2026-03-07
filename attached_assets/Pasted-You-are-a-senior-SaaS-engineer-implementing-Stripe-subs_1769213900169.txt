@@ -1,0 +1,166 @@
+You are a senior SaaS engineer implementing Stripe subscriptions with feature gating for a professional video creation app (Navinta).
+
+GOAL:
+Users can use all Director Mode features for FREE, but:
+	•	All exports are WATERMARKED
+	•	Pro features are PREVIEW-ONLY
+	•	To export clean videos, user must upgrade
+	•	Stripe controls access
+	•	Supabase stores entitlements
+	•	No feature leakage
+
+IMPLEMENT EXACTLY THIS:
+
+⸻
+
+1. STRIPE SETUP (DO NOT CHANGE)
+
+Create Stripe subscriptions with 4 tiers:
+
+FREE:
+	•	Can record
+	•	Can see AI cuts
+	•	Can preview captions
+	•	Can preview b-roll
+	•	EXPORT = always watermarked
+	•	Max 3 exports/day (watermarked)
+	•	NO clean export
+
+STARTER ($19):
+	•	Clean export
+	•	No AI b-roll
+	•	No AI voice
+	•	Basic captions only
+	•	10 exports/month
+
+PRO ($49):
+	•	Clean export
+	•	AI cuts
+	•	AI b-roll
+	•	Smart captions
+	•	All formats
+	•	Unlimited exports
+
+STUDIO ($99):
+	•	Everything
+	•	Priority rendering
+	•	Brand presets
+	•	Faster processing
+	•	Team ready
+
+⸻
+
+2. SUPABASE ENTITLEMENTS
+
+Create user_entitlements table:
+	•	user_id
+	•	stripe_customer_id
+	•	plan (free | starter | pro | studio)
+	•	status (active | canceled | past_due)
+	•	export_allowed (boolean)
+	•	watermark_required (boolean)
+	•	ai_broll (boolean)
+	•	ai_voice (boolean)
+	•	max_exports
+	•	created_at
+	•	updated_at
+
+Stripe webhooks MUST update this table.
+
+⸻
+
+3. STRIPE WEBHOOKS (MANDATORY)
+
+Handle:
+	•	checkout.session.completed
+	•	customer.subscription.created
+	•	customer.subscription.updated
+	•	customer.subscription.deleted
+	•	invoice.payment_failed
+
+On webhook:
+	•	Update Supabase entitlements
+	•	Immediately enable/disable features
+	•	Never trust frontend
+
+⸻
+
+4. DIRECTOR MODE BEHAVIOR (CRITICAL)
+
+In Director Mode:
+	•	All users can click all buttons
+	•	All users can preview AI results
+	•	All users can see final video
+	•	Free users ALWAYS see watermark overlay
+	•	Export button:
+	•	If free → show upgrade modal
+	•	If paid → export clean video
+	•	Preview video should look EXACTLY like final video except watermark
+
+Watermark rules:
+	•	Free: center + corner watermark
+	•	Starter: small corner watermark
+	•	Pro/Studio: no watermark
+
+⸻
+
+5. EXPORT FLOW (IMPORTANT)
+
+On export request:
+	•	Backend checks entitlements
+	•	If export_allowed = false → return 402
+	•	If watermark_required = true → render with watermark
+	•	If clean export → render normally
+	•	Never trust client flags
+
+⸻
+
+6. UPGRADE FLOW
+
+When user clicks “Export Clean Video”:
+	•	Open Stripe Checkout
+	•	After success → redirect back
+	•	App refreshes entitlements
+	•	Export button becomes active instantly
+
+⸻
+
+7. UI RULES (IMPORTANT)
+	•	NEVER hide features
+	•	Always show locked features with tooltip “Upgrade to export clean”
+	•	Add subtle lock icon
+	•	Add “Preview mode” badge for free users
+	•	Add “Upgrade to unlock clean export” CTA near export button
+
+⸻
+
+8. SECURITY
+	•	Stripe secret key backend only
+	•	Supabase RLS enforces ownership
+	•	Never trust frontend for plan checks
+	•	All exports validated server-side
+
+⸻
+
+9. TESTING
+
+Implement test mode:
+	•	Stripe test cards
+	•	Fake subscriptions
+	•	Manual entitlement override for admin
+
+⸻
+
+10. UX GOAL
+
+User should feel:
+“I can see how powerful this is — I just need to upgrade to export it.”
+
+DO NOT:
+	•	Block features
+	•	Hide buttons
+	•	Interrupt recording
+	•	Force upgrade early
+	•	Break preview
+
+IMPLEMENT THIS CLEANLY, PROFESSIONALLY, AND SAFELY.
