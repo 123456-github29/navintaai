@@ -2512,9 +2512,8 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
         let captionStyleSpec: any = undefined;
         if (edl.captionStyleId) {
           try {
-            const stylesRaw = readFileSync(join(process.cwd(), "src/captions/styles/generated.json"), "utf-8");
-            const allStyles = JSON.parse(stylesRaw);
-            captionStyleSpec = allStyles.find((s: any) => s.id === edl.captionStyleId) || undefined;
+            const { resolveCaptionStyleSpec } = await import("./lib/captionStyleResolver");
+            captionStyleSpec = resolveCaptionStyleSpec(edl.captionStyleId);
             if (captionStyleSpec) {
               console.log(`[export-captions] Loaded caption style: ${captionStyleSpec.name} (${captionStyleSpec.styleFamily})`);
             }
@@ -3612,17 +3611,21 @@ Return ONLY valid JSON, no markdown or explanation.`;
       .where(eq(editSessions.id, sessionId));
 
     try {
-      const { processStudioJobInline, setSharedDb } = await import("../src/worker/studio.worker");
-      setSharedDb(db);
-      processStudioJobInline({
+      const { enqueueStudioJob } = await import("../src/queue/studio.queue");
+      enqueueStudioJob({
         sessionId,
         messageId: message.id,
         userId,
         videoId: session.videoId,
         content: parsed.data.content,
+      }).catch(async (queueErr: any) => {
+        console.error(`[studio] Queue processing failed:`, queueErr.message);
+        await db.update(editSessions)
+          .set({ status: "failed", updatedAt: new Date() })
+          .where(eq(editSessions.id, sessionId));
       });
     } catch (inlineErr: any) {
-      console.error(`[studio] Inline processing failed:`, inlineErr.message);
+      console.error(`[studio] Enqueue failed:`, inlineErr.message);
       await db.update(editSessions)
         .set({ status: "failed", updatedAt: new Date() })
         .where(eq(editSessions.id, sessionId));
@@ -3818,12 +3821,16 @@ Return ONLY valid JSON, no markdown or explanation.`;
 
     if (isRenderServiceAvailable()) {
       try {
+        const { resolveCaptionStyleSpec } = await import("./lib/captionStyleResolver");
+        const captionStyleSpec = resolveCaptionStyleSpec((version.edlJson as any)?.captionStyleId);
+
         const renderResult = await renderViaCloudRun({
           edl: version.edlJson as any,
           composition: "TikTokStyle",
           userId,
           videoId: session.videoId,
           watermark: false,
+          captionStyleSpec,
         });
 
         await db.update(edlVersions)

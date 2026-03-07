@@ -35,10 +35,19 @@ export const CinematicVideo: React.FC<CinematicVideoProps> = ({
   let xValue = 0;
   let yValue = 0;
   let rotationValue = 0;
+  const clipFrames = Math.max(1, (endFrame ?? (trimStartFrame + durationInFrames)) - trimStartFrame);
+
+  const toLocalFrame = (timeSec: number): number => {
+    const frameFromSec = Math.round(timeSec * fps);
+    const looksLocal = frameFromSec <= clipFrames + fps;
+    return looksLocal
+      ? frameFromSec
+      : frameFromSec - trimStartFrame;
+  };
 
   for (const move of cameraMoves) {
-    const localStart = Math.max(0, Math.round(move.startSec * fps) - trimStartFrame);
-    const localEnd = Math.max(0, Math.round(move.endSec * fps) - trimStartFrame);
+    const localStart = Math.max(0, toLocalFrame(move.startSec));
+    const localEnd = Math.max(0, toLocalFrame(move.endSec));
 
     if (localStart === localEnd) continue;
 

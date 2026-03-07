@@ -11,6 +11,7 @@ const OperationSchema = z.object({
     "transitions",
     "color_grade",
     "remove_broll",
+    "ai_director",
   ]),
   params: z.record(z.string(), z.any()).optional(),
 });
@@ -27,6 +28,7 @@ const IntentResponseSchema = z.object({
     "MAKE_ENERGETIC",
     "MAKE_CALMER",
     "MULTI",
+    "OPEN_ENDED",
   ]),
   confidence: z.number().min(0).max(1),
   operations: z.array(OperationSchema),
@@ -90,6 +92,7 @@ SUPPORTED OPERATIONS:
 - transitions: params: { type: "fade" | "slide" | "wipe" | "clockWipe" | "flip" | "none", durationFrames?: number }
 - color_grade: params: { preset: "none" | "cinematic" | "vintage" | "moody" | "vibrant" | "pastel" }
 - remove_broll: params: { insertIds?: string[] }  (empty = remove all)
+- ai_director: params: { prompt: string, intensity?: number, useLumaCamera?: boolean }  (use transcript + context to stylize broadly; optional Luma camera motion b-roll)
 
 For MAKE_ENERGETIC, produce operations: tighten_cuts(aggressive) + add_zooms(high) + caption_style(bold)
 For MAKE_CALMER, produce operations: tighten_cuts(gentle) + add_zooms(low) + transitions(fade) + color_grade(pastel)
@@ -228,10 +231,10 @@ function buildFallbackResponse(message: string): IntentResponse {
   }
 
   return {
-    intent: "TIGHTEN_CUTS",
-    confidence: 0.3,
-    operations: [{ op: "tighten_cuts", params: { aggressiveness: "gentle" } }],
-    notes: "I wasn't sure what you meant. Applying gentle edits — try being more specific!",
+    intent: "OPEN_ENDED",
+    confidence: 0.55,
+    operations: [{ op: "ai_director", params: { prompt: message, intensity: 0.6, useLumaCamera: true } }],
+    notes: "Applying an AI-directed cinematic pass based on your request",
   };
 }
 
@@ -281,7 +284,7 @@ export async function routeStudioIntent(
           intent: parsed.intent,
           confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.5,
           operations: parsed.operations.map((op: any) => ({
-            op: op.op || "tighten_cuts",
+            op: op.op || "ai_director",
             params: op.params || {},
           })),
           notes: parsed.notes || "Applying your requested edits",
@@ -290,11 +293,18 @@ export async function routeStudioIntent(
       return buildFallbackResponse(message);
     }
 
+    const data = validated.data;
+
+    if (data.operations.length === 0) {
+      data.operations = [{ op: "ai_director", params: { prompt: message, intensity: 0.6, useLumaCamera: true } } as any];
+      data.notes = data.notes || "Applying AI-directed edits";
+    }
+
     console.log(
-      `[studioIntentRouter] intent=${validated.data.intent}, confidence=${validated.data.confidence}, ops=${validated.data.operations.length}`
+      `[studioIntentRouter] intent=${data.intent}, confidence=${data.confidence}, ops=${data.operations.length}`
     );
 
-    return validated.data;
+    return data;
   } catch (error: any) {
     console.error(`[studioIntentRouter] Failed: ${error.message}`);
     return buildFallbackResponse(message);

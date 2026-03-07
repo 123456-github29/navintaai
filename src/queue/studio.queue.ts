@@ -33,8 +33,17 @@ export function getStudioQueue(): Queue<StudioJobData> {
 }
 
 export async function enqueueStudioJob(data: StudioJobData): Promise<string> {
-  console.log("[studio-queue] Processing inline (always inline mode)");
-  const { processStudioJobInline } = await import("../worker/studio.worker");
-  processStudioJobInline(data);
-  return data.messageId;
+  if (!isRedisConfigured()) {
+    console.warn("[studio-queue] Redis not available, processing inline");
+    const { processStudioJobInline } = await import("../worker/studio.worker");
+    await processStudioJobInline(data);
+    return data.messageId;
+  }
+
+  const queue = getStudioQueue();
+  const job = await queue.add("edit", data, {
+    jobId: `studio-${data.messageId}`,
+  });
+
+  return job.id || data.messageId;
 }
