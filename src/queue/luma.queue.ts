@@ -56,14 +56,21 @@ export async function enqueueLumaJob(data: LumaJobData): Promise<string> {
     return data.insertId;
   }
 
-  const queue = getLumaQueue();
+  try {
+    const queue = getLumaQueue();
 
-  const job = await queue.add("generate", data, {
-    jobId: `luma-${data.insertId}`,
-  });
+    const job = await queue.add("generate", data, {
+      jobId: `luma-${data.insertId}`,
+    });
 
-  console.log(`[luma-queue] Enqueued luma job for insert ${data.insertId}`);
-  return job.id || data.insertId;
+    console.log(`[luma-queue] Enqueued luma job for insert ${data.insertId}`);
+    return job.id || data.insertId;
+  } catch (err: any) {
+    console.warn(`[luma-queue] Queue enqueue failed, falling back inline: ${err.message}`);
+    const { processLumaJobInline } = await import("../worker/luma.worker");
+    await processLumaJobInline(data);
+    return data.insertId;
+  }
 }
 
 export async function removeLumaJob(insertId: string): Promise<boolean> {

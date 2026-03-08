@@ -40,10 +40,17 @@ export async function enqueueStudioJob(data: StudioJobData): Promise<string> {
     return data.messageId;
   }
 
-  const queue = getStudioQueue();
-  const job = await queue.add("edit", data, {
-    jobId: `studio-${data.messageId}`,
-  });
+  try {
+    const queue = getStudioQueue();
+    const job = await queue.add("edit", data, {
+      jobId: `studio-${data.messageId}`,
+    });
 
-  return job.id || data.messageId;
+    return job.id || data.messageId;
+  } catch (err: any) {
+    console.warn(`[studio-queue] Queue enqueue failed, falling back inline: ${err.message}`);
+    const { processStudioJobInline } = await import("../worker/studio.worker");
+    await processStudioJobInline(data);
+    return data.messageId;
+  }
 }

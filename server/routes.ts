@@ -3619,10 +3619,23 @@ Return ONLY valid JSON, no markdown or explanation.`;
         videoId: session.videoId,
         content: parsed.data.content,
       }).catch(async (queueErr: any) => {
-        console.error(`[studio] Queue processing failed:`, queueErr.message);
-        await db.update(editSessions)
-          .set({ status: "failed", updatedAt: new Date() })
-          .where(eq(editSessions.id, sessionId));
+        console.error(`[studio] Queue processing failed, falling back inline:`, queueErr.message);
+        try {
+          const { processStudioJobInline, setSharedDb } = await import("../src/worker/studio.worker");
+          setSharedDb(db);
+          await processStudioJobInline({
+            sessionId,
+            messageId: message.id,
+            userId,
+            videoId: session.videoId,
+            content: parsed.data.content,
+          });
+        } catch (fallbackErr: any) {
+          console.error(`[studio] Inline fallback failed:`, fallbackErr.message);
+          await db.update(editSessions)
+            .set({ status: "failed", updatedAt: new Date() })
+            .where(eq(editSessions.id, sessionId));
+        }
       });
     } catch (inlineErr: any) {
       console.error(`[studio] Enqueue failed:`, inlineErr.message);
