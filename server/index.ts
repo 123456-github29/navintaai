@@ -248,6 +248,13 @@ app.use((req, res, next) => {
     } catch (err: any) {
       console.error("[boot] Studio worker startup failed (non-fatal):", err.message);
     }
+
+    try {
+      const { startLumaWorker } = await import("../src/worker/luma.worker");
+      startLumaWorker();
+    } catch (err: any) {
+      console.error("[boot] Luma worker startup failed (non-fatal):", err.message);
+    }
   } else {
     console.log("[boot] Queue workers disabled — using inline processing");
   }

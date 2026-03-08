@@ -11,6 +11,7 @@ import {
   videos,
   transcriptions,
   lumaGenerations,
+  userEntitlements,
 } from "../../shared/schema";
 import type { EDL } from "../../src/remotion/types/edl";
 
@@ -163,15 +164,42 @@ async function processJob(job: Job<StudioJobData>) {
         .limit(1);
 
       if (trans && trans.captions && Array.isArray(trans.captions)) {
-        transcriptWords = (trans.captions as any[]).map((w: any) => ({
-          text: w.text || w.word || w.originalText || "",
-          start: w.startMs ?? w.start ?? 0,
-          end: w.endMs ?? w.end ?? 0,
-        }));
+        const extracted: Array<{ text: string; start: number; end: number }> = [];
+
+        for (const segment of trans.captions as any[]) {
+          if (Array.isArray(segment?.words) && segment.words.length > 0) {
+            for (const w of segment.words) {
+              const text = (w.word || w.text || "").trim();
+              const start = Number(w.startMs ?? w.start ?? segment.startMs ?? segment.start ?? 0);
+              const end = Number(w.endMs ?? w.end ?? segment.endMs ?? segment.end ?? start);
+              if (text && Number.isFinite(start) && Number.isFinite(end) && end > start) {
+                extracted.push({ text, start, end });
+              }
+            }
+            continue;
+          }
+
+          const text = (segment?.text || segment?.originalText || segment?.viralText || segment?.word || "").trim();
+          const start = Number(segment?.startMs ?? segment?.start ?? 0);
+          const end = Number(segment?.endMs ?? segment?.end ?? start);
+          if (text && Number.isFinite(start) && Number.isFinite(end) && end > start) {
+            extracted.push({ text, start, end });
+          }
+        }
+
+        transcriptWords = extracted.sort((a, b) => a.start - b.start);
       }
     } catch (err: any) {
       console.warn(`[studio] Failed to load transcript: ${err.message}`);
     }
+
+    const [entitlement] = await db
+      .select()
+      .from(userEntitlements)
+      .where(eq(userEntitlements.userId, userId))
+      .limit(1);
+
+    const canUseAiBroll = entitlement?.aiBroll === true;
 
     const recentMessages = await db
       .select()
@@ -240,6 +268,10 @@ async function processJob(job: Job<StudioJobData>) {
 
     let patchedEdl = currentEdl;
 
+    const operationsToApply = intentResult.operations.length > 0
+      ? intentResult.operations
+      : [{ op: "ai_director", params: { prompt: content, intensity: 0.6 } } as any];
+
     if (editRunId) {
       try {
         await db
@@ -247,7 +279,7 @@ async function processJob(job: Job<StudioJobData>) {
           .set({
             step2Status: "completed",
             step2Progress: 100,
-            step2Summary: `${intentResult.operations.length} operations queued`,
+            step2Summary: `${operationsToApply.length} operations queued`,
             currentStep: 3,
             step3Status: "running",
             step3Summary: "Applying edits...",
@@ -258,7 +290,7 @@ async function processJob(job: Job<StudioJobData>) {
       } catch {}
     }
 
-    for (const op of intentResult.operations) {
+    for (const op of operationsToApply) {
       try {
         switch (op.op) {
           case "tighten_cuts":
@@ -296,6 +328,18 @@ async function processJob(job: Job<StudioJobData>) {
             break;
 
           case "insert_broll": {
+            if (!canUseAiBroll) {
+              await db.insert(editMessages).values({
+                sessionId,
+                userId,
+                role: "tool",
+                content: "AI b-roll is unavailable on your current plan",
+                toolName: "insert_broll",
+                toolPayload: { blockedByPlan: true },
+              });
+              break;
+            }
+
             const prompt = op.params?.prompt || "cinematic b-roll";
             const fps = patchedEdl.fps || 30;
             const totalFrames = patchedEdl.clips.reduce(
@@ -450,6 +494,203 @@ async function processJob(job: Job<StudioJobData>) {
             });
             break;
 
+          case "ai_director": {
+            const { runAiEditDirector } = await import("../../server/lib/aiEditDirector");
+            const { analyzeEmphasisMoments, emphasisToCameraMoves } = await import("../../server/lib/smartZoomAnalyzer");
+            const { computeCacheKey } = await import("../../server/lib/lumaService");
+            const { enqueueLumaJob } = await import("../queue/luma.queue");
+
+            const fps = patchedEdl.fps || 30;
+            const totalDurationMs = patchedEdl.clips.reduce(
+              (sum, c) => sum + (c.durationInFrames / fps) * 1000,
+              0
+            );
+
+            const directorResult = await runAiEditDirector({
+              words: transcriptWords,
+              existingCameraMoves: patchedEdl.clips.flatMap((c) => c.cameraMoves || []),
+              videoDurationMs: totalDurationMs,
+              clipCount: patchedEdl.clips.length,
+              platform: "general",
+              userPrompt: (op.params?.prompt || content || "").toString(),
+            });
+
+            for (let i = 0; i < patchedEdl.clips.length - 1; i++) {
+              if (directorResult.transitions[i]) {
+                patchedEdl.clips[i].transitionType = directorResult.transitions[i];
+              }
+            }
+
+            patchedEdl.captionStyleId = directorResult.captionStyleId;
+            patchedEdl.colorGrade = directorResult.colorGrade;
+            patchedEdl.musicVolume = directorResult.musicVolume;
+
+            const clipBounds = patchedEdl.clips.map((c) => ({
+              trimStartMs: (c.trimStartFrame / fps) * 1000,
+              durationMs: (c.durationInFrames / fps) * 1000,
+            }));
+
+            const emphasis = await analyzeEmphasisMoments(transcriptWords);
+
+            let runningMs = 0;
+            patchedEdl.clips = patchedEdl.clips.map((clip, idx) => {
+              const clipDurationMs = (clip.durationInFrames / fps) * 1000;
+              const aiMoves = emphasisToCameraMoves(
+                emphasis,
+                clipBounds[idx].trimStartMs,
+                clipBounds[idx].durationMs
+              );
+
+              const directorMoves = directorResult.additionalCameraMoves
+                .filter((m) => m.startSec * 1000 >= runningMs && m.startSec * 1000 < runningMs + clipDurationMs)
+                .map((m) => ({
+                  ...m,
+                  startSec: Math.max(0, m.startSec - runningMs / 1000),
+                  endSec: Math.max(0.1, Math.min(clipDurationMs / 1000, m.endSec - runningMs / 1000)),
+                }));
+
+              runningMs += clipDurationMs;
+
+              return {
+                ...clip,
+                cameraMoves: [...(clip.cameraMoves || []), ...aiMoves, ...directorMoves],
+                zoomTarget: Math.max(clip.zoomTarget || 1, directorMoves.length > 0 || aiMoves.length > 0 ? 1.08 : 1),
+              };
+            });
+
+            const shouldUseLumaCamera = canUseAiBroll && op.params?.useLumaCamera !== false;
+            let lumaCameraInsertId: string | null = null;
+
+            if (shouldUseLumaCamera) {
+              const mapToLumaMove = (moveType?: string): string => {
+                switch (moveType) {
+                  case "zoom_in":
+                  case "dolly_in":
+                    return "push_in";
+                  case "zoom_out":
+                  case "dolly_out":
+                    return "pull_out";
+                  case "pan_left":
+                    return "tracking_left";
+                  case "pan_right":
+                    return "tracking_right";
+                  case "tilt_up":
+                  case "pan_up":
+                    return "crane_up";
+                  case "tilt_down":
+                  case "pan_down":
+                    return "crane_down";
+                  default:
+                    return "handheld";
+                }
+              };
+
+              const selectedMove = mapToLumaMove(directorResult.additionalCameraMoves[0]?.type);
+              const promptSeed = (op.params?.prompt || content || "cinematic atmosphere").toString();
+              const lumaPrompt = `${promptSeed}, cinematic b-roll, premium lighting, realistic motion`;
+              const durationSec = 4;
+              const startFrame = emphasis.length > 0
+                ? Math.max(0, Math.round((emphasis[0].startTime / 1000) * fps))
+                : Math.round(patchedEdl.clips.reduce((s, c) => s + c.durationInFrames, 0) * 0.25);
+              const insertId = `studio-ai-cam-${Date.now()}`;
+              const cacheKey = computeCacheKey(lumaPrompt, "9:16", durationSec, selectedMove);
+
+              try {
+                const [existingByCache] = await db
+                  .select()
+                  .from(lumaGenerations)
+                  .where(eq(lumaGenerations.cacheKey, cacheKey))
+                  .limit(1);
+
+                let lumaSrc: string | null = null;
+
+                if (existingByCache?.status === "succeeded" && existingByCache.assetUrl) {
+                  lumaSrc = existingByCache.assetUrl;
+                } else {
+                  await db.insert(lumaGenerations).values({
+                    userId,
+                    videoId,
+                    insertId,
+                    prompt: lumaPrompt,
+                    generationType: "text_to_video",
+                    aspectRatio: "9:16",
+                    durationSeconds: durationSec,
+                    startFrame,
+                    durationInFrames: Math.round(durationSec * fps),
+                    status: "queued",
+                    cacheKey,
+                    cameraMove: selectedMove,
+                  });
+
+                  await enqueueLumaJob({
+                    videoId,
+                    insertId,
+                    userId,
+                    prompt: lumaPrompt,
+                    aspectRatio: "9:16",
+                    durationSeconds: durationSec,
+                    cacheKey,
+                    generationType: "text_to_video",
+                    cameraMove: selectedMove,
+                  });
+
+                  const LUMA_WAIT_MS = 60_000;
+                  const POLL_MS = 3000;
+                  const startedAt = Date.now();
+
+                  while (Date.now() - startedAt < LUMA_WAIT_MS) {
+                    await new Promise((r) => setTimeout(r, POLL_MS));
+                    const [row] = await db
+                      .select()
+                      .from(lumaGenerations)
+                      .where(eq(lumaGenerations.insertId, insertId))
+                      .limit(1);
+
+                    if (!row) break;
+                    if (row.status === "succeeded" && row.assetUrl) {
+                      lumaSrc = row.assetUrl;
+                      lumaCameraInsertId = insertId;
+                      break;
+                    }
+                    if (row.status === "failed") break;
+                  }
+                }
+
+                if (lumaSrc) {
+                  patchedEdl = insertBroll(patchedEdl, [{
+                    id: lumaCameraInsertId || `studio-ai-cam-cached-${Date.now()}`,
+                    src: lumaSrc,
+                    startFrame,
+                    durationInFrames: Math.round(durationSec * fps),
+                    type: "luma" as const,
+                    prompt: lumaPrompt,
+                    mix: 0.9,
+                    audio: { keepOriginal: true, lumaAudioGain: 0 },
+                  }]);
+                }
+              } catch (lumaCameraErr: any) {
+                console.warn(`[studio] Luma camera pass failed (non-fatal): ${lumaCameraErr.message}`);
+              }
+            }
+
+            await db.insert(editMessages).values({
+              sessionId,
+              userId,
+              role: "tool",
+              content: `AI director pass applied (${directorResult.additionalCameraMoves.length} director moves, ${emphasis.length} transcript emphasis moments${lumaCameraInsertId ? ", Luma camera b-roll added" : ""})` ,
+              toolName: "ai_director",
+              toolPayload: {
+                prompt: op.params?.prompt || content,
+                transitions: directorResult.transitions.length,
+                captionStyleId: directorResult.captionStyleId,
+                colorGrade: directorResult.colorGrade,
+                emphasisMoments: emphasis.length,
+                lumaCameraInsertId,
+              },
+            });
+            break;
+          }
+
           default:
             console.warn(`[studio] Unknown operation: ${op.op}`);
         }
@@ -502,7 +743,7 @@ async function processJob(job: Job<StudioJobData>) {
           .set({
             step3Status: "completed",
             step3Progress: 100,
-            step3Summary: `Applied ${intentResult.operations.length} operations`,
+            step3Summary: `Applied ${operationsToApply.length} operations`,
             currentStep: 4,
             step4Status: "running",
             step4Summary: "Saving version...",
@@ -542,14 +783,18 @@ async function processJob(job: Job<StudioJobData>) {
       const { renderViaCloudRun, isRenderServiceAvailable } = await import(
         "../../server/lib/renderClient"
       );
+      const { resolveCaptionStyleSpec } = await import("../../server/lib/captionStyleResolver");
 
       if (isRenderServiceAvailable()) {
+        const captionStyleSpec = resolveCaptionStyleSpec(patchedEdl.captionStyleId);
+
         const renderResult = await renderViaCloudRun({
           edl: patchedEdl,
           composition: "TikTokStyle",
           userId,
           videoId,
           watermark: true,
+          captionStyleSpec,
         });
 
         if (renderResult.signedUrl) {
@@ -645,9 +890,7 @@ export async function processStudioJobInline(
 ): Promise<void> {
   console.warn("[studio] Processing inline (no Redis queue)");
   const fakeJob = { data } as Job<StudioJobData>;
-  processJob(fakeJob).catch((err) => {
-    console.error(`[studio] Inline job failed:`, err.message);
-  });
+  await processJob(fakeJob);
 }
 
 export function startStudioWorker() {

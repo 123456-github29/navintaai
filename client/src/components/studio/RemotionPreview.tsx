@@ -123,6 +123,18 @@ const CAPTION_STYLE_MAP: Record<string, CaptionStyleSpec> = {
   },
 };
 
+
+const CAPTION_STYLE_ALIASES: Record<string, string> = {
+  "tiktok-classic-pop-clean-white": "default",
+  "kinetic-bounce-pop-orange": "kinetic_bounce",
+  "per-word-pill-midnight": "bold_stack",
+  "subtitle-bar-classic-white": "minimal_fade",
+  "cinematic-plate-gold": "cinematic_plate",
+  "neon-glow-cyan": "karaoke_glow",
+  "marker-highlight-yellow": "impact_flash",
+  "glass-pill-frost": "minimal_fade",
+  "typewriter-cursor-green": "minimal_fade",
+};
 interface RemotionPreviewProps {
   edl: EDL;
   watermark?: boolean;
@@ -142,8 +154,9 @@ export const RemotionPreview: React.FC<RemotionPreviewProps> = ({
   }, [edl.clips]);
 
   const captionStyleSpec = useMemo<CaptionStyleSpec>(() => {
-    const styleId = (edl as any).captionStyleId as string | undefined;
-    return CAPTION_STYLE_MAP[styleId ?? "default"] ?? DEFAULT_SPEC;
+    const rawStyleId = (edl as any).captionStyleId as string | undefined;
+    const normalizedStyleId = rawStyleId ? (CAPTION_STYLE_ALIASES[rawStyleId] ?? rawStyleId) : "default";
+    return CAPTION_STYLE_MAP[normalizedStyleId] ?? DEFAULT_SPEC;
   }, [(edl as any).captionStyleId]);
 
   const inputProps = useMemo(

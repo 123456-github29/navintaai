@@ -14,6 +14,7 @@ interface DirectorInput {
   videoDurationMs: number;
   clipCount: number;
   platform?: "tiktok" | "youtube_shorts" | "instagram_reels" | "general";
+  userPrompt?: string;
 }
 
 interface DirectorOutput {
@@ -34,7 +35,7 @@ const STYLE_CATEGORIES: Record<string, string[]> = {
 
 const DEFAULTS: DirectorOutput = {
   transitions: [],
-  captionStyleId: "tiktok-classic-pop-clean-white",
+  captionStyleId: "default",
   colorGrade: "none",
   musicVolume: 0.3,
   additionalCameraMoves: [],
@@ -53,6 +54,7 @@ TRANSCRIPT (${durationSec}s, ${input.words.length} words, ~${speechDensity.toFix
 NUMBER OF CLIPS: ${input.clipCount}
 EXISTING CAMERA MOVES: ${input.existingCameraMoves.length}
 PLATFORM: ${input.platform || "general"}
+USER STYLE REQUEST: "${(input.userPrompt || "").substring(0, 300)}"
 
 Respond with ONLY valid JSON (no markdown, no explanation):
 
@@ -109,18 +111,29 @@ function pickCaptionStyleId(mood: string): string {
   const family = families[0];
 
   const familyToStyleId: Record<string, string> = {
-    tiktok_classic_pop: "tiktok-classic-pop-clean-white",
-    kinetic_bounce: "kinetic-bounce-pop-orange",
-    per_word_pill: "per-word-pill-midnight",
-    subtitle_bar: "subtitle-bar-classic-white",
-    cinematic_plate: "cinematic-plate-gold",
-    neon_glow: "neon-glow-cyan",
-    marker_highlight: "marker-highlight-yellow",
-    glass_pill: "glass-pill-frost",
-    typewriter_cursor: "typewriter-cursor-green",
+    tiktok_classic_pop: "default",
+    kinetic_bounce: "kinetic_bounce",
+    per_word_pill: "bold_stack",
+    subtitle_bar: "minimal_fade",
+    cinematic_plate: "cinematic_plate",
+    neon_glow: "karaoke_glow",
+    marker_highlight: "impact_flash",
+    glass_pill: "minimal_fade",
+    typewriter_cursor: "minimal_fade",
   };
 
-  return familyToStyleId[family] || "tiktok-classic-pop-clean-white";
+  return familyToStyleId[family] || "default";
+}
+
+function inferMoodFromPrompt(userPrompt?: string): string | null {
+  if (!userPrompt) return null;
+  const text = userPrompt.toLowerCase();
+  if (text.includes("cinematic") || text.includes("film") || text.includes("movie")) return "calm";
+  if (text.includes("energetic") || text.includes("hype") || text.includes("viral") || text.includes("fast")) return "energetic";
+  if (text.includes("dramatic") || text.includes("intense") || text.includes("dark")) return "dramatic";
+  if (text.includes("clean") || text.includes("professional") || text.includes("corporate")) return "professional";
+  if (text.includes("fun") || text.includes("playful")) return "fun";
+  return null;
 }
 
 export async function runAiEditDirector(input: DirectorInput): Promise<DirectorOutput> {
@@ -165,7 +178,7 @@ export async function runAiEditDirector(input: DirectorInput): Promise<DirectorO
 
     const additionalCameraMoves = parseMoves(parsed.additionalMoves || []);
 
-    const mood = parsed.mood || "energetic";
+    const mood = inferMoodFromPrompt(input.userPrompt) || parsed.mood || "energetic";
     const captionStyleId = pickCaptionStyleId(mood);
 
     console.log(`[aiEditDirector] mood=${mood}, grade=${colorGrade}, vol=${musicVolume}, transitions=${transitions.length}, moves=${additionalCameraMoves.length}`);
