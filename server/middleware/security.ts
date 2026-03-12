@@ -72,9 +72,16 @@ export function setupSecurity(app: Express) {
   });
 
   // CORS configuration with strict origin control
+  // Only apply CORS to API routes — static assets are same-origin and don't need CORS
   const publicUrl = process.env.PUBLIC_URL;
-  const defaultProductionOrigins = publicUrl ? [publicUrl] : [];
-  
+  const railwayUrl = process.env.RAILWAY_PUBLIC_DOMAIN
+    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+    : undefined;
+  const defaultProductionOrigins = [
+    ...(publicUrl ? [publicUrl] : []),
+    ...(railwayUrl ? [railwayUrl] : []),
+  ];
+
   const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(",").map(o => o.trim())
     : isProduction
@@ -83,9 +90,11 @@ export function setupSecurity(app: Express) {
 
   const corsOptions: cors.CorsOptions = {
     origin: (origin, callback) => {
+      // Allow requests with no origin (same-origin, server-to-server, curl, etc.)
       if (!origin || allowedOrigins.includes(origin) || !isProduction) {
         callback(null, true);
       } else {
+        console.warn(`[CORS] Blocked origin: ${origin}. Allowed: ${allowedOrigins.join(", ")}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -96,7 +105,8 @@ export function setupSecurity(app: Express) {
     maxAge: 86400,
   };
 
-  app.use(cors(corsOptions));
+  // Only apply CORS to /api routes — static assets don't need CORS checks
+  app.use("/api", cors(corsOptions));
 
   // Block requests with suspicious headers
   app.use((req: Request, res: Response, next: NextFunction) => {
