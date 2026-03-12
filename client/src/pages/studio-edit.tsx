@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense, Component } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -115,6 +115,42 @@ const SUGGESTION_CHIPS = [
   "More cinematic",
 ];
 
+class PreviewErrorBoundary extends Component<
+  { children: React.ReactNode; resetKey?: string },
+  { hasError: boolean; error: string }
+> {
+  state = { hasError: false, error: "" };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message };
+  }
+
+  componentDidUpdate(prevProps: { resetKey?: string }) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false, error: "" });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center gap-3 text-[#666] p-6">
+          <AlertCircle className="w-10 h-10 text-amber-500" />
+          <p className="text-sm text-center text-[#999]">Preview couldn't load</p>
+          <p className="text-xs text-[#555] text-center max-w-[250px]">{this.state.error}</p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: "" })}
+            className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function StudioEdit() {
   const { videoId } = useParams<{ videoId: string }>();
   const [, navigate] = useLocation();
@@ -126,6 +162,7 @@ export default function StudioEdit() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const forcePollCountRef = useRef(0);
+  const processingFromVersionRef = useRef<string | null>(null);
 
   const startMutation = useMutation({
     mutationFn: async () => {
@@ -169,6 +206,9 @@ export default function StudioEdit() {
         forcePollCountRef.current--;
         return 1500;
       }
+      if (isProcessing) {
+        return 1500;
+      }
       return false;
     },
   });
@@ -179,8 +219,9 @@ export default function StudioEdit() {
       return res.json();
     },
     onSuccess: () => {
+      processingFromVersionRef.current = sessionQuery.data?.activeVersion?.id || null;
       setIsProcessing(true);
-      forcePollCountRef.current = 5;
+      forcePollCountRef.current = 10;
       queryClient.invalidateQueries({ queryKey: [`/api/studio/${sessionId}`] });
     },
   });
@@ -203,11 +244,22 @@ export default function StudioEdit() {
   });
 
   useEffect(() => {
+    if (!isProcessing) return;
     const status = sessionQuery.data?.session?.status;
-    if (status === "idle" || status === "failed") {
+    const currentVersionId = sessionQuery.data?.activeVersion?.id;
+    // Reset processing when a new version appears or session moves to terminal state
+    if (status === "failed") {
       setIsProcessing(false);
+      processingFromVersionRef.current = null;
+    } else if (
+      status === "idle" &&
+      currentVersionId &&
+      currentVersionId !== processingFromVersionRef.current
+    ) {
+      setIsProcessing(false);
+      processingFromVersionRef.current = null;
     }
-  }, [sessionQuery.data?.session?.status]);
+  }, [sessionQuery.data?.session?.status, sessionQuery.data?.activeVersion?.id, isProcessing]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -329,16 +381,18 @@ export default function StudioEdit() {
           <div className="flex-1 flex items-center justify-center p-6 bg-black/20 relative">
             {activeVersion?.edlJson?.clips?.length > 0 && activeVersion ? (
               <div className="relative w-full h-full flex items-center justify-center">
-                <Suspense
-                  fallback={
-                    <div className="flex flex-col items-center gap-3 text-[#666]">
-                      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                      <p className="text-sm">Loading preview...</p>
-                    </div>
-                  }
-                >
-                  <RemotionPreview key={activeVersion.id} edl={activeVersion.edlJson} />
-                </Suspense>
+                <PreviewErrorBoundary resetKey={activeVersion.id}>
+                  <Suspense
+                    fallback={
+                      <div className="flex flex-col items-center gap-3 text-[#666]">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                        <p className="text-sm">Loading preview...</p>
+                      </div>
+                    }
+                  >
+                    <RemotionPreview key={activeVersion.id} edl={activeVersion.edlJson} />
+                  </Suspense>
+                </PreviewErrorBoundary>
                 {edlSummary && activeVersion.versionNumber > 1 && (
                   <div className="absolute top-3 left-3 right-3 flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 z-10">
                     <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />

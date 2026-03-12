@@ -3612,42 +3612,24 @@ Return ONLY valid JSON, no markdown or explanation.`;
 
     try {
       const { enqueueStudioJob } = await import("../src/queue/studio.queue");
-      enqueueStudioJob({
+      await enqueueStudioJob({
         sessionId,
         messageId: message.id,
         userId,
         videoId: session.videoId,
         content: parsed.data.content,
-      }).catch(async (queueErr: any) => {
-        console.error(`[studio] Queue processing failed, falling back inline:`, queueErr.message);
-        try {
-          const { processStudioJobInline, setSharedDb } = await import("../src/worker/studio.worker");
-          setSharedDb(db);
-          await processStudioJobInline({
-            sessionId,
-            messageId: message.id,
-            userId,
-            videoId: session.videoId,
-            content: parsed.data.content,
-          });
-        } catch (fallbackErr: any) {
-          console.error(`[studio] Inline fallback failed:`, fallbackErr.message);
-          await db.update(editSessions)
-            .set({ status: "failed", updatedAt: new Date() })
-            .where(eq(editSessions.id, sessionId));
-          await db.insert(editMessages).values({
-            sessionId,
-            userId,
-            role: "assistant",
-            content: `Sorry, something went wrong: ${fallbackErr.message}. Please try again.`,
-          });
-        }
       });
-    } catch (inlineErr: any) {
-      console.error(`[studio] Enqueue failed:`, inlineErr.message);
+    } catch (jobErr: any) {
+      console.error(`[studio] Job processing failed:`, jobErr.message);
       await db.update(editSessions)
         .set({ status: "failed", updatedAt: new Date() })
         .where(eq(editSessions.id, sessionId));
+      await db.insert(editMessages).values({
+        sessionId,
+        userId,
+        role: "assistant",
+        content: `Sorry, something went wrong: ${jobErr.message}. Please try again.`,
+      });
     }
 
     res.json({ messageId: message.id, status: "queued" });
