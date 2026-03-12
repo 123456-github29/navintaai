@@ -35,7 +35,23 @@ app.get("/", (req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Request ID middleware (must be first)
+// Serve static assets EARLY — before security/CORS/body parsing middleware
+// This prevents Helmet, CORS, and other API middleware from interfering with asset delivery
+if (process.env.NODE_ENV === "production") {
+  const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+  log(`[production] Early static asset serving from: ${distPath}`);
+  app.use(express.static(distPath, {
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+    }
+  }));
+}
+
+// Request ID middleware (must be first for API routes)
 app.use(requestIdMiddleware);
 
 // Redirect www to non-www (important for OAuth callbacks)

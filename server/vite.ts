@@ -71,7 +71,7 @@ export function serveStatic(app: Express) {
   const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
 
   log(`[production] Checking for build directory: ${distPath}`);
-  
+
   if (!fs.existsSync(distPath)) {
     console.error(`[FATAL] Build directory not found: ${distPath}`);
     console.error(`[FATAL] Run 'npm run legacy:build' before starting in production mode.`);
@@ -86,21 +86,10 @@ export function serveStatic(app: Express) {
     throw new Error(`index.html not found in build directory: ${indexPath}`);
   }
 
-  log(`[production] Serving static files from: ${distPath}`);
   log(`[production] index.html found: ${indexPath}`);
 
-  app.use(express.static(distPath, {
-    etag: true,
-    lastModified: true,
-    setHeaders: (res, filePath) => {
-      // Don't cache HTML to ensure fresh content
-      if (filePath.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      }
-    }
-  }));
-
-  // fall through to index.html if the file doesn't exist (SPA routing)
+  // Note: express.static is registered early in server/index.ts (before security middleware)
+  // Here we only add the SPA fallback for client-side routing
   app.use("/{*splat}", (_req, res) => {
     log(`[production] SPA fallback serving index.html for: ${_req.originalUrl}`);
     res.sendFile(indexPath);
