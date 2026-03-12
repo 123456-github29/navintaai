@@ -178,16 +178,28 @@ export default function Editor() {
               <p className="text-[#666666] mt-1">{post.title}</p>
             </div>
           </div>
-          <Button
-            size="lg"
-            onClick={handleExport}
-            disabled={exportMutation.isPending || postClips.length === 0}
-            data-testid="button-export"
-            className="bg-[#111111] hover:bg-[#333333] text-white rounded-full"
-          >
-            <Download className="h-5 w-5 mr-2" />
-            {exportMutation.isPending ? "Exporting..." : "Export Video"}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              size="lg"
+              onClick={() => setLocation(`/ai-editor/${postId}`)}
+              disabled={postClips.length === 0}
+              data-testid="button-ai-edit"
+              className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-full"
+            >
+              <Sparkles className="h-5 w-5 mr-2" />
+              AI Edit
+            </Button>
+            <Button
+              size="lg"
+              onClick={handleExport}
+              disabled={exportMutation.isPending || postClips.length === 0}
+              data-testid="button-export"
+              className="bg-[#111111] hover:bg-[#333333] text-white rounded-full"
+            >
+              <Download className="h-5 w-5 mr-2" />
+              {exportMutation.isPending ? "Exporting..." : "Export Video"}
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

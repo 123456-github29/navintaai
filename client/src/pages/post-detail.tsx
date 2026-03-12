@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Video, CheckCircle2, Circle, Edit } from "lucide-react";
+import { ArrowLeft, Video, CheckCircle2, Circle, Edit, Sparkles } from "lucide-react";
 import type { Post } from "@shared/schema";
 
 export default function PostDetail() {
@@ -195,12 +195,20 @@ export default function PostDetail() {
                 <p className="text-sm text-muted-foreground">Ready to edit and export your video</p>
               </div>
             </div>
-            <Link href={`/editor/${post.id}`}>
-              <Button data-testid="button-edit-video">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Video
-              </Button>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link href={`/ai-editor/${post.id}`}>
+                <Button data-testid="button-finish-video" className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Finish Video
+                </Button>
+              </Link>
+              <Link href={`/editor/${post.id}`}>
+                <Button variant="outline" data-testid="button-edit-video">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Manual Edit
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       )}

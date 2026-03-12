@@ -7,8 +7,6 @@ export interface SubscriptionData {
   plan: PlanId;
   status: "active" | "past_due" | "canceled" | "trialing" | "none";
   watermarkRequired: boolean;
-  aiBroll: boolean;
-  aiVoice: boolean;
   maxExports: number;
   exportsUsedToday: number;
   stripeCustomerId: string | null;
@@ -19,9 +17,6 @@ export interface SubscriptionData {
 export interface FeatureAccess {
   aiContentPlanning: boolean;
   recordMode: boolean;
-  autoEditing: boolean;
-  aiBroll: boolean;
-  aiVoice: boolean;
   noWatermark: boolean;
   unlimitedExports: boolean;
 }
@@ -30,36 +25,24 @@ const PLAN_FEATURES: Record<PlanId, FeatureAccess> = {
   free: {
     aiContentPlanning: true,
     recordMode: true,
-    autoEditing: false,
-    aiBroll: false,
-    aiVoice: false,
     noWatermark: false,
     unlimitedExports: false,
   },
   starter: {
     aiContentPlanning: true,
     recordMode: true,
-    autoEditing: false,
-    aiBroll: true,
-    aiVoice: false,
     noWatermark: true,
     unlimitedExports: false,
   },
   pro: {
     aiContentPlanning: true,
     recordMode: true,
-    autoEditing: true,
-    aiBroll: true,
-    aiVoice: true,
     noWatermark: true,
     unlimitedExports: false,
   },
   studio: {
     aiContentPlanning: true,
     recordMode: true,
-    autoEditing: true,
-    aiBroll: true,
-    aiVoice: true,
     noWatermark: true,
     unlimitedExports: true,
   },
@@ -67,14 +50,12 @@ const PLAN_FEATURES: Record<PlanId, FeatureAccess> = {
 
 async function fetchSubscription(): Promise<SubscriptionData> {
   const { data: { session } } = await supabase.auth.getSession();
-  
+
   if (!session?.access_token) {
     return {
       plan: "free",
       status: "none",
       watermarkRequired: true,
-      aiBroll: false,
-      aiVoice: false,
       maxExports: 3,
       exportsUsedToday: 0,
       stripeCustomerId: null,

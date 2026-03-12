@@ -17,7 +17,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { Link } from "wouter";
-import { EditPlanChat } from "@/components/edit-plan-chat";
+
 import { getQueryFn } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import type { Post, ContentPlan } from "@shared/schema";
@@ -146,12 +146,6 @@ export default function Dashboard() {
                 <p className="text-[0.95rem] text-[#6b7280]">4-week content calendar</p>
               </div>
               <div className="flex gap-3">
-                {contentPlan && (
-                  <EditPlanChat 
-                    projectId={debugData?.projects?.[0]?.id || ""} 
-                    contentPlanId={contentPlan.id} 
-                  />
-                )}
                 <Link href="/onboarding">
                   <button
                     className="inline-flex items-center gap-2 px-5 py-2.5 text-[0.95rem] font-medium text-[#111827] bg-white border border-[#e5e7eb] rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#f3f4f6] transition-colors"

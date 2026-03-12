@@ -17,9 +17,10 @@ import Pricing from "@/pages/pricing";
 import Onboarding from "@/pages/onboarding";
 import Dashboard from "@/pages/dashboard";
 import PostDetail from "@/pages/post-detail";
-import DirectorMode from "@/pages/director-mode";
+
 import Editor from "@/pages/editor";
-import PreviewCaptions from "@/pages/preview-captions";
+import AiEditor from "@/pages/ai-editor";
+
 import Library from "@/pages/library";
 import BrandKitPage from "@/pages/brand-kit";
 import Schedule from "@/pages/schedule";
@@ -28,7 +29,7 @@ import PrivacyPolicy from "@/pages/privacy";
 import TermsOfService from "@/pages/terms";
 import BillingSuccess from "@/pages/billing-success";
 import BillingCancel from "@/pages/billing-cancel";
-import StudioEdit from "@/pages/studio-edit";
+
 import PhoneRecorder from "@/pages/phone-recorder";
 import Contact from "@/pages/contact";
 import Waitlist from "@/pages/waitlist";
@@ -120,15 +121,15 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
       <Switch>
         <Route path="/record/phone" component={PhoneRecorder} />
         <Route path="/onboarding" component={Onboarding} />
-        <Route path="/director/:id" component={DirectorMode} />
-        <Route path="/videos/:videoId/preview" component={PreviewCaptions} />
+
+
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route path="/contact" component={Contact} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/billing/success" component={BillingSuccess} />
         <Route path="/billing/cancel" component={BillingCancel} />
-        <Route path="/studio/:videoId/edit" component={StudioEdit} />
+
         <Route>
           <div className="flex h-screen w-full" style={{ fontFamily: "'Inter', sans-serif" }}>
             <AppSidebar />
@@ -145,6 +146,7 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
                   <Route path="/dashboard" component={Dashboard} />
                   <Route path="/post/:id" component={PostDetail} />
                   <Route path="/editor/:id" component={Editor} />
+                  <Route path="/ai-editor/:id" component={AiEditor} />
                   <Route path="/library" component={Library} />
                   <Route path="/brand-kit" component={BrandKitPage} />
                   <Route path="/schedule" component={Schedule} />
