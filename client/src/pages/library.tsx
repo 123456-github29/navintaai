@@ -299,7 +299,7 @@ function VideoCard({ video }: { video: Video }) {
             <Button 
               size="sm" 
               className="w-full bg-white/90 text-[#111111] hover:bg-white backdrop-blur-sm border-0" 
-              onClick={() => setLocation(`/videos/${video.id}/preview`)}
+              onClick={() => setLocation(`/ai-editor/${video.id}`)}
               data-testid={`button-edit-captions-${video.id}`}
             >
               <PencilSquareIcon className="h-4 w-4 mr-2" />
