@@ -36,7 +36,7 @@ export function setupSecurity(app: Express) {
             ...(isProduction ? [] : ["ws:", "wss:"]),
           ],
           frameSrc: ["'self'"],
-          frameAncestors: ["'self'", "https://*.replit.app", "https://*.replit.dev", "https://*.repl.co", "https://navinta.org", "https://www.navinta.org"],
+          frameAncestors: ["'self'", "https://navinta.org", "https://www.navinta.org"],
           objectSrc: ["'none'"],
           baseUri: ["'self'"],
           formAction: ["'self'"],

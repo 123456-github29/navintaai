@@ -202,8 +202,12 @@ app.use((req, res, next) => {
     console.error("[boot] Storage bucket init failed (non-fatal):", err.message);
   });
 
-  const { renderRouter } = await import("../src/api/routes");
-  app.use(renderRouter);
+  try {
+    const { renderRouter } = await import("../src/api/routes");
+    app.use(renderRouter);
+  } catch (err: any) {
+    console.warn("[boot] Render router import failed (non-fatal):", err.message);
+  }
 
   try {
     const { RenderJobService } = await import("../src/services/renderJob.service");

@@ -83,15 +83,11 @@ export function getPriceId(plan: PlanId, interval: BillingInterval): string | nu
 }
 
 export function getSuccessUrl(): string {
-  const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-    : "http://localhost:5000";
+  const baseUrl = process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 5000}`;
   return `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`;
 }
 
 export function getCancelUrl(): string {
-  const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-    : "http://localhost:5000";
+  const baseUrl = process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 5000}`;
   return `${baseUrl}/pricing`;
 }
