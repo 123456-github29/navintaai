@@ -399,10 +399,8 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
     let baseUrl: string;
     if (process.env.PUBLIC_URL) {
       baseUrl = process.env.PUBLIC_URL;
-    } else if (process.env.REPLIT_DEV_DOMAIN) {
-      baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
     } else {
-      baseUrl = `${req.protocol}://${req.get("host")}`;
+      baseUrl = `http://localhost:${process.env.PORT || 5000}`;
     }
     
     console.log("[Stripe] Using base URL:", baseUrl);
@@ -464,10 +462,8 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
     let baseUrl: string;
     if (process.env.PUBLIC_URL) {
       baseUrl = process.env.PUBLIC_URL;
-    } else if (process.env.REPLIT_DEV_DOMAIN) {
-      baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
     } else {
-      baseUrl = `${req.protocol}://${req.get("host")}`;
+      baseUrl = `http://localhost:${process.env.PORT || 5000}`;
     }
     
     const sessionUrl = await createCheckoutSession({
