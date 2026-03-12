@@ -3,7 +3,6 @@ import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import { downloadVideoToTemp } from "./supabaseStorage";
-import { trendingMusicService } from "./trendingMusic";
 import { checkLumaStatus } from "./aiEditor";
 
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
@@ -380,64 +379,8 @@ export async function executeEdits(
       true
     );
 
-    // Step 5: Add music if specified
-    let musicInput = processInput;
-    if (editState.musicStyle) {
-      // Get the music file path for the specified vibe
-      const vibeToFilename: Record<string, string> = {
-        "Upbeat & Energetic": "upbeat.mp3",
-        "Calm & Relaxing": "calm.mp3",
-        "Inspirational": "inspirational.mp3",
-        "Corporate & Professional": "corporate.mp3",
-        "Fun & Playful": "fun.mp3",
-      };
-
-      const musicFilename =
-        vibeToFilename[editState.musicStyle] || "upbeat.mp3";
-      const musicPath = path.join(
-        process.cwd(),
-        "server/assets/music",
-        musicFilename
-      );
-
-      // Check if music file exists
-      try {
-        await fs.access(musicPath);
-
-        // Create music-blended version
-        const musicMixPath = path.join(
-          TEMP_DIR,
-          `music-mix-${jobId}.mp4`
-        );
-        tempFiles.push(musicMixPath);
-
-        await new Promise<void>((resolve, reject) => {
-          ffmpeg()
-            .input(processInput)
-            .input(musicPath)
-            .outputOptions([
-              "-c:v copy",
-              "-c:a aac",
-              "-filter_complex",
-              "[0:a][1:a]amerge=inputs=2[a]",
-              "-map",
-              "0:v:0",
-              "-map",
-              "[a]",
-              "-shortest",
-            ])
-            .output(musicMixPath)
-            .on("end", () => resolve())
-            .on("error", reject)
-            .run();
-        });
-
-        musicInput = musicMixPath;
-      } catch {
-        // Music file not found, skip music addition
-        console.log(`[editExecutor] Music file not found: ${musicPath}`);
-      }
-    }
+    // Music disabled for now
+    const musicInput = processInput;
 
     // Step 6: Final render with all filters
     await new Promise<void>((resolve, reject) => {

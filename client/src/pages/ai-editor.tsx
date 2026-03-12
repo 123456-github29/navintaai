@@ -62,7 +62,7 @@ const QUICK_ACTIONS = [
   { label: "Speed up", icon: Zap, prompt: "Speed up the boring parts and slow down the exciting moments" },
   { label: "Add B-roll", icon: Film, prompt: "Suggest and add relevant B-roll footage at key moments in the video" },
   { label: "Cinematic look", icon: Wand2, prompt: "Apply a cinematic color grade and add smooth transitions between clips" },
-  { label: "Add music", icon: Music, prompt: "Add upbeat background music that matches the energy of the video" },
+  { label: "AI clip", icon: Film, prompt: "Generate a short AI cinematic intro clip using Luma" },
 ];
 
 function EditOperationBadge({ op }: { op: { type: string; status: string } }) {
