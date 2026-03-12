@@ -43,6 +43,15 @@ interface Config {
   };
 }
 
+/**
+ * Strip invisible Unicode characters (line/paragraph separators, zero-width spaces, etc.)
+ * that can sneak in when copy-pasting env vars from web UIs.
+ */
+function sanitizeEnvValue(value: string): string {
+  // eslint-disable-next-line no-control-regex
+  return value.replace(/[\u2028\u2029\u200B\u200C\u200D\uFEFF]/g, "").trim();
+}
+
 function getRequiredEnv(key: string): string {
   const value = process.env[key];
   if (!value) {
@@ -53,11 +62,12 @@ function getRequiredEnv(key: string): string {
       `Application cannot start in unsafe mode.`
     );
   }
-  return value;
+  return sanitizeEnvValue(value);
 }
 
 function getOptionalEnv(key: string): string | undefined {
-  return process.env[key];
+  const value = process.env[key];
+  return value ? sanitizeEnvValue(value) : undefined;
 }
 
 function validateJwtSecret(secret: string): void {

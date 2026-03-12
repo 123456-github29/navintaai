@@ -6,6 +6,7 @@ import { storage } from "./storage";
 
 import ffmpeg from "fluent-ffmpeg";
 import { generateViralScript, scriptToShotDialogue, scriptToTeleprompterCards, HOOK_STYLES } from "./lib/script";
+import { chatJSON } from "./lib/openaiClient";
 import type { HookStyle } from "./lib/script";
 import { exportWithEdits } from "./lib/ffmpegExport";
 
@@ -21,7 +22,7 @@ import {
 } from "./lib/supabaseStorage";
 import { trendingMusicService } from "./lib/trendingMusic";
 import { getMixedMedia, getCuratedVideos, getCuratedPhotos, searchPhotos } from "./lib/pexels";
-import { insertPostSchema, insertClipSchema } from "@shared/schema";
+import { insertPostSchema, insertClipSchema, onboardingSchema } from "@shared/schema";
 
 import { requireAuth } from "./middleware/authJwt";
 import rateLimit from "express-rate-limit";
@@ -387,10 +388,8 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
     let baseUrl: string;
     if (process.env.PUBLIC_URL) {
       baseUrl = process.env.PUBLIC_URL;
-    } else if (process.env.REPLIT_DEV_DOMAIN) {
-      baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
     } else {
-      baseUrl = `${req.protocol}://${req.get("host")}`;
+      baseUrl = `http://localhost:${process.env.PORT || 5000}`;
     }
     
     console.log("[Stripe] Using base URL:", baseUrl);
@@ -452,10 +451,8 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
     let baseUrl: string;
     if (process.env.PUBLIC_URL) {
       baseUrl = process.env.PUBLIC_URL;
-    } else if (process.env.REPLIT_DEV_DOMAIN) {
-      baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
     } else {
-      baseUrl = `${req.protocol}://${req.get("host")}`;
+      baseUrl = `http://localhost:${process.env.PORT || 5000}`;
     }
     
     const sessionUrl = await createCheckoutSession({
@@ -857,6 +854,183 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
       res.status(500).json({ error: error.message });
     }
   });
+
+  // Onboarding: create project, brand kit, content plan, and AI-generated posts
+  app.post("/api/onboarding", requireAuth, asyncHandler(async (req: any, res) => {
+    const userId = req.user.sub;
+    const userEmail = req.user.email;
+
+    // Validate onboarding data
+    const parsed = onboardingSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw createError("Invalid onboarding data: " + parsed.error.issues.map(i => i.message).join(", "), 400);
+    }
+    const data = parsed.data;
+
+    console.log(`[onboarding] Starting for user ${userId}`);
+
+    // Map duration type to seconds
+    const durationMap: Record<string, number> = {
+      "quick": 20,
+      "standard": 35,
+      "story": 75,
+      "deep-dive": 105,
+    };
+    const targetDuration = durationMap[data.durationType] || 35;
+
+    // 1. Create or reuse project
+    const existingProjects = await storage.getProjects(userId);
+    let project;
+    if (existingProjects.length > 0) {
+      // Delete existing content plans and posts for fresh start
+      project = existingProjects[0];
+      const existingPlan = await storage.getContentPlan(project.id, userId);
+      if (existingPlan) {
+        const existingPosts = await storage.getPosts(project.id, userId);
+        for (const post of existingPosts) {
+          await storage.deletePost(post.id, userId);
+        }
+      }
+    } else {
+      project = await storage.createProject({
+        userId,
+        name: data.brandName,
+        description: data.brandDescription || "",
+      });
+    }
+
+    console.log(`[onboarding] Using project ${project.id}`);
+
+    // 2. Create content plan record
+    const contentPlan = await storage.createContentPlan({
+      projectId: project.id,
+      userId,
+      businessType: data.creatorType === "other" ? (data.creatorTypeOther || "creator") : data.creatorType,
+      targetAudience: data.audienceDescription,
+      contentGoals: [data.contentGoal],
+      platforms: ["Instagram Reels", "TikTok"],
+      postFrequency: "3x per week",
+      tone: data.brandPersonality,
+    });
+
+    console.log(`[onboarding] Created content plan ${contentPlan.id}`);
+
+    // 3. Generate 4 weeks of posts using AI
+    const postsPerWeek = 3;
+    const totalWeeks = 4;
+    const createdPosts = [];
+
+    for (let week = 1; week <= totalWeeks; week++) {
+      for (let day = 1; day <= postsPerWeek; day++) {
+        try {
+          // Generate a unique video concept using AI
+          const topicPrompt = {
+            system: `You are a content strategist for short-form video. Generate a unique video idea for a ${data.creatorType} brand called "${data.brandName}".
+The brand description: ${data.brandDescription || "N/A"}
+Target audience: ${data.audienceDescription}
+Content goal: ${data.contentGoal}
+Brand personality: ${data.brandPersonality}
+Emotional result: ${data.emotionalResult}
+
+Return ONLY valid JSON with this structure:
+{
+  "title": "Catchy video title (max 60 chars)",
+  "concept": "Brief concept description (1-2 sentences)",
+  "hashtags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+  "caption": "Social media caption (1-2 sentences)",
+  "musicVibe": "one of: energetic, chill, dramatic, upbeat, ambient",
+  "brollSuggestions": ["suggestion1", "suggestion2"]
+}
+
+Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
+            user: `Generate video idea #${(week - 1) * postsPerWeek + day} for week ${week}, day ${day}. Make it specific to the ${data.contentGoal} goal and ${data.brandPersonality} personality.`,
+          };
+
+          const topicJson = await chatJSON(topicPrompt);
+          const topic = JSON.parse(topicJson);
+          const safeTopic = deepSanitize(topic);
+
+          // Generate script and shot list
+          const scriptResult = await generateViralScript({
+            brandName: data.brandName,
+            brandDescription: data.brandDescription || "",
+            creatorType: data.creatorType,
+            audienceDescription: data.audienceDescription,
+            contentGoal: data.contentGoal,
+            brandPersonality: data.brandPersonality,
+            cameraComfort: data.cameraComfort,
+            emotionalResult: data.emotionalResult,
+            platform: "Instagram Reels",
+            videoTitle: safeTopic.title,
+            videoConcept: safeTopic.concept,
+            targetDurationSec: targetDuration,
+          });
+
+          const shotList = scriptToShotDialogue(scriptResult.script, targetDuration);
+
+          const post = await storage.createPost({
+            projectId: project.id,
+            contentPlanId: contentPlan.id,
+            userId,
+            weekNumber: week,
+            dayNumber: day,
+            title: ensureByteSafe(safeTopic.title),
+            concept: ensureByteSafe(safeTopic.concept),
+            platform: "Instagram Reels",
+            shotList,
+            brollSuggestions: safeTopic.brollSuggestions || [],
+            caption: ensureByteSafe(safeTopic.caption || ""),
+            hashtags: safeTopic.hashtags || [],
+            musicVibe: safeTopic.musicVibe || "energetic",
+            status: "planned",
+            scheduledFor: null,
+          });
+
+          createdPosts.push(post);
+          console.log(`[onboarding] Created post ${post.id} (week ${week}, day ${day})`);
+        } catch (err: any) {
+          console.error(`[onboarding] Failed to generate post for week ${week} day ${day}:`, err.message);
+          // Create a fallback post without AI
+          const post = await storage.createPost({
+            projectId: project.id,
+            contentPlanId: contentPlan.id,
+            userId,
+            weekNumber: week,
+            dayNumber: day,
+            title: `${data.brandName} - Week ${week} Video ${day}`,
+            concept: `Create a ${data.brandPersonality} video about ${data.contentGoal} for ${data.audienceDescription}`,
+            platform: "Instagram Reels",
+            shotList: [{
+              id: `shot-1`,
+              shotNumber: 1,
+              instruction: "Look at camera, speak naturally",
+              cameraAngle: "eye level",
+              framing: "medium-close",
+              dialogue: "",
+              duration: targetDuration,
+              completed: false,
+            }],
+            brollSuggestions: [],
+            caption: `${data.brandName} content`,
+            hashtags: [data.brandName.toLowerCase().replace(/\s+/g, ""), data.contentGoal],
+            musicVibe: "energetic",
+            status: "planned",
+            scheduledFor: null,
+          });
+          createdPosts.push(post);
+        }
+      }
+    }
+
+    console.log(`[onboarding] Completed: ${createdPosts.length} posts created`);
+
+    res.json({
+      success: true,
+      projectId: project.id,
+      contentPlanId: contentPlan.id,
+      postCount: createdPosts.length,
+    });
+  }));
 
   // Get content plan with posts
   app.get("/api/content-plan", requireAuth, async (req: any, res) => {

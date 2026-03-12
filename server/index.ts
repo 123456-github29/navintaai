@@ -35,7 +35,23 @@ app.get("/", (req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Request ID middleware (must be first)
+// Serve static assets EARLY — before security/CORS/body parsing middleware
+// This prevents Helmet, CORS, and other API middleware from interfering with asset delivery
+if (process.env.NODE_ENV === "production") {
+  const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+  log(`[production] Early static asset serving from: ${distPath}`);
+  app.use(express.static(distPath, {
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+    }
+  }));
+}
+
+// Request ID middleware (must be first for API routes)
 app.use(requestIdMiddleware);
 
 // Redirect www to non-www (important for OAuth callbacks)
@@ -201,63 +217,6 @@ app.use((req, res, next) => {
   }).catch((err) => {
     console.error("[boot] Storage bucket init failed (non-fatal):", err.message);
   });
-
-  const { renderRouter } = await import("../src/api/routes");
-  app.use(renderRouter);
-
-  try {
-    const { RenderJobService } = await import("../src/services/renderJob.service");
-    RenderJobService.startWorker();
-  } catch (err: any) {
-    console.error("[boot] RenderWorker startup failed (non-fatal):", err.message);
-  }
-
-  let redisHealthy = false;
-  if (process.env.REDIS_URL) {
-    try {
-      const { getRedisConnection } = await import("../src/queue/redis");
-      const conn = getRedisConnection();
-      const pong = await conn.ping();
-      await conn.set("_health", "1", "EX", 60);
-      redisHealthy = true;
-    } catch (err: any) {
-      const msg = err.message || "";
-      if (msg.includes("max requests limit")) {
-        console.warn("[boot] Redis request limit exceeded — skipping queue workers (using inline processing)");
-      } else {
-        console.warn("[boot] Redis unavailable, skipping queue workers:", msg.substring(0, 120));
-      }
-      try {
-        const { closeRedis } = await import("../src/queue/redis");
-        await closeRedis();
-      } catch {}
-    }
-  }
-
-  if (redisHealthy) {
-    try {
-      const { startProEditWorker } = await import("../src/worker/proedit.worker");
-      startProEditWorker();
-    } catch (err: any) {
-      console.error("[boot] ProEdit worker startup failed (non-fatal):", err.message);
-    }
-
-    try {
-      const { startStudioWorker } = await import("../src/worker/studio.worker");
-      startStudioWorker();
-    } catch (err: any) {
-      console.error("[boot] Studio worker startup failed (non-fatal):", err.message);
-    }
-
-    try {
-      const { startLumaWorker } = await import("../src/worker/luma.worker");
-      startLumaWorker();
-    } catch (err: any) {
-      console.error("[boot] Luma worker startup failed (non-fatal):", err.message);
-    }
-  } else {
-    console.log("[boot] Queue workers disabled — using inline processing");
-  }
 
   await registerRoutes(app, server);
 

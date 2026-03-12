@@ -20,6 +20,7 @@ import PostDetail from "@/pages/post-detail";
 
 import Editor from "@/pages/editor";
 import AiEditor from "@/pages/ai-editor";
+import Director from "@/pages/director";
 
 import Library from "@/pages/library";
 import BrandKitPage from "@/pages/brand-kit";
@@ -145,6 +146,7 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
                   <Route path="/" component={Dashboard} />
                   <Route path="/dashboard" component={Dashboard} />
                   <Route path="/post/:id" component={PostDetail} />
+                  <Route path="/director/:id" component={Director} />
                   <Route path="/editor/:id" component={Editor} />
                   <Route path="/ai-editor/:id" component={AiEditor} />
                   <Route path="/library" component={Library} />
