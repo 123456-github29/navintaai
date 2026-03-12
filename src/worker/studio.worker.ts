@@ -697,7 +697,8 @@ async function processJob(job: Job<StudioJobData>) {
 
         if (
           op.op !== "insert_broll" &&
-          op.op !== "remove_broll"
+          op.op !== "remove_broll" &&
+          op.op !== "ai_director"
         ) {
           await db.insert(editMessages).values({
             sessionId,
