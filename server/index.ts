@@ -203,7 +203,7 @@ app.use((req, res, next) => {
   });
 
   try {
-    const { renderRouter } = await import("../src/api/routes.js");
+    const { renderRouter } = await import("../src/api/routes");
     app.use(renderRouter);
   } catch (err: any) {
     console.warn("[boot] Render router import failed (non-fatal):", err.message);
