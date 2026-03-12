@@ -2106,6 +2106,285 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
     }
   });
 
+  // ============================================================
+  // AI Video Editing Routes
+  // ============================================================
+
+  // POST /api/ai-edit/sessions - Create or resume an AI edit session for a post
+  app.post("/api/ai-edit/sessions", requireAuth as any, asyncHandler(async (req: any, res) => {
+    const userId = req.user.sub;
+    const { postId } = req.body;
+
+    if (!postId) {
+      throw createError("postId is required", 400, "MISSING_POST_ID");
+    }
+
+    // Check if there's already an active session for this post
+    let session = await storage.getAiEditSessionByPost(postId, userId);
+    if (session) {
+      const messages = await storage.getAiEditMessages(session.id);
+      return res.json({ session, messages });
+    }
+
+    // Get the post and its clips to build context
+    const post = await storage.getPost(postId, userId);
+    if (!post) {
+      throw createError("Post not found", 404, "POST_NOT_FOUND");
+    }
+
+    // Find the latest exported video for this post (if any)
+    const userVideos = await storage.getVideos(userId, postId);
+    const video = userVideos[0];
+
+    // Create a new session
+    session = await storage.createAiEditSession({
+      postId,
+      userId,
+      videoId: video?.id || null,
+      status: "active",
+    });
+
+    // Create system welcome message
+    const welcomeMsg = await storage.createAiEditMessage({
+      sessionId: session.id,
+      role: "assistant",
+      content: `Welcome to AI Video Editing! I can see your video for "${post.title}". Tell me what edits you'd like to make - I can trim, cut, add captions, insert B-roll, change speed, add transitions, apply filters, add music, and even generate cinematic AI clips. What would you like to do?`,
+    });
+
+    res.json({ session, messages: [welcomeMsg] });
+  }));
+
+  // GET /api/ai-edit/sessions/:id - Get session with messages
+  app.get("/api/ai-edit/sessions/:id", requireAuth as any, asyncHandler(async (req: any, res) => {
+    const userId = req.user.sub;
+    const { id } = req.params;
+
+    const session = await storage.getAiEditSession(id, userId);
+    if (!session) {
+      throw createError("Session not found", 404, "SESSION_NOT_FOUND");
+    }
+
+    const messages = await storage.getAiEditMessages(session.id);
+    res.json({ session, messages });
+  }));
+
+  // POST /api/ai-edit/sessions/:id/transcribe - Transcribe the video for this session
+  app.post("/api/ai-edit/sessions/:id/transcribe", requireAuth as any, asyncHandler(async (req: any, res) => {
+    const userId = req.user.sub;
+    const { id } = req.params;
+
+    const session = await storage.getAiEditSession(id, userId);
+    if (!session) {
+      throw createError("Session not found", 404, "SESSION_NOT_FOUND");
+    }
+
+    // If transcript already exists, return it
+    if (session.transcript) {
+      return res.json({ transcript: session.transcript });
+    }
+
+    // Get clips for the post
+    const postClips = await storage.getClipsByPost(session.postId);
+    if (postClips.length === 0) {
+      throw createError("No clips found for this post", 400, "NO_CLIPS");
+    }
+
+    // Download the first clip's video and transcribe it
+    const clip = postClips[0];
+    const videoPath = clip.videoPath;
+
+    if (!videoPath) {
+      throw createError("No video file found for clip", 400, "NO_VIDEO_PATH");
+    }
+
+    // Import dynamically to avoid circular dependencies
+    const { transcribeVideo } = await import("./lib/aiEditor");
+    const { downloadVideoToTemp } = await import("./lib/supabaseStorage");
+
+    let tempPath: string | null = null;
+    try {
+      tempPath = await downloadVideoToTemp(videoPath, "clips");
+      const result = await transcribeVideo(tempPath);
+
+      // Store the transcript on the session
+      await storage.updateAiEditSession(id, userId, {
+        transcript: result.fullText,
+      });
+
+      // Add system message about transcription
+      await storage.createAiEditMessage({
+        sessionId: id,
+        role: "system",
+        content: `Video transcribed successfully. Duration: ${result.duration}s, Language: ${result.language}. Transcript: "${result.fullText}"`,
+      });
+
+      res.json({
+        transcript: result.fullText,
+        segments: result.segments,
+        duration: result.duration,
+        language: result.language,
+      });
+    } finally {
+      if (tempPath) {
+        await fs.unlink(tempPath).catch(() => {});
+      }
+    }
+  }));
+
+  // POST /api/ai-edit/sessions/:id/chat - Send a chat message and get AI edit response
+  app.post("/api/ai-edit/sessions/:id/chat", requireAuth as any, asyncHandler(async (req: any, res) => {
+    const userId = req.user.sub;
+    const { id } = req.params;
+    const { message } = req.body;
+
+    if (!message || typeof message !== "string" || message.trim().length === 0) {
+      throw createError("Message is required", 400, "MISSING_MESSAGE");
+    }
+
+    const session = await storage.getAiEditSession(id, userId);
+    if (!session) {
+      throw createError("Session not found", 404, "SESSION_NOT_FOUND");
+    }
+
+    // Save user message
+    const userMsg = await storage.createAiEditMessage({
+      sessionId: id,
+      role: "user",
+      content: message.trim(),
+    });
+
+    // Get chat history
+    const allMessages = await storage.getAiEditMessages(id);
+    const chatHistory = allMessages
+      .filter(m => m.role !== "system")
+      .map(m => ({ role: m.role, content: m.content }));
+
+    // Get video duration from clips
+    const postClips = await storage.getClipsByPost(session.postId);
+    const videoDuration = postClips.reduce((sum, c) => sum + c.duration, 0);
+
+    // Plan the edits using OpenAI
+    const { planEdits, applyOperationsToState, generateLumaVideo } = await import("./lib/aiEditor");
+
+    const editPlan = await planEdits(
+      message.trim(),
+      session.transcript || "",
+      session.currentEditState,
+      chatHistory,
+      videoDuration,
+    );
+
+    // Process Luma generations if any
+    for (const op of editPlan.operations) {
+      if (op.type === "luma_generate" && op.params.prompt) {
+        const lumaResult = await generateLumaVideo(
+          op.params.prompt,
+          op.params.duration || 5,
+          op.params.aspect_ratio || "9:16",
+        );
+        op.params.generationId = lumaResult.id;
+        op.params.videoUrl = lumaResult.videoUrl;
+        op.status = lumaResult.status === "failed" ? "failed" : "applied";
+      } else {
+        op.status = "applied";
+      }
+    }
+
+    // Apply operations to session state
+    const newState = applyOperationsToState(
+      session.currentEditState || {},
+      editPlan.operations,
+    );
+
+    // Update session with new state
+    await storage.updateAiEditSession(id, userId, {
+      currentEditState: newState,
+    });
+
+    // Save assistant message with edit operations
+    const assistantMsg = await storage.createAiEditMessage({
+      sessionId: id,
+      role: "assistant",
+      content: editPlan.message,
+      editOperations: editPlan.operations,
+    });
+
+    res.json({
+      userMessage: userMsg,
+      assistantMessage: assistantMsg,
+      editState: newState,
+    });
+  }));
+
+  // GET /api/ai-edit/sessions/:id/state - Get current edit state
+  app.get("/api/ai-edit/sessions/:id/state", requireAuth as any, asyncHandler(async (req: any, res) => {
+    const userId = req.user.sub;
+    const { id } = req.params;
+
+    const session = await storage.getAiEditSession(id, userId);
+    if (!session) {
+      throw createError("Session not found", 404, "SESSION_NOT_FOUND");
+    }
+
+    res.json({
+      editState: session.currentEditState || {},
+      transcript: session.transcript,
+    });
+  }));
+
+  // POST /api/ai-edit/sessions/:id/luma-status - Check Luma generation status
+  app.post("/api/ai-edit/sessions/:id/luma-status", requireAuth as any, asyncHandler(async (req: any, res) => {
+    const userId = req.user.sub;
+    const { id } = req.params;
+    const { generationId } = req.body;
+
+    const session = await storage.getAiEditSession(id, userId);
+    if (!session) {
+      throw createError("Session not found", 404, "SESSION_NOT_FOUND");
+    }
+
+    const { checkLumaStatus } = await import("./lib/aiEditor");
+    const result = await checkLumaStatus(generationId);
+
+    // If complete, update the broll segment in the edit state
+    if (result.status === "completed" && result.videoUrl && session.currentEditState) {
+      const state = { ...(session.currentEditState as any) };
+      if (state.brollSegments) {
+        for (const seg of state.brollSegments) {
+          if (seg.lumaGenerationId === generationId) {
+            seg.url = result.videoUrl;
+          }
+        }
+        await storage.updateAiEditSession(id, userId, { currentEditState: state });
+      }
+    }
+
+    res.json(result);
+  }));
+
+  // POST /api/ai-edit/sessions/:id/reset - Reset all edits
+  app.post("/api/ai-edit/sessions/:id/reset", requireAuth as any, asyncHandler(async (req: any, res) => {
+    const userId = req.user.sub;
+    const { id } = req.params;
+
+    const session = await storage.getAiEditSession(id, userId);
+    if (!session) {
+      throw createError("Session not found", 404, "SESSION_NOT_FOUND");
+    }
+
+    await storage.updateAiEditSession(id, userId, {
+      currentEditState: null as any,
+    });
+
+    const resetMsg = await storage.createAiEditMessage({
+      sessionId: id,
+      role: "assistant",
+      content: "All edits have been reset. Your video is back to its original state. What would you like to do?",
+    });
+
+    res.json({ message: resetMsg, editState: {} });
+  }));
+
   const httpServer = existingServer || createServer(app);
   return httpServer;
 }

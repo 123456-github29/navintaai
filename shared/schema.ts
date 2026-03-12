@@ -438,6 +438,58 @@ export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 
 
+// AI Edit Sessions - chat-based AI video editing
+export const aiEditSessions = pgTable("ai_edit_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  videoId: varchar("video_id").references(() => videos.id, { onDelete: "set null" }),
+  transcript: text("transcript"),
+  currentEditState: jsonb("current_edit_state").$type<{
+    cuts?: Array<{ start: number; end: number; label?: string }>;
+    captions?: boolean;
+    musicStyle?: string;
+    brollSegments?: Array<{ timestamp: number; duration: number; query: string; lumaGenerationId?: string; url?: string }>;
+    filters?: Array<{ type: string; params: Record<string, any>; startTime?: number; endTime?: number }>;
+    speedAdjustments?: Array<{ start: number; end: number; speed: number }>;
+    transitions?: Array<{ type: string; timestamp: number; duration: number }>;
+  }>(),
+  status: text("status").notNull().default("active"), // active | completed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// AI Edit Messages - individual chat messages in an edit session
+export const aiEditMessages = pgTable("ai_edit_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull().references(() => aiEditSessions.id, { onDelete: "cascade" }),
+  role: text("role").notNull(), // user | assistant | system
+  content: text("content").notNull(),
+  editOperations: jsonb("edit_operations").$type<Array<{
+    type: string; // cut | trim | add_caption | add_broll | add_music | speed_change | add_filter | add_transition | luma_generate
+    params: Record<string, any>;
+    status: string; // pending | applied | failed
+  }>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAiEditSessionSchema = createInsertSchema(aiEditSessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiEditMessageSchema = createInsertSchema(aiEditMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAiEditSession = z.infer<typeof insertAiEditSessionSchema>;
+export type AiEditSession = typeof aiEditSessions.$inferSelect;
+
+export type InsertAiEditMessage = z.infer<typeof insertAiEditMessageSchema>;
+export type AiEditMessage = typeof aiEditMessages.$inferSelect;
+
 // Replit Auth: User types
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,

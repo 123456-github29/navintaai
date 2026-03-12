@@ -26,6 +26,10 @@ import {
   type InsertRecordingSession,
   type WaitlistEntry,
   type InsertWaitlist,
+  type AiEditSession,
+  type InsertAiEditSession,
+  type AiEditMessage,
+  type InsertAiEditMessage,
   brandKits,
   contentPlans,
   posts,
@@ -41,6 +45,8 @@ import {
   renderJobs,
   recordingSessions,
   waitlist,
+  aiEditSessions,
+  aiEditMessages,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { deepSanitize } from "./utils/sanitizeText";
@@ -109,6 +115,14 @@ export interface IStorage {
   createRecordingSession(session: InsertRecordingSession): Promise<RecordingSession>;
   getRecordingSession(id: string): Promise<RecordingSession | undefined>;
   updateRecordingSession(id: string, updates: Partial<RecordingSession>): Promise<RecordingSession | undefined>;
+
+  // AI Edit Sessions
+  createAiEditSession(session: InsertAiEditSession): Promise<AiEditSession>;
+  getAiEditSession(id: string, userId: string): Promise<AiEditSession | undefined>;
+  getAiEditSessionByPost(postId: string, userId: string): Promise<AiEditSession | undefined>;
+  updateAiEditSession(id: string, userId: string, updates: Partial<AiEditSession>): Promise<AiEditSession | undefined>;
+  createAiEditMessage(message: InsertAiEditMessage): Promise<AiEditMessage>;
+  getAiEditMessages(sessionId: string): Promise<AiEditMessage[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -583,6 +597,30 @@ export class MemStorage implements IStorage {
 
   async updateRecordingSession(id: string, updates: Partial<RecordingSession>): Promise<RecordingSession | undefined> {
     throw new Error("updateRecordingSession not implemented in MemStorage");
+  }
+
+  async createAiEditSession(session: InsertAiEditSession): Promise<AiEditSession> {
+    throw new Error("createAiEditSession not implemented in MemStorage");
+  }
+
+  async getAiEditSession(id: string, userId: string): Promise<AiEditSession | undefined> {
+    throw new Error("getAiEditSession not implemented in MemStorage");
+  }
+
+  async getAiEditSessionByPost(postId: string, userId: string): Promise<AiEditSession | undefined> {
+    throw new Error("getAiEditSessionByPost not implemented in MemStorage");
+  }
+
+  async updateAiEditSession(id: string, userId: string, updates: Partial<AiEditSession>): Promise<AiEditSession | undefined> {
+    throw new Error("updateAiEditSession not implemented in MemStorage");
+  }
+
+  async createAiEditMessage(message: InsertAiEditMessage): Promise<AiEditMessage> {
+    throw new Error("createAiEditMessage not implemented in MemStorage");
+  }
+
+  async getAiEditMessages(sessionId: string): Promise<AiEditMessage[]> {
+    throw new Error("getAiEditMessages not implemented in MemStorage");
   }
 }
 
@@ -1360,6 +1398,53 @@ export class DbStorage implements IStorage {
       .where(eq(waitlist.email, email))
       .returning();
     return result[0];
+  }
+
+  // AI Edit Sessions
+  async createAiEditSession(session: InsertAiEditSession): Promise<AiEditSession> {
+    const result = await this.db.insert(aiEditSessions).values(session).returning();
+    return result[0];
+  }
+
+  async getAiEditSession(id: string, userId: string): Promise<AiEditSession | undefined> {
+    const result = await this.db
+      .select()
+      .from(aiEditSessions)
+      .where(and(eq(aiEditSessions.id, id), eq(aiEditSessions.userId, userId)))
+      .limit(1);
+    return result[0];
+  }
+
+  async getAiEditSessionByPost(postId: string, userId: string): Promise<AiEditSession | undefined> {
+    const result = await this.db
+      .select()
+      .from(aiEditSessions)
+      .where(and(eq(aiEditSessions.postId, postId), eq(aiEditSessions.userId, userId), eq(aiEditSessions.status, "active")))
+      .orderBy(desc(aiEditSessions.createdAt))
+      .limit(1);
+    return result[0];
+  }
+
+  async updateAiEditSession(id: string, userId: string, updates: Partial<AiEditSession>): Promise<AiEditSession | undefined> {
+    const result = await this.db
+      .update(aiEditSessions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(aiEditSessions.id, id), eq(aiEditSessions.userId, userId)))
+      .returning();
+    return result[0];
+  }
+
+  async createAiEditMessage(message: InsertAiEditMessage): Promise<AiEditMessage> {
+    const result = await this.db.insert(aiEditMessages).values(message).returning();
+    return result[0];
+  }
+
+  async getAiEditMessages(sessionId: string): Promise<AiEditMessage[]> {
+    return this.db
+      .select()
+      .from(aiEditMessages)
+      .where(eq(aiEditMessages.sessionId, sessionId))
+      .orderBy(aiEditMessages.createdAt);
   }
 }
 
