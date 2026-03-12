@@ -737,6 +737,25 @@ async function processJob(job: Job<StudioJobData>) {
       patchedEdl = makeCalmer(patchedEdl);
     }
 
+    // Sanitize EDL: ensure all clips have valid arrays (prevents TikTokComposition crash)
+    patchedEdl.clips = patchedEdl.clips.map((clip: any) => ({
+      ...clip,
+      words: Array.isArray(clip.words) ? clip.words : [],
+      cameraMoves: Array.isArray(clip.cameraMoves) ? clip.cameraMoves : [],
+      popups: Array.isArray(clip.popups) ? clip.popups : [],
+    }));
+
+    // Refresh clip source URLs so the saved EDL has valid signed URLs
+    for (const clip of patchedEdl.clips) {
+      const sp = (clip as any).storagePath;
+      if (sp) {
+        try {
+          const freshUrl = await getVideoSignedUrl(sp);
+          if (freshUrl) clip.src = freshUrl;
+        } catch {}
+      }
+    }
+
     if (editRunId) {
       try {
         await db

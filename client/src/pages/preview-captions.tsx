@@ -77,6 +77,8 @@ export default function PreviewCaptions() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [inputText, setInputText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const forcePollCountRef = useRef(0);
+  const processingFromVersionRef = useRef<string | null>(null);
 
   const { data: video, isLoading: videoLoading } = useQuery<Video>({
     queryKey: ["/api/videos", videoId],
@@ -117,6 +119,13 @@ export default function PreviewCaptions() {
       if (status === "generating" || status === "rendering" || renderStatus === "running" || renderStatus === "queued") {
         return 2000;
       }
+      if (forcePollCountRef.current > 0) {
+        forcePollCountRef.current--;
+        return 2000;
+      }
+      if (isProcessing) {
+        return 2000;
+      }
       return false;
     },
   });
@@ -127,7 +136,9 @@ export default function PreviewCaptions() {
       return res.json();
     },
     onSuccess: () => {
+      processingFromVersionRef.current = sessionQuery.data?.activeVersion?.id || null;
       setIsProcessing(true);
+      forcePollCountRef.current = 10;
       queryClient.invalidateQueries({ queryKey: [`/api/studio/${sessionId}`] });
     },
   });
@@ -161,19 +172,21 @@ export default function PreviewCaptions() {
   });
 
   useEffect(() => {
+    if (!isProcessing) return;
     const status = sessionQuery.data?.session?.status;
-    if (status && status !== "generating" && status !== "rendering") {
+    const currentVersionId = sessionQuery.data?.activeVersion?.id;
+    if (status === "failed") {
       setIsProcessing(false);
-    }
-  }, [sessionQuery.data?.session?.status]);
-
-  useEffect(() => {
-    const msgs = sessionQuery.data?.messages || [];
-    const lastMsg = msgs[msgs.length - 1];
-    if (lastMsg && (lastMsg.role === "assistant" || lastMsg.role === "tool") && isProcessing) {
+      processingFromVersionRef.current = null;
+    } else if (
+      status === "idle" &&
+      currentVersionId &&
+      currentVersionId !== processingFromVersionRef.current
+    ) {
       setIsProcessing(false);
+      processingFromVersionRef.current = null;
     }
-  }, [sessionQuery.data?.messages?.length]);
+  }, [sessionQuery.data?.session?.status, sessionQuery.data?.activeVersion?.id, isProcessing]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

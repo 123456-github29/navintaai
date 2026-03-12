@@ -230,11 +230,69 @@ function buildFallbackResponse(message: string): IntentResponse {
     };
   }
 
+  if (lower.includes("better") || lower.includes("improve") || lower.includes("enhance") || lower.includes("polish")) {
+    return {
+      intent: "MAKE_ENERGETIC",
+      confidence: 0.6,
+      operations: [
+        { op: "tighten_cuts", params: { aggressiveness: "moderate" } },
+        { op: "add_zooms", params: { intensity: 0.4 } },
+      ],
+      notes: "Enhancing the video with tighter cuts and subtle zooms",
+    };
+  }
+
+  if (lower.includes("shorter") || lower.includes("cut") || lower.includes("trim") || lower.includes("shorten")) {
+    return {
+      intent: "TIGHTEN_CUTS",
+      confidence: 0.7,
+      operations: [{ op: "tighten_cuts", params: { aggressiveness: "moderate" } }],
+      notes: "Trimming the video for better pacing",
+    };
+  }
+
+  if (lower.includes("warm") || lower.includes("cool") || lower.includes("moody") || lower.includes("vintage") || lower.includes("dark") || lower.includes("bright")) {
+    const preset = lower.includes("vintage") ? "vintage"
+      : lower.includes("moody") || lower.includes("dark") ? "moody"
+      : lower.includes("warm") || lower.includes("bright") ? "vibrant"
+      : "pastel";
+    return {
+      intent: "COLOR_GRADE",
+      confidence: 0.7,
+      operations: [{ op: "color_grade", params: { preset } }],
+      notes: `Applying ${preset} color grading`,
+    };
+  }
+
+  if (lower.includes("pop") || lower.includes("bold") || lower.includes("bigger text") || lower.includes("larger text")) {
+    return {
+      intent: "CAPTION_STYLE",
+      confidence: 0.65,
+      operations: [{ op: "caption_style", params: { fontScale: 1.4, highlightColor: "#FBBF24" } }],
+      notes: "Making captions bolder and more visible",
+    };
+  }
+
+  if (lower.includes("slide") || lower.includes("wipe") || lower.includes("flip")) {
+    const type = lower.includes("slide") ? "slide" : lower.includes("wipe") ? "wipe" : "flip";
+    return {
+      intent: "TRANSITIONS",
+      confidence: 0.7,
+      operations: [{ op: "transitions", params: { type, durationFrames: 12 } }],
+      notes: `Adding ${type} transitions`,
+    };
+  }
+
+  // Fallback: apply a general cinematic polish instead of relying on ai_director (which needs OpenAI)
   return {
-    intent: "OPEN_ENDED",
-    confidence: 0.55,
-    operations: [{ op: "ai_director", params: { prompt: message, intensity: 0.6, useLumaCamera: true } }],
-    notes: "Applying an AI-directed cinematic pass based on your request",
+    intent: "MULTI",
+    confidence: 0.5,
+    operations: [
+      { op: "tighten_cuts", params: { aggressiveness: "gentle" } },
+      { op: "add_zooms", params: { intensity: 0.3 } },
+      { op: "color_grade", params: { preset: "cinematic" } },
+    ],
+    notes: "Applying a general cinematic polish to your video",
   };
 }
 
