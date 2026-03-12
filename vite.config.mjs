@@ -12,7 +12,6 @@ export default defineConfig(async ({ mode }) => {
         "@": path.resolve(import.meta.dirname, "client", "src"),
         "@shared": path.resolve(import.meta.dirname, "shared"),
         "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-        "@remotion-src": path.resolve(import.meta.dirname, "src", "remotion"),
       },
     },
     root: path.resolve(import.meta.dirname, "client"),
@@ -41,7 +40,6 @@ export default defineConfig(async ({ mode }) => {
         strict: true,
         allow: [
           path.resolve(import.meta.dirname, "client"),
-          path.resolve(import.meta.dirname, "src", "remotion"),
           path.resolve(import.meta.dirname, "shared"),
           path.resolve(import.meta.dirname, "node_modules"),
         ],
