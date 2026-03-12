@@ -3635,6 +3635,12 @@ Return ONLY valid JSON, no markdown or explanation.`;
           await db.update(editSessions)
             .set({ status: "failed", updatedAt: new Date() })
             .where(eq(editSessions.id, sessionId));
+          await db.insert(editMessages).values({
+            sessionId,
+            userId,
+            role: "assistant",
+            content: `Sorry, something went wrong: ${fallbackErr.message}. Please try again.`,
+          });
         }
       });
     } catch (inlineErr: any) {

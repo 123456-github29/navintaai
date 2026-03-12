@@ -125,6 +125,7 @@ export default function StudioEdit() {
   const [activeTab, setActiveTab] = useState<"chat" | "transcript">("chat");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const forcePollCountRef = useRef(0);
 
   const startMutation = useMutation({
     mutationFn: async () => {
@@ -164,6 +165,10 @@ export default function StudioEdit() {
       ) {
         return 1500;
       }
+      if (forcePollCountRef.current > 0) {
+        forcePollCountRef.current--;
+        return 1500;
+      }
       return false;
     },
   });
@@ -175,6 +180,7 @@ export default function StudioEdit() {
     },
     onSuccess: () => {
       setIsProcessing(true);
+      forcePollCountRef.current = 5;
       queryClient.invalidateQueries({ queryKey: [`/api/studio/${sessionId}`] });
     },
   });
@@ -331,7 +337,7 @@ export default function StudioEdit() {
                     </div>
                   }
                 >
-                  <RemotionPreview edl={activeVersion.edlJson} />
+                  <RemotionPreview key={activeVersion.id} edl={activeVersion.edlJson} />
                 </Suspense>
                 {edlSummary && activeVersion.versionNumber > 1 && (
                   <div className="absolute top-3 left-3 right-3 flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 z-10">
