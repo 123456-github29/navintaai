@@ -4,6 +4,7 @@ import { readFileSync, promises as fs } from "fs";
 import { join } from "path";
 import { storage } from "./storage";
 
+import ffmpeg from "fluent-ffmpeg";
 import { generateViralScript, scriptToShotDialogue, scriptToTeleprompterCards, HOOK_STYLES } from "./lib/script";
 import type { HookStyle } from "./lib/script";
 import { exportWithEdits } from "./lib/ffmpegExport";
@@ -2383,6 +2384,123 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
     });
 
     res.json({ message: resetMsg, editState: {} });
+  }));
+
+  // POST /api/ai-edit/sessions/:id/export - Export edited video
+  app.post("/api/ai-edit/sessions/:id/export", requireAuth as any, asyncHandler(async (req: any, res) => {
+    const userId = req.user.sub;
+    const { id } = req.params;
+
+    const session = await storage.getAiEditSession(id, userId);
+    if (!session) {
+      throw createError("Session not found", 404, "SESSION_NOT_FOUND");
+    }
+
+    // Get all clips for this post
+    const clips = await storage.getClipsByPost(session.postId);
+    if (clips.length === 0) {
+      throw createError("No clips found for this post", 400, "NO_CLIPS");
+    }
+
+    // Concatenate all clips into a single video
+    const { promises: fs } = await import("fs");
+    const path = await import("path");
+    const { randomUUID } = await import("crypto");
+    const { downloadVideoToTemp } = await import("./lib/supabaseStorage");
+    const { executeEdits } = await import("./lib/editExecutor");
+    const { uploadVideoToStorage } = await import("./lib/supabaseStorage");
+
+    const jobId = randomUUID();
+    const tempDir = path.join(process.cwd(), "uploads", "temp");
+    await fs.mkdir(tempDir, { recursive: true });
+
+    try {
+      // Download all clips
+      const clipPaths: string[] = [];
+      for (const clip of clips) {
+        if (clip.videoPath) {
+          const clipPath = await downloadVideoToTemp(clip.videoPath, tempDir);
+          clipPaths.push(clipPath);
+        }
+      }
+
+      if (clipPaths.length === 0) {
+        throw createError("No valid clips to export", 400, "NO_VALID_CLIPS");
+      }
+
+      // Concatenate clips
+      const concatFile = path.join(tempDir, `concat-${jobId}.txt`);
+      const concatContent = clipPaths.map((p) => `file '${p}'`).join("\n");
+      await fs.writeFile(concatFile, concatContent);
+
+      const mergedPath = path.join(tempDir, `merged-${jobId}.mp4`);
+
+      await new Promise<void>((resolve, reject) => {
+        ffmpeg()
+          .input(concatFile)
+          .inputOptions(["-f concat", "-safe 0"])
+          .outputOptions([
+            "-c:v libx264",
+            "-c:a aac",
+            "-preset ultrafast",
+            "-crf 23",
+            "-movflags +faststart",
+          ])
+          .output(mergedPath)
+          .on("end", () => resolve())
+          .on("error", reject)
+          .run();
+      });
+
+      // Calculate total duration
+      const totalDuration = clips.reduce((sum, c) => sum + (c.duration || 0), 0);
+
+      // Execute edits
+      const editedFilename = await executeEdits(
+        mergedPath,
+        session.currentEditState || {},
+        totalDuration
+      );
+
+      // Upload to storage
+      const editedVideoPath = path.join(
+        process.cwd(),
+        "uploads",
+        "videos",
+        editedFilename
+      );
+      const storagePath = await uploadVideoToStorage(
+        editedVideoPath,
+        userId
+      );
+
+      // Create video record
+      const videoId = randomUUID();
+      await storage.createVideo({
+        id: videoId,
+        postId: session.postId,
+        userId,
+        videoPath: storagePath,
+        title: `Edited Video - ${new Date().toLocaleString()}`,
+      });
+
+      // Get signed URL for playback
+      const { getVideoSignedUrl } = await import(
+        "./lib/supabaseStorage"
+      );
+      const signedUrl = await getVideoSignedUrl(storagePath);
+
+      res.json({
+        success: true,
+        videoId,
+        videoPath: storagePath,
+        signedUrl,
+        message: "Video exported successfully!",
+      });
+    } catch (error) {
+      console.error("[export] Error:", error);
+      throw error;
+    }
   }));
 
   const httpServer = existingServer || createServer(app);

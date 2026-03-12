@@ -21,6 +21,8 @@ import {
   Music,
   Type,
   Zap,
+  Download,
+  CheckCircle2,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -177,6 +179,37 @@ export default function AiEditor() {
       setMessages((prev) => [...prev, data.message]);
       setSession((prev) => prev ? { ...prev, currentEditState: {} } : prev);
       toast({ title: "Edits reset", description: "All edits have been removed." });
+    },
+  });
+
+  // Export edited video
+  const exportVideo = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/ai-edit/sessions/${session!.id}/export`);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Video exported successfully!",
+        description: "Your edited video is ready to download.",
+      });
+      // Save signed URL for download
+      if (data.signedUrl) {
+        const a = document.createElement("a");
+        a.href = data.signedUrl;
+        a.download = `edited-video-${Date.now()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      setLocation(`/library`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Export failed",
+        description: error?.message || "Could not export the video. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -431,10 +464,21 @@ export default function AiEditor() {
             )}
             <Button
               size="sm"
-              onClick={() => setLocation(`/editor/${postId}`)}
-              className="text-xs bg-[#111] hover:bg-[#333] text-white rounded-lg"
+              onClick={() => exportVideo.mutate()}
+              disabled={exportVideo.isPending || !session}
+              className="text-xs bg-[#111] hover:bg-[#333] text-white rounded-lg gap-1.5"
             >
-              Export Video
+              {exportVideo.isPending ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-3.5 w-3.5" />
+                  Export Video
+                </>
+              )}
             </Button>
           </div>
         </div>
