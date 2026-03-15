@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TermsAcceptance } from "@/components/terms-acceptance";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +16,7 @@ import Pricing from "@/pages/pricing";
 import Onboarding from "@/pages/onboarding";
 import Dashboard from "@/pages/dashboard";
 import PostDetail from "@/pages/post-detail";
+import Settings from "@/pages/settings";
 
 import Editor from "@/pages/editor";
 import AiEditor from "@/pages/ai-editor";
@@ -33,7 +33,6 @@ import BillingCancel from "@/pages/billing-cancel";
 
 import PhoneRecorder from "@/pages/phone-recorder";
 import Contact from "@/pages/contact";
-import Waitlist from "@/pages/waitlist";
 
 function App() {
   const style = {
@@ -62,22 +61,25 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-white">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#111111] mb-4"></div>
-        <p className="text-[#666666]">Loading...</p>
+      <div className="flex flex-col items-center justify-center h-screen" style={{ background: "#000000" }}>
+        <div className="relative w-12 h-12">
+          <div className="absolute inset-0 rounded-full border-2 border-white/5" />
+          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-white animate-spin" />
+        </div>
+        <p className="text-white/30 mt-6 text-sm font-medium tracking-wide">Loading</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-white text-center px-4">
+      <div className="flex flex-col items-center justify-center h-screen text-center px-4" style={{ background: "#000000" }}>
         <div className="max-w-md">
-          <h1 className="text-2xl font-bold text-[#111111] mb-4">Authentication Error</h1>
-          <p className="text-[#666666] mb-6">{error}</p>
+          <h1 className="text-2xl font-bold text-white mb-4">Something went wrong</h1>
+          <p className="text-white/40 mb-8 text-sm">{error}</p>
           <button
             onClick={retry}
-            className="px-6 py-3 bg-[#111111] text-white rounded-full hover:opacity-90 transition-opacity"
+            className="px-8 py-3 bg-white text-black rounded-full font-semibold text-sm hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] transition-all"
           >
             Try Again
           </button>
@@ -88,20 +90,8 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
 
   const waitlistApproved = typeof window !== "undefined" && localStorage.getItem("waitlist_approved") === "true";
 
+  // Unauthenticated users always see the landing page (which has waitlist gate built in)
   if (!isAuthenticated) {
-    if (!waitlistApproved) {
-      return (
-        <Switch>
-          <Route path="/waitlist" component={Waitlist} />
-          <Route path="/record/phone" component={PhoneRecorder} />
-          <Route path="/privacy" component={PrivacyPolicy} />
-          <Route path="/terms" component={TermsOfService} />
-          <Route path="/contact" component={Contact} />
-          <Route component={Waitlist} />
-        </Switch>
-      );
-    }
-
     return (
       <Switch>
         <Route path="/" component={Landing} />
@@ -111,7 +101,20 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route path="/contact" component={Contact} />
-        <Route path="/waitlist" component={Waitlist} />
+        <Route component={Landing} />
+      </Switch>
+    );
+  }
+
+  // Authenticated but not waitlist approved - redirect to landing
+  if (!waitlistApproved) {
+    return (
+      <Switch>
+        <Route path="/" component={Landing} />
+        <Route path="/record/phone" component={PhoneRecorder} />
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/terms" component={TermsOfService} />
+        <Route path="/contact" component={Contact} />
         <Route component={Landing} />
       </Switch>
     );
@@ -122,8 +125,6 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
       <Switch>
         <Route path="/record/phone" component={PhoneRecorder} />
         <Route path="/onboarding" component={Onboarding} />
-
-
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route path="/contact" component={Contact} />
@@ -134,12 +135,9 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
         <Route>
           <div className="flex h-screen w-full" style={{ fontFamily: "'Inter', sans-serif" }}>
             <AppSidebar />
-            <div className="flex flex-col flex-1 overflow-hidden bg-white">
-              <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-100 bg-white/90 backdrop-blur-xl sticky top-0 z-40">
-                <SidebarTrigger data-testid="button-sidebar-toggle" className="text-[#666666] hover:text-[#111111] hover:bg-gray-50 rounded-lg" />
-                <div className="flex items-center gap-3">
-                  <ThemeToggle />
-                </div>
+            <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "#050505" }}>
+              <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-white/5 bg-black/60 backdrop-blur-2xl sticky top-0 z-40">
+                <SidebarTrigger data-testid="button-sidebar-toggle" className="text-white/40 hover:text-white hover:bg-white/5 rounded-lg transition-colors" />
               </header>
               <main className="flex-1 overflow-auto">
                 <Switch>
@@ -153,6 +151,7 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
                   <Route path="/brand-kit" component={BrandKitPage} />
                   <Route path="/schedule" component={Schedule} />
                   <Route path="/analytics" component={Analytics} />
+                  <Route path="/settings" component={Settings} />
                   <Route component={NotFound} />
                 </Switch>
               </main>

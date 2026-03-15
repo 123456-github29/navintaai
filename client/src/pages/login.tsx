@@ -35,24 +35,24 @@ export default function Login() {
 
   if (hasAccess === null) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300"></div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#050505" }}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/20"></div>
       </div>
     );
   }
 
   if (!hasAccess) {
     return (
-      <div className="bg-white min-h-screen flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: "#050505" }}>
         <div className="w-full max-w-sm space-y-12" style={{ animation: "fade-in-up 0.4s ease-out" }}>
           <div className="text-center space-y-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gray-50 border border-gray-200">
-              <LockClosedIcon className="w-7 h-7 text-[#666666]" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/[0.06]">
+              <LockClosedIcon className="w-7 h-7 text-white/40" />
             </div>
             <div className="space-y-2">
-              <span className="text-[#111111] text-2xl font-bold block tracking-tight">Navinta AI</span>
-              <h1 className="text-xl font-medium text-[#111111]">Private Beta Access</h1>
-              <p className="text-[#666666] text-base">Enter your access code to continue</p>
+              <span className="text-white text-2xl font-bold block tracking-tight">Navinta AI</span>
+              <h1 className="text-xl font-medium text-white/80">Private Beta Access</h1>
+              <p className="text-white/30 text-base">Enter your access code to continue</p>
             </div>
           </div>
           <form onSubmit={handleAccessSubmit} className="space-y-4">
@@ -62,23 +62,23 @@ export default function Login() {
                 placeholder="Enter access code"
                 value={code}
                 onChange={(e) => { setCode(e.target.value); setError(""); }}
-                className="h-12 bg-white border-gray-200 text-[#111111] placeholder:text-[#9CA3AF] text-center text-sm tracking-widest uppercase focus:border-[#111111] focus:ring-[#111111] rounded-full shadow-sm"
+                className="h-12 bg-white/[0.03] border-white/[0.06] text-white placeholder:text-white/20 text-center text-sm tracking-widest uppercase focus:border-indigo-500/50 focus:ring-indigo-500/30 rounded-full"
                 autoFocus
               />
             </div>
-            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-            <Button type="submit" className="w-full h-12 vyro-btn-primary font-medium text-sm">
+            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+            <Button type="submit" className="w-full h-12 bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] font-medium text-sm rounded-full">
               <span>Continue</span>
               <ArrowRightIcon className="w-4 h-4 ml-2" />
             </Button>
           </form>
           <div className="text-center">
             <Link href="/">
-              <span className="text-sm text-[#666666] hover:text-[#111111] cursor-pointer">Back to home</span>
+              <span className="text-sm text-white/30 hover:text-white/60 cursor-pointer transition-colors">Back to home</span>
             </Link>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center gap-2 text-gray-400 text-xs">
+            <div className="flex items-center justify-center gap-2 text-white/15 text-xs">
               <SparklesIcon className="w-3.5 h-3.5" />
               <span>AI-powered video production</span>
             </div>
@@ -124,36 +124,36 @@ export default function Login() {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen flex" style={{ background: "#050505" }}>
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] via-transparent to-white/[0.02]" />
         <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 30% 20%, rgba(0,0,0,0.02) 0%, transparent 50%),
-                           radial-gradient(circle at 70% 80%, rgba(0,0,0,0.02) 0%, transparent 50%)`
+          backgroundImage: `radial-gradient(circle at 30% 20%, rgba(255,255,255,0.02) 0%, transparent 50%),
+                           radial-gradient(circle at 70% 80%, rgba(255,255,255,0.02) 0%, transparent 50%)`
         }} />
-        
+
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
           <div className="space-y-8">
             <div>
-              <span className="text-[#111111] text-3xl font-bold tracking-tight">Navinta AI</span>
-              <p className="text-[#666666] text-lg mt-2">
+              <span className="text-white text-3xl font-bold tracking-tight">Navinta AI</span>
+              <p className="text-white/30 text-lg mt-2">
                 Create professional videos with AI-powered guidance
               </p>
             </div>
-            
+
             <div className="grid gap-5">
               {features.map((feature, index) => (
-                <div 
+                <div
                   key={feature.title}
-                  className="flex items-start gap-4 p-4 rounded-3xl bg-white/60 border border-gray-100 backdrop-blur-sm"
+                  className="flex items-start gap-4 p-4 rounded-2xl bg-white/[0.025] border border-white/[0.06]"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                    <feature.icon className="h-5 w-5 text-[#111111]" />
+                  <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center">
+                    <feature.icon className="h-5 w-5 text-white/40" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-[#111111]">{feature.title}</h3>
-                    <p className="text-sm text-[#666666] mt-0.5">{feature.description}</p>
+                    <h3 className="text-sm font-semibold text-white/80">{feature.title}</h3>
+                    <p className="text-sm text-white/25 mt-0.5">{feature.description}</p>
                   </div>
                 </div>
               ))}
@@ -162,35 +162,35 @@ export default function Login() {
             <div className="flex items-center gap-3 pt-4">
               <div className="flex -space-x-2">
                 {[1, 2, 3, 4].map((i) => (
-                  <div 
-                    key={i} 
-                    className="h-8 w-8 rounded-full bg-gradient-to-br from-[#111111] to-[#444444] border-2 border-white flex items-center justify-center text-white text-xs font-medium"
+                  <div
+                    key={i}
+                    className="h-8 w-8 rounded-full bg-gradient-to-br from-white/20 to-white/5 border-2 border-[#050505] flex items-center justify-center text-white/60 text-xs font-medium"
                   >
                     {String.fromCharCode(64 + i)}
                   </div>
                 ))}
               </div>
-              <p className="text-sm text-[#666666]">
-                <span className="font-semibold text-[#111111]">500+</span> creators already using Navinta AI
+              <p className="text-sm text-white/25">
+                <span className="font-semibold text-white/50">500+</span> creators already using Navinta AI
               </p>
             </div>
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#050505] to-transparent" />
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 lg:px-12">
         <div className="w-full max-w-sm space-y-10">
           <div className="lg:hidden text-center mb-8">
-            <span className="text-[#111111] text-2xl font-bold tracking-tight">Navinta AI</span>
+            <span className="text-white text-2xl font-bold tracking-tight">Navinta AI</span>
           </div>
 
           <div className="text-center space-y-3">
-            <h1 className="text-2xl lg:text-3xl font-bold text-[#111111]">
+            <h1 className="text-2xl lg:text-3xl font-bold text-white">
               Welcome back
             </h1>
-            <p className="text-[#666666]">
+            <p className="text-white/30">
               Sign in to continue creating amazing videos
             </p>
           </div>
@@ -198,7 +198,7 @@ export default function Login() {
           <div className="space-y-4">
             <button
               onClick={() => signInWithGoogle()}
-              className="w-full h-14 bg-[#111111] hover:opacity-90 text-white rounded-full font-medium text-sm shadow-sm hover:shadow-md transition-opacity flex items-center justify-center gap-3"
+              className="w-full h-14 bg-white hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] text-black rounded-full font-medium text-sm transition-all flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -211,15 +211,15 @@ export default function Login() {
           </div>
 
           <div className="text-center space-y-4">
-            <p className="text-xs text-[#666666] leading-relaxed">
+            <p className="text-xs text-white/20 leading-relaxed">
               By continuing, you agree to our{" "}
-              <a href="/terms" className="text-[#111111] font-medium hover:underline">Terms of Service</a>
+              <a href="/terms" className="text-white/40 font-medium hover:underline">Terms of Service</a>
               {" "}and{" "}
-              <a href="/privacy" className="text-[#111111] font-medium hover:underline">Privacy Policy</a>
+              <a href="/privacy" className="text-white/40 font-medium hover:underline">Privacy Policy</a>
             </p>
           </div>
 
-          <div className="pt-8 flex items-center justify-center gap-2 text-[#666666]/60 text-xs">
+          <div className="pt-8 flex items-center justify-center gap-2 text-white/15 text-xs">
             <SparklesIcon className="w-3.5 h-3.5" />
             <span>AI-powered video production</span>
           </div>

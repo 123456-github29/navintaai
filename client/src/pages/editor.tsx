@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,10 +8,10 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { 
-  ArrowLeft, 
-  Download, 
-  Play, 
+import {
+  ArrowLeft,
+  Download,
+  Play,
   Pause,
   SkipBack,
   SkipForward,
@@ -97,12 +96,12 @@ export default function Editor() {
 
   if (postLoading || clipsLoading) {
     return (
-      <div className="flex justify-center p-6 bg-white min-h-screen">
-        <div className="w-full max-w-7xl space-y-6">
-          <Skeleton className="h-12 w-64 bg-gray-100" />
+      <div className="p-6 md:p-8 min-h-screen" style={{ background: "#050505" }}>
+        <div className="max-w-7xl mx-auto space-y-6">
+          <Skeleton className="h-12 w-64 bg-white/5 rounded-xl" />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Skeleton className="lg:col-span-2 h-[600px] bg-gray-100 rounded-3xl" />
-            <Skeleton className="h-[600px] bg-gray-100 rounded-3xl" />
+            <Skeleton className="lg:col-span-2 h-[600px] bg-white/[0.03] rounded-2xl" />
+            <Skeleton className="h-[600px] bg-white/[0.03] rounded-2xl" />
           </div>
         </div>
       </div>
@@ -111,10 +110,10 @@ export default function Editor() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#050505" }}>
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-[#111111] mb-2">Post not found</h2>
-          <Button onClick={() => setLocation("/dashboard")} className="bg-[#111111] hover:bg-[#333333] text-white rounded-full">Back to Dashboard</Button>
+          <h2 className="text-2xl font-semibold text-white mb-4">Post not found</h2>
+          <Button onClick={() => setLocation("/dashboard")} className="bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] rounded-full">Back to Dashboard</Button>
         </div>
       </div>
     );
@@ -124,26 +123,26 @@ export default function Editor() {
 
   if (exportMutation.isPending) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl mx-auto p-12 bg-white border border-gray-200 rounded-3xl">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#050505" }}>
+        <div className="w-full max-w-2xl mx-auto p-12 rounded-2xl border border-white/[0.06] bg-white/[0.025]">
           <div className="text-center space-y-6">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-50 mb-4 animate-pulse">
-              <Sparkles className="h-10 w-10 text-[#111111] animate-spin" />
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 mb-4 animate-pulse">
+              <Sparkles className="h-10 w-10 text-white animate-spin" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-semibold text-[#111111]">Compiling Your Video</h2>
-              <p className="text-[#666666]">
+              <h2 className="text-2xl font-semibold text-white">Compiling Your Video</h2>
+              <p className="text-white/30">
                 Merging clips, adding captions and music...
               </p>
             </div>
             <div className="space-y-3 max-w-md mx-auto">
-              <Progress value={66} className="h-2 bg-gray-100" />
-              <div className="space-y-2 text-sm text-[#666666]">
+              <Progress value={66} className="h-2 bg-white/5" />
+              <div className="space-y-2 text-sm text-white/30">
                 <div className="flex items-center justify-center gap-2">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 rounded-full bg-[#111111] animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <div className="w-2 h-2 rounded-full bg-[#111111] animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <div className="w-2 h-2 rounded-full bg-[#111111] animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div className="w-2 h-2 rounded-full bg-white animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-2 h-2 rounded-full bg-white animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-2 h-2 rounded-full bg-white animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                   <span>Processing {postClips.length} clips</span>
                 </div>
@@ -154,14 +153,14 @@ export default function Editor() {
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex justify-center p-6 bg-white min-h-screen">
-      <div className="w-full max-w-7xl space-y-6">
+    <div className="p-6 md:p-8 lg:p-10 min-h-screen" style={{ background: "#050505" }}>
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
@@ -169,13 +168,13 @@ export default function Editor() {
               size="icon"
               onClick={() => setLocation(`/post/${postId}`)}
               data-testid="button-back"
-              className="text-[#666666] hover:text-[#111111] hover:bg-gray-50 rounded-full"
+              className="text-white/40 hover:text-white hover:bg-white/5 rounded-full"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-[#111111]">Video Editor</h1>
-              <p className="text-[#666666] mt-1">{post.title}</p>
+              <h1 className="text-3xl font-bold tracking-tight text-white">Video Editor</h1>
+              <p className="text-sm text-white/30 mt-1">{post.title}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -194,7 +193,7 @@ export default function Editor() {
               onClick={handleExport}
               disabled={exportMutation.isPending || postClips.length === 0}
               data-testid="button-export"
-              className="bg-[#111111] hover:bg-[#333333] text-white rounded-full"
+              className="bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] rounded-full"
             >
               <Download className="h-5 w-5 mr-2" />
               {exportMutation.isPending ? "Exporting..." : "Export Video"}
@@ -204,19 +203,19 @@ export default function Editor() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-          <Card className="bg-white border border-gray-200 rounded-3xl">
-            <CardContent className="p-0">
-              <div className="relative aspect-[9/16] bg-gray-50 rounded-t-3xl overflow-hidden max-w-md mx-auto">
+            {/* Video Preview */}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] overflow-hidden">
+              <div className="relative aspect-[9/16] bg-black/50 overflow-hidden max-w-md mx-auto">
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center space-y-4 p-8">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100">
-                      <Play className="h-10 w-10 text-[#111111]" />
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5">
+                      <Play className="h-10 w-10 text-white/40" />
                     </div>
                     <div>
-                      <h3 className="text-[#111111] text-lg font-semibold mb-2">
+                      <h3 className="text-white text-lg font-semibold mb-2">
                         Video Preview
                       </h3>
-                      <p className="text-[#666666] text-sm">
+                      <p className="text-white/30 text-sm">
                         {postClips.length > 0
                           ? "Preview functionality coming soon"
                           : "Record clips to see preview"}
@@ -226,21 +225,21 @@ export default function Editor() {
                 </div>
               </div>
 
-              <div className="p-4 bg-white border-t border-gray-200 space-y-4">
+              <div className="p-4 border-t border-white/[0.06] space-y-4">
                 <div className="flex items-center justify-center gap-2">
                   <Button
                     size="icon"
                     variant="ghost"
                     disabled
                     data-testid="button-skip-back"
-                    className="text-[#666666] hover:bg-gray-50 rounded-full"
+                    className="text-white/30 hover:bg-white/5 rounded-full"
                   >
                     <SkipBack className="h-5 w-5" />
                   </Button>
                   <Button
                     size="icon"
                     variant="default"
-                    className="h-12 w-12 rounded-full bg-[#111111] hover:bg-[#333333] text-white"
+                    className="h-12 w-12 rounded-full bg-white text-black hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
                     onClick={() => setIsPlaying(!isPlaying)}
                     disabled={postClips.length === 0}
                     data-testid="button-play-pause"
@@ -256,7 +255,7 @@ export default function Editor() {
                     variant="ghost"
                     disabled
                     data-testid="button-skip-forward"
-                    className="text-[#666666] hover:bg-gray-50 rounded-full"
+                    className="text-white/30 hover:bg-white/5 rounded-full"
                   >
                     <SkipForward className="h-5 w-5" />
                   </Button>
@@ -270,7 +269,7 @@ export default function Editor() {
                   className="cursor-pointer"
                 />
 
-                <div className="flex items-center justify-between text-xs text-[#666666] font-mono">
+                <div className="flex items-center justify-between text-xs text-white/25 font-mono">
                   <span>0:00</span>
                   <span>
                     {Math.floor(postClips.reduce((sum, c) => sum + c.duration, 0) / 60)}:
@@ -280,17 +279,14 @@ export default function Editor() {
                   </span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card className="bg-white border border-gray-200 rounded-3xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[#111111]">
-                <Scissors className="h-5 w-5" />
-                Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            {/* Timeline */}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Scissors className="h-5 w-5 text-white/40" />
+                <h3 className="text-sm font-semibold text-white">Timeline</h3>
+              </div>
               {postClips.length > 0 ? (
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {postClips.map((clip, index) => (
@@ -299,7 +295,7 @@ export default function Editor() {
                       className="flex-shrink-0 w-24 space-y-2 group"
                       data-testid={`timeline-clip-${index}`}
                     >
-                      <div className="aspect-[9/16] bg-gray-100 rounded-lg overflow-hidden border-2 border-transparent hover:border-[#111111] transition-colors">
+                      <div className="aspect-[9/16] bg-white/5 rounded-xl overflow-hidden border-2 border-transparent hover:border-white/20 transition-colors">
                         {clip.thumbnail ? (
                           <img
                             src={clip.thumbnail}
@@ -308,125 +304,121 @@ export default function Editor() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Play className="h-6 w-6 text-[#666666]" />
+                            <Play className="h-6 w-6 text-white/20" />
                           </div>
                         )}
                       </div>
                       <div className="text-center">
-                        <p className="text-xs font-medium text-[#111111]">Clip {index + 1}</p>
-                        <p className="text-xs text-[#666666]">{clip.duration}s</p>
+                        <p className="text-xs font-medium text-white/60">Clip {index + 1}</p>
+                        <p className="text-xs text-white/25">{clip.duration}s</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-[#666666]">
-                  <p>No clips recorded yet</p>
+                <div className="text-center py-12 text-white/20">
+                  <p className="text-sm">No clips recorded yet</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
           </div>
 
           <div className="space-y-4">
-          <Card className="bg-white border border-gray-200 rounded-3xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[#111111]">
-                <Type className="h-5 w-5" />
-                Captions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="captions" className="cursor-pointer text-[#111111]">
-                  Auto-generate captions
-                </Label>
-                <Switch
-                  id="captions"
-                  checked={hasCaption}
-                  onCheckedChange={setHasCaption}
-                  data-testid="switch-captions"
-                />
+            {/* Captions */}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Type className="h-5 w-5 text-white/40" />
+                <h3 className="text-sm font-semibold text-white">Captions</h3>
               </div>
-              <p className="text-sm text-[#666666]">
-                Automatically add text captions to your video for better engagement
-              </p>
-            </CardContent>
-          </Card>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="captions" className="cursor-pointer text-sm text-white/60">
+                    Auto-generate captions
+                  </Label>
+                  <Switch
+                    id="captions"
+                    checked={hasCaption}
+                    onCheckedChange={setHasCaption}
+                    data-testid="switch-captions"
+                  />
+                </div>
+                <p className="text-xs text-white/25">
+                  Automatically add text captions to your video for better engagement
+                </p>
+              </div>
+            </div>
 
-          <Card className="bg-white border border-gray-200 rounded-3xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[#111111]">
-                <Music className="h-5 w-5" />
-                Background Music
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {MUSIC_STYLES.map((style) => (
-                <button
-                  key={style}
-                  onClick={() => setSelectedMusic(style)}
-                  className={`w-full p-3 rounded-full border text-left transition-all hover:bg-gray-50 ${
-                    selectedMusic === style
-                      ? "border-[#111111] bg-gray-50"
-                      : "border-gray-200"
-                  }`}
-                  data-testid={`music-${style.toLowerCase().replace(/[^a-z]/g, "-")}`}
-                >
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-sm font-medium text-[#111111]">{style}</span>
-                    {selectedMusic === style && (
-                      <div className="h-2 w-2 rounded-full bg-[#111111]" />
-                    )}
+            {/* Background Music */}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Music className="h-5 w-5 text-white/40" />
+                <h3 className="text-sm font-semibold text-white">Background Music</h3>
+              </div>
+              <div className="space-y-2">
+                {MUSIC_STYLES.map((style) => (
+                  <button
+                    key={style}
+                    onClick={() => setSelectedMusic(style)}
+                    className={`w-full p-3 rounded-xl border text-left transition-all ${
+                      selectedMusic === style
+                        ? "border-white/20 bg-white/[0.06]"
+                        : "border-white/[0.06] bg-transparent hover:bg-white/[0.03]"
+                    }`}
+                    data-testid={`music-${style.toLowerCase().replace(/[^a-z]/g, "-")}`}
+                  >
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-sm font-medium text-white/60">{style}</span>
+                      {selectedMusic === style && (
+                        <div className="h-2 w-2 rounded-full bg-white" />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Video Settings */}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="h-5 w-5 text-white/40" />
+                <h3 className="text-sm font-semibold text-white">Video Settings</h3>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-xs text-white/40 mb-2 block">Aspect Ratio</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["9:16", "1:1", "16:9"].map((ratio) => (
+                      <Button
+                        key={ratio}
+                        variant={ratio === "9:16" ? "default" : "outline"}
+                        size="sm"
+                        disabled={ratio !== "9:16"}
+                        data-testid={`aspect-ratio-${ratio.replace(":", "-")}`}
+                        className={ratio === "9:16"
+                          ? "bg-white text-black rounded-xl"
+                          : "border border-white/[0.06] text-white/30 bg-transparent rounded-xl"
+                        }
+                      >
+                        {ratio}
+                      </Button>
+                    ))}
                   </div>
-                </button>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border border-gray-200 rounded-3xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[#111111]">
-                <Sparkles className="h-5 w-5" />
-                Video Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-sm mb-2 block text-[#111111]">Aspect Ratio</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {["9:16", "1:1", "16:9"].map((ratio) => (
-                    <Button
-                      key={ratio}
-                      variant={ratio === "9:16" ? "default" : "outline"}
-                      size="sm"
-                      disabled={ratio !== "9:16"}
-                      data-testid={`aspect-ratio-${ratio.replace(":", "-")}`}
-                      className={ratio === "9:16" 
-                        ? "bg-[#111111] hover:bg-[#333333] text-white rounded-full" 
-                        : "border border-gray-200 text-[#666666] rounded-full"
-                      }
-                    >
-                      {ratio}
-                    </Button>
-                  ))}
+                  <p className="text-xs text-white/20 mt-2">
+                    Vertical (9:16) optimized for Reels, TikTok, and Shorts
+                  </p>
                 </div>
-                <p className="text-xs text-[#666666] mt-2">
-                  Vertical (9:16) optimized for Reels, TikTok, and Shorts
-                </p>
-              </div>
 
-              <div className="pt-4 border-t border-gray-100">
-                <div className="flex items-center gap-2 text-sm text-[#666666] mb-2">
-                  <Badge variant="secondary" className="bg-gray-100 text-[#666666]">Auto-applied</Badge>
-                  <span>Brand colors & intro/outro</span>
+                <div className="pt-4 border-t border-white/[0.06]">
+                  <div className="flex items-center gap-2 text-xs text-white/30 mb-2">
+                    <span className="text-xs font-medium text-white/40 bg-white/[0.04] px-2 py-0.5 rounded-full border border-white/[0.06]">Auto-applied</span>
+                    <span>Brand colors & intro/outro</span>
+                  </div>
+                  <p className="text-xs text-white/20">
+                    Your brand kit settings will be automatically applied to the video
+                  </p>
                 </div>
-                <p className="text-xs text-[#666666]">
-                  Your brand kit settings will be automatically applied to the video
-                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
           </div>
         </div>
       </div>
