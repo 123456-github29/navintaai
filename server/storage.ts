@@ -73,6 +73,7 @@ export interface IStorage {
   // Content Plans
   getContentPlan(projectId: string, userId: string): Promise<ContentPlan | undefined>;
   createContentPlan(plan: InsertContentPlan): Promise<ContentPlan>;
+  deleteContentPlansByProject(projectId: string, userId: string): Promise<void>;
 
   // Posts
   getPost(id: string, userId: string): Promise<Post | undefined>;
@@ -273,6 +274,16 @@ export class MemStorage implements IStorage {
     };
     this.contentPlans.set(id, contentPlan);
     return contentPlan;
+  }
+
+  async deleteContentPlansByProject(projectId: string, userId: string): Promise<void> {
+    const toDelete: string[] = [];
+    this.contentPlans.forEach((plan, id) => {
+      if (plan.projectId === projectId && plan.userId === userId) {
+        toDelete.push(id);
+      }
+    });
+    toDelete.forEach((id) => this.contentPlans.delete(id));
   }
 
   // Post methods
@@ -759,6 +770,7 @@ export class DbStorage implements IStorage {
       .select()
       .from(contentPlans)
       .where(and(eq(contentPlans.projectId, projectId), eq(contentPlans.userId, userId)))
+      .orderBy(desc(contentPlans.createdAt))
       .limit(1);
     return result[0];
   }
@@ -767,6 +779,12 @@ export class DbStorage implements IStorage {
     const sanitizedPlan = deepSanitize(plan);
     const created = await this.db.insert(contentPlans).values(sanitizedPlan).returning();
     return created[0];
+  }
+
+  async deleteContentPlansByProject(projectId: string, userId: string): Promise<void> {
+    await this.db
+      .delete(contentPlans)
+      .where(and(eq(contentPlans.projectId, projectId), eq(contentPlans.userId, userId)));
   }
 
   // Post methods
