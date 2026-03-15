@@ -120,7 +120,7 @@ export default function AiEditor() {
     queryKey: ["/api/clips"],
   });
 
-  const postClips = clips?.filter((c) => c.postId === postId) || [];
+  const postClips = Array.isArray(clips) ? clips.filter((c) => c.postId === postId) : [];
   const firstClipUrl = (postClips.find((c: any) => c.signedUrl || c.videoPath) as any)?.signedUrl || null;
 
   const initSession = useMutation({
@@ -130,8 +130,8 @@ export default function AiEditor() {
     },
     onSuccess: (data) => {
       setSession(data.session);
-      setMessages(data.messages);
-      if (!data.session.transcript) {
+      setMessages(Array.isArray(data.messages) ? data.messages : []);
+      if (data.session && !data.session.transcript) {
         handleTranscribe(data.session.id);
       }
     },
@@ -508,7 +508,7 @@ export default function AiEditor() {
         {/* Video Preview Area */}
         <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
           <div className="relative w-full max-w-sm aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/[0.06]">
-            {postClips.length > 0 && postClips[0].videoPath ? (
+            {firstClipUrl ? (
               <>
                 <video
                   ref={videoRef}
