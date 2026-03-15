@@ -235,7 +235,7 @@ async function insertBroll(
     const segment = editState.brollSegments[i];
     if (!segment.url) continue;
 
-    const brollPath = await downloadBrollVideo(currentInput, jobId, i, tempFiles);
+    const brollPath = await downloadBrollVideo(segment.url, jobId, i, tempFiles);
     const outputPath = path.join(TEMP_DIR, `with-broll-${jobId}-${i}.mp4`);
     tempFiles.push(outputPath);
 
