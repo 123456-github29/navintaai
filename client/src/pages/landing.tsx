@@ -4,7 +4,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useAuth } from "@/hooks/useAuth";
 import { ContactModal } from "@/components/ContactModal";
-import { Key, Loader2, ArrowRight, Mail, User, CheckCircle, X } from "lucide-react";
+import { Key, Loader2, ArrowRight, Mail, User, CheckCircle, X, Check } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -44,6 +44,7 @@ export default function Landing() {
       <HowItWorksSection />
       <SolutionSection />
       <OutcomesSection />
+      <LandingPricingSection onJoinWaitlist={() => setShowWaitlistModal(true)} waitlistApproved={waitlistApproved} />
       <ForWhoSection />
       <FAQSection />
       <FinalCTASection onGetStarted={handleGetStarted} waitlistApproved={waitlistApproved} />
@@ -331,6 +332,220 @@ function WaitlistModal({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </div>
+  );
+}
+
+const landingPlans = [
+  {
+    id: "free",
+    name: "Free",
+    tagline: "For trying Navinta",
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    cta: "Get Started Free",
+    features: ["3 exports per day", "Director Mode recording", "AI Content Planning", "Watermarked exports"],
+    excluded: ["AI B-roll", "AI Voice", "Auto-Editing"],
+  },
+  {
+    id: "starter",
+    name: "Starter",
+    tagline: "For new creators",
+    monthlyPrice: 19.99,
+    yearlyPrice: 215.88,
+    cta: "Start Creating",
+    features: ["20 exports per day", "AI Content Planning", "Director Mode recording", "AI B-roll insertion", "Export without watermark"],
+    excluded: ["AI Voice", "Auto-Editing"],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    tagline: "For serious creators",
+    monthlyPrice: 49.99,
+    yearlyPrice: 539.88,
+    cta: "Go Pro",
+    popular: true,
+    features: ["100 exports per day", "AI Content Planning", "Director Mode recording", "AI B-roll insertion", "AI Voice generation", "Auto-Editing features", "Priority processing"],
+    excluded: [],
+  },
+  {
+    id: "studio",
+    name: "Studio",
+    tagline: "For teams & agencies",
+    monthlyPrice: 99.99,
+    yearlyPrice: 1079.88,
+    cta: "Join Studio",
+    features: ["Unlimited exports", "Everything in Pro", "Team workspace", "Brand kit", "Advanced analytics", "Early access features"],
+    excluded: [],
+  },
+];
+
+function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWaitlist: () => void; waitlistApproved: boolean }) {
+  const [interval, setInterval] = useState<"monthly" | "yearly">("monthly");
+  const { signInWithGoogle, isAuthenticated, session } = useAuth();
+  const [, setLocation] = useLocation();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const handleChoosePlan = async (planId: string) => {
+    if (!waitlistApproved) {
+      onJoinWaitlist();
+      return;
+    }
+
+    if (planId === "free") {
+      if (isAuthenticated) {
+        setLocation("/onboarding");
+      } else {
+        signInWithGoogle();
+      }
+      return;
+    }
+
+    if (!isAuthenticated) {
+      sessionStorage.setItem("pendingPlan", planId);
+      sessionStorage.setItem("pendingInterval", interval);
+      signInWithGoogle();
+      return;
+    }
+
+    setLoadingPlan(planId);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://iqfrjomoggddxwteuigk.supabase.co";
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxZnJqb21vZ2dkZHh3dGV1aWdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNTM5MDAsImV4cCI6MjA2MTYyOTkwMH0.VJD2Fy3F7B8s_0pRCfLOMGjRNVJMhmMNrlVcsYJXcwQ";
+      const response = await fetch(`${supabaseUrl}/functions/v1/stripe-checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+          "apikey": supabaseAnonKey,
+        },
+        body: JSON.stringify({ plan: planId, interval }),
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.replace(data.url);
+      } else {
+        setLoadingPlan(null);
+      }
+    } catch {
+      setLoadingPlan(null);
+    }
+  };
+
+  return (
+    <section id="pricing" className="relative py-24 px-6" style={{ background: "#000000" }}>
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4">
+            Simple, transparent pricing
+          </h2>
+          <p className="text-lg text-white/35 max-w-2xl mx-auto">
+            Choose the plan that fits your creative workflow. Upgrade or downgrade anytime.
+          </p>
+
+          <div className="flex justify-center mt-8">
+            <div className="inline-flex items-center p-1 rounded-full bg-white/[0.03] border border-white/[0.06]">
+              <button
+                onClick={() => setInterval("monthly")}
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  interval === "monthly" ? "bg-white text-black" : "text-white/40 hover:text-white/60"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setInterval("yearly")}
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  interval === "yearly" ? "bg-white text-black" : "text-white/40 hover:text-white/60"
+                }`}
+              >
+                Yearly
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  interval === "yearly" ? "bg-black/10 text-black" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                }`}>
+                  Save 10%
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {landingPlans.map((plan) => (
+            <div
+              key={plan.id}
+              className={`relative flex flex-col p-6 rounded-2xl border-2 transition-all duration-300 ${
+                plan.popular
+                  ? "border-white/20 bg-white/[0.04] shadow-[0_0_30px_rgba(255,255,255,0.03)]"
+                  : "border-white/[0.06] bg-white/[0.025]"
+              }`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-black">
+                    Most Popular
+                  </span>
+                </div>
+              )}
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                  <p className="text-sm text-white/25">{plan.tagline}</p>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-white">
+                    {plan.monthlyPrice === 0
+                      ? "Free"
+                      : `$${interval === "monthly" ? plan.monthlyPrice : (plan.yearlyPrice / 12).toFixed(2)}`}
+                  </span>
+                  {plan.monthlyPrice > 0 && (
+                    <span className="text-white/30">
+                      /{interval === "yearly" ? "mo, billed yearly" : "month"}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleChoosePlan(plan.id)}
+                disabled={loadingPlan === plan.id}
+                className={`w-full h-12 rounded-full font-medium text-sm transition-all duration-200 flex items-center justify-center ${
+                  plan.popular
+                    ? "bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+                    : "bg-transparent border border-white/10 text-white/60 hover:bg-white/5"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {loadingPlan === plan.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : !waitlistApproved ? (
+                  "Join Waitlist to Unlock"
+                ) : (
+                  plan.cta
+                )}
+              </button>
+
+              <div className="mt-6 pt-6 border-t border-white/[0.06] flex-1">
+                <ul className="space-y-3">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <Check className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-white/60">{feature}</span>
+                    </li>
+                  ))}
+                  {plan.excluded.map((feature, index) => (
+                    <li key={`excluded-${index}`} className="flex items-start gap-3">
+                      <X className="h-4 w-4 text-white/10 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-white/20">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

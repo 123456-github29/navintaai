@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CheckIcon, MinusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
+import { Key, Loader2, ArrowRight, X } from "lucide-react";
 
 const plans = [
   {
@@ -153,6 +154,14 @@ export default function Pricing() {
   const [platforms, setPlatforms] = useState(2);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  const [waitlistApproved, setWaitlistApproved] = useState(
+    typeof window !== "undefined" && localStorage.getItem("waitlist_approved") === "true"
+  );
+  const [showWaitlistCodeModal, setShowWaitlistCodeModal] = useState(false);
+  const [waitlistCode, setWaitlistCode] = useState("");
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [waitlistError, setWaitlistError] = useState<string | null>(null);
+
   const getRecommendedPlan = () => {
     if (videosPerMonth <= 8 && videoLength <= 60 && platforms <= 1) return "free";
     if (videosPerMonth <= 20 && videoLength <= 120 && platforms <= 2) return "starter";
@@ -214,9 +223,38 @@ export default function Pricing() {
     }
   }, [isAuthenticated, session?.access_token]);
 
+  const handleRedeemCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waitlistCode.trim()) return;
+    setWaitlistLoading(true);
+    setWaitlistError(null);
+
+    try {
+      const res = await fetch("/api/waitlist/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: waitlistCode.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || data.error || "Invalid code");
+      localStorage.setItem("waitlist_approved", "true");
+      setWaitlistApproved(true);
+      setShowWaitlistCodeModal(false);
+    } catch (err: any) {
+      setWaitlistError(err.message);
+    } finally {
+      setWaitlistLoading(false);
+    }
+  };
+
   const handleChoosePlan = (e: React.MouseEvent<HTMLButtonElement>, planId: string) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!waitlistApproved) {
+      setShowWaitlistCodeModal(true);
+      return;
+    }
 
     if (planId === "free") {
       if (isAuthenticated) {
@@ -428,6 +466,8 @@ export default function Pricing() {
                         </svg>
                         Redirecting...
                       </span>
+                    ) : !waitlistApproved ? (
+                      "Enter Waitlist Code"
                     ) : (
                       plan.cta
                     )}
@@ -558,6 +598,17 @@ export default function Pricing() {
         </section>
 
         <div className="mt-16 text-center space-y-4">
+          {!waitlistApproved && (
+            <div className="mb-6 p-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] inline-block">
+              <p className="text-sm text-white/40 mb-3">Have a waitlist access code?</p>
+              <button
+                onClick={() => setShowWaitlistCodeModal(true)}
+                className="px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] transition-all"
+              >
+                Enter Access Code
+              </button>
+            </div>
+          )}
           <p className="text-sm text-white/20">
             All plans include 24/7 email support and automatic updates.
           </p>
@@ -573,6 +624,43 @@ export default function Pricing() {
           </p>
         </div>
       </div>
+
+      {/* Waitlist Code Modal */}
+      {showWaitlistCodeModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => setShowWaitlistCodeModal(false)} />
+          <div className="relative max-w-md w-full rounded-3xl border border-white/10 p-8 md:p-10" style={{ background: "linear-gradient(180deg, #111111 0%, #0a0a0a 100%)", boxShadow: "0 40px 80px rgba(0,0,0,0.8), 0 0 60px rgba(99,102,241,0.08)" }}>
+            <button onClick={() => setShowWaitlistCodeModal(false)} className="absolute top-5 right-5 p-2 rounded-full hover:bg-white/5 transition-colors">
+              <X className="w-5 h-5 text-white/30" />
+            </button>
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Enter Access Code</h2>
+              <p className="text-sm text-white/30">Enter your waitlist code to unlock checkout.</p>
+            </div>
+            <form onSubmit={handleRedeemCode} className="space-y-4">
+              <div className="relative">
+                <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                <input
+                  type="text"
+                  value={waitlistCode}
+                  onChange={(e) => setWaitlistCode(e.target.value.toUpperCase())}
+                  placeholder="ENTER CODE"
+                  required
+                  className="w-full pl-11 pr-4 py-3.5 border border-white/10 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all bg-white/[0.03] tracking-[0.3em] font-mono text-center"
+                />
+              </div>
+              {waitlistError && <p className="text-sm text-red-400 text-center">{waitlistError}</p>}
+              <button
+                type="submit"
+                disabled={waitlistLoading || !waitlistCode.trim()}
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-white text-black rounded-full text-sm font-semibold hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+              >
+                {waitlistLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Unlock Access <ArrowRight className="w-4 h-4" /></>}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

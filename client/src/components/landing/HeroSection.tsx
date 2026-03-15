@@ -58,39 +58,39 @@ export default function HeroSection({ onGetStarted, waitlistApproved }: HeroSect
         ease: "power3.out",
       }, 0.8);
 
-      // Scroll-triggered parallax effects (Apple-style)
+      // Scroll-triggered parallax effects - gentle fade so hero stays visible
       gsap.to(headlineRef.current, {
-        y: -100,
-        opacity: 0,
+        y: -60,
+        opacity: 0.15,
         ease: "none",
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top top",
-          end: "40% top",
+          start: "30% top",
+          end: "80% top",
           scrub: 1,
         },
       });
 
       gsap.to(subRef.current, {
-        y: -80,
-        opacity: 0,
+        y: -40,
+        opacity: 0.15,
         ease: "none",
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top top",
-          end: "35% top",
+          start: "30% top",
+          end: "75% top",
           scrub: 1,
         },
       });
 
       gsap.to(ctaRef.current, {
-        y: -60,
-        opacity: 0,
+        y: -30,
+        opacity: 0.15,
         ease: "none",
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top top",
-          end: "30% top",
+          start: "30% top",
+          end: "70% top",
           scrub: 1,
         },
       });
