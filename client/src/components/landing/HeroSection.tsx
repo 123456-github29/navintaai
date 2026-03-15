@@ -24,7 +24,6 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
     if (reduced) return;
 
     const ctx = gsap.context(() => {
-      // Hero entrance timeline
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
       tl.from(gridRef.current, { opacity: 0, duration: 1.5 }, 0);
@@ -43,7 +42,6 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
         ease: "power3.out",
       }, 0.6);
 
-      // Scroll-triggered 3D perspective on mockup
       gsap.to(mockupRef.current, {
         rotateX: 0,
         y: -40,
@@ -57,39 +55,22 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
         },
       });
 
-      // Parallax orbs
       gsap.to(orb1Ref.current, {
         yPercent: 30,
         ease: "none",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
+        scrollTrigger: { trigger: sectionRef.current, start: "top top", end: "bottom top", scrub: true },
       });
 
       gsap.to(orb2Ref.current, {
         yPercent: -20,
         ease: "none",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
+        scrollTrigger: { trigger: sectionRef.current, start: "top top", end: "bottom top", scrub: true },
       });
 
-      // Grid fade on scroll
       gsap.to(gridRef.current, {
         opacity: 0.02,
         ease: "none",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "center center",
-          end: "bottom top",
-          scrub: true,
-        },
+        scrollTrigger: { trigger: sectionRef.current, start: "center center", end: "bottom top", scrub: true },
       });
     }, sectionRef);
 
@@ -102,46 +83,28 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
       className="relative min-h-screen overflow-hidden flex flex-col items-center pt-32 pb-20"
       style={{ background: "linear-gradient(180deg, #000000 0%, #0a0a0a 50%, #111111 100%)" }}
     >
-      {/* Animated grid background */}
+      {/* Grid */}
       <div
         ref={gridRef}
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
-          `,
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
           backgroundSize: "60px 60px",
           maskImage: "radial-gradient(ellipse at 50% 30%, black 20%, transparent 70%)",
           WebkitMaskImage: "radial-gradient(ellipse at 50% 30%, black 20%, transparent 70%)",
         }}
       />
 
-      {/* Gradient orbs */}
-      <div
-        ref={orb1Ref}
-        className="absolute top-[10%] left-[15%] w-[500px] h-[500px] rounded-full pointer-events-none"
-        style={{
-          background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)",
-          filter: "blur(60px)",
-        }}
-      />
-      <div
-        ref={orb2Ref}
-        className="absolute top-[20%] right-[10%] w-[400px] h-[400px] rounded-full pointer-events-none"
-        style={{
-          background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)",
-          filter: "blur(50px)",
-        }}
-      />
+      {/* Orbs */}
+      <div ref={orb1Ref} className="absolute top-[10%] left-[15%] w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)", filter: "blur(60px)" }} />
+      <div ref={orb2Ref} className="absolute top-[20%] right-[10%] w-[400px] h-[400px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)", filter: "blur(50px)" }} />
 
       {/* Content */}
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-        {/* YC-style badge */}
-        <div ref={badgeRef} className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm">
+        <div ref={badgeRef} className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-white/[0.06]">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-sm text-white/70 font-medium">Now in public beta</span>
-          <span className="text-xs text-white/40">|</span>
+          <span className="text-sm text-white/60 font-medium">Now in public beta</span>
+          <span className="text-xs text-white/20">|</span>
           <span className="text-sm text-emerald-400 font-medium">5,000+ videos created</span>
         </div>
 
@@ -157,10 +120,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
           </span>
         </h1>
 
-        <p
-          ref={subRef}
-          className="mt-6 text-lg md:text-xl text-white/50 max-w-xl mx-auto leading-relaxed"
-        >
+        <p ref={subRef} className="mt-6 text-lg md:text-xl text-white/50 max-w-xl mx-auto leading-relaxed">
           AI that plans your shots, guides your recording, and edits your video — all in minutes, not days.
         </p>
 
@@ -174,7 +134,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
           </button>
           <a
             href="#showcase"
-            className="px-6 py-4 text-sm font-medium text-white/60 hover:text-white transition-colors border border-white/10 rounded-full hover:border-white/20"
+            className="px-6 py-4 text-sm font-medium text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/[0.04]"
           >
             Watch it work
           </a>
@@ -185,13 +145,10 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
       <div
         ref={mockupRef}
         className="relative z-10 mt-16 w-full max-w-5xl mx-auto px-6"
-        style={{
-          perspective: "1200px",
-          transformStyle: "preserve-3d",
-        }}
+        style={{ perspective: "1200px", transformStyle: "preserve-3d" }}
       >
         <div
-          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+          className="relative rounded-2xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.6)]"
           style={{
             transform: "rotateX(8deg)",
             transformOrigin: "center bottom",
@@ -199,24 +156,20 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
           }}
         >
           {/* Browser chrome */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-[#1a1a1a]">
+          <div className="flex items-center gap-2 px-4 py-3 bg-[#1a1a1a]">
             <div className="flex gap-1.5">
               <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
               <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
               <div className="w-3 h-3 rounded-full bg-[#28c840]" />
             </div>
             <div className="flex-1 flex justify-center">
-              <div className="px-4 py-1 rounded-md bg-white/5 text-xs text-white/30 font-mono">
-                navinta.ai/studio
-              </div>
+              <div className="px-4 py-1 rounded-md bg-white/5 text-xs text-white/30 font-mono">navinta.ai/studio</div>
             </div>
           </div>
 
           {/* Product UI mockup */}
           <div className="p-6 md:p-8 min-h-[320px] md:min-h-[420px]">
-            {/* Simulated UI */}
             <div className="flex gap-6">
-              {/* Sidebar */}
               <div className="hidden md:flex flex-col gap-3 w-48 shrink-0">
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5">
                   <div className="w-5 h-5 rounded bg-indigo-500/30 flex items-center justify-center">
@@ -224,27 +177,21 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
                   </div>
                   <span className="text-xs text-white/80 font-medium">Dashboard</span>
                 </div>
-                {["Content Plan", "Record", "Library", "Brand Kit"].map((item, i) => (
-                  <div key={item} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-white/30 hover:text-white/50 transition-colors">
+                {["Content Plan", "Record", "Library", "Brand Kit"].map((item) => (
+                  <div key={item} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-white/30">
                     <div className="w-5 h-5 rounded bg-white/5" />
                     <span>{item}</span>
                   </div>
                 ))}
               </div>
-
-              {/* Main content area */}
               <div className="flex-1 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-semibold text-white/90">Your Studio</div>
                     <div className="text-xs text-white/30 mt-0.5">4-week content calendar</div>
                   </div>
-                  <div className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-xs text-indigo-400 font-medium">
-                    + New Plan
-                  </div>
+                  <div className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-xs text-indigo-400 font-medium">+ New Plan</div>
                 </div>
-
-                {/* Stats row */}
                 <div className="grid grid-cols-4 gap-3">
                   {[
                     { label: "Total", value: "28", color: "text-white/80" },
@@ -252,14 +199,12 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
                     { label: "Active", value: "8", color: "text-amber-400" },
                     { label: "Planned", value: "8", color: "text-indigo-400" },
                   ].map((stat) => (
-                    <div key={stat.label} className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
+                    <div key={stat.label} className="rounded-xl bg-white/[0.03] p-3">
                       <div className={`text-lg font-bold ${stat.color}`}>{stat.value}</div>
                       <div className="text-[10px] text-white/30 mt-0.5">{stat.label}</div>
                     </div>
                   ))}
                 </div>
-
-                {/* Content cards */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { title: "Brand Launch Reel", status: "Recording", statusColor: "bg-amber-500/20 text-amber-400" },
@@ -267,7 +212,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
                     { title: "Client Testimonial", status: "Planned", statusColor: "bg-indigo-500/20 text-indigo-400" },
                     { title: "Weekly Update", status: "Editing", statusColor: "bg-white/10 text-white/50" },
                   ].map((card) => (
-                    <div key={card.title} className="rounded-xl bg-white/[0.03] border border-white/5 p-4 space-y-3">
+                    <div key={card.title} className="rounded-xl bg-white/[0.03] p-4 space-y-3">
                       <div className="flex justify-between items-start">
                         <span className="text-xs font-medium text-white/70">{card.title}</span>
                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${card.statusColor}`}>{card.status}</span>
@@ -277,7 +222,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
                       </div>
                       <div className="flex gap-1">
                         {[1, 2, 3].map((s) => (
-                          <div key={s} className="flex-1 h-8 rounded bg-white/[0.03] border border-white/5" />
+                          <div key={s} className="flex-1 h-8 rounded bg-white/[0.03]" />
                         ))}
                       </div>
                     </div>
@@ -287,21 +232,12 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
             </div>
           </div>
 
-          {/* Bottom glow */}
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
         </div>
 
-        {/* Reflection/glow underneath */}
-        <div
-          className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-3/4 h-40 rounded-full pointer-events-none"
-          style={{
-            background: "radial-gradient(ellipse, rgba(99,102,241,0.1) 0%, transparent 70%)",
-            filter: "blur(40px)",
-          }}
-        />
+        <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-3/4 h-40 rounded-full pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(99,102,241,0.1) 0%, transparent 70%)", filter: "blur(40px)" }} />
       </div>
 
-      {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/20">
         <span className="text-xs font-medium tracking-widest uppercase">Scroll</span>
         <div className="w-px h-8 bg-gradient-to-b from-white/20 to-transparent" />

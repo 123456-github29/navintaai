@@ -98,10 +98,10 @@ export default function OutcomesSection() {
           {outcomes.map((outcome) => (
             <div
               key={outcome.title}
-              className="outcome-card group rounded-2xl border border-white/8 p-8 transition-all duration-500 hover:border-white/15 hover:bg-white/[0.02]"
+              className="outcome-card group rounded-2xl bg-white/[0.02] p-8 transition-all duration-500 hover:white/15 hover:bg-white/[0.04]"
               style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%)" }}
             >
-              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-6 transition-colors duration-500 group-hover:bg-indigo-500/15">
+              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-6 transition-colors duration-500 group-hover:bg-indigo-500/15">
                 {outcome.icon}
               </div>
               <h3 className="text-lg font-semibold text-white mb-3">{outcome.title}</h3>

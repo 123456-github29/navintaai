@@ -74,13 +74,13 @@ function PlanningAnimation() {
 
   const screens = [
     <div key="prompt" className="flex flex-col gap-3.5">
-      <div className="bg-white/[0.04] rounded-2xl border border-white/8 px-4 py-3.5">
+      <div className="bg-white/[0.04] rounded-2xl bg-white/[0.02] px-4 py-3.5">
         <p className="text-[10px] text-white/30 font-medium mb-1.5 uppercase tracking-wider">Describe your video</p>
         <p className="text-[13px] text-white/90 font-medium leading-snug">30-second brand intro for Instagram</p>
       </div>
       <div className="flex gap-2 flex-wrap">
         {["Instagram Reel", "9:16", "30s"].map((tag) => (
-          <span key={tag} className="bg-white/5 border border-white/8 text-white/50 text-[10px] px-3 py-1.5 rounded-full font-medium">{tag}</span>
+          <span key={tag} className="bg-white/5 bg-white/[0.02] text-white/50 text-[10px] px-3 py-1.5 rounded-full font-medium">{tag}</span>
         ))}
       </div>
       <button className="bg-white text-black rounded-full py-2.5 text-[12px] font-medium mt-1">
@@ -96,7 +96,7 @@ function PlanningAnimation() {
         { num: 4, label: "Social proof", time: "0:15 – 0:22" },
         { num: 5, label: "Call to action", time: "0:22 – 0:30" },
       ].map((s, idx) => (
-        <div key={s.num} className="flex items-center gap-3 bg-white/[0.03] rounded-xl border border-white/8 px-3 py-2.5 transition-all duration-500" style={{ opacity: shotChecks.includes(idx) ? 1 : 0.4, transform: shotChecks.includes(idx) ? "translateY(0)" : "translateY(4px)" }}>
+        <div key={s.num} className="flex items-center gap-3 bg-white/[0.03] rounded-xl bg-white/[0.02] px-3 py-2.5 transition-all duration-500" style={{ opacity: shotChecks.includes(idx) ? 1 : 0.4, transform: shotChecks.includes(idx) ? "translateY(0)" : "translateY(4px)" }}>
           <span className={`w-6 h-6 rounded-full text-[10px] font-semibold flex items-center justify-center shrink-0 transition-all duration-400 ${shotChecks.includes(idx) ? "bg-emerald-500/20 text-emerald-400" : "bg-white/5 text-white/50"}`}>
             {shotChecks.includes(idx) ? (
               <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -131,7 +131,7 @@ function PlanningAnimation() {
         </div>
       </div>
       <div className="flex gap-2">
-        <div className="flex-1 bg-white/5 border border-white/8 rounded-xl py-2.5 text-center text-[11px] font-medium text-white/50">Retake</div>
+        <div className="flex-1 bg-white/5 bg-white/[0.02] rounded-xl py-2.5 text-center text-[11px] font-medium text-white/50">Retake</div>
         <div className="flex-1 bg-white rounded-xl py-2.5 text-center text-[11px] font-medium text-black">Next shot</div>
       </div>
     </div>,
@@ -160,7 +160,7 @@ function PlanningAnimation() {
         </div>
         <div className="flex gap-1.5 ml-auto">
           {["9:16", "1:1", "16:9"].map((fmt) => (
-            <span key={fmt} className="bg-white/5 border border-white/8 text-white/40 text-[9px] px-2.5 py-1 rounded-full font-medium">{fmt}</span>
+            <span key={fmt} className="bg-white/5 bg-white/[0.02] text-white/40 text-[9px] px-2.5 py-1 rounded-full font-medium">{fmt}</span>
           ))}
         </div>
       </div>
@@ -300,7 +300,7 @@ function DirectorAnimation() {
   return (
     <div ref={containerRef} className="relative z-10 flex h-full gap-3">
       {/* Timeline panel */}
-      <div className="flex-[1.1] flex flex-col rounded-2xl overflow-hidden relative border border-white/8">
+      <div className="flex-[1.1] flex flex-col rounded-2xl overflow-hidden relative bg-white/[0.02]">
         <div className="flex-1 relative overflow-hidden bg-gradient-to-br from-[#0f172a] to-[#1e293b]">
           <div className="absolute inset-0 flex flex-col justify-between p-3">
             <div className="flex items-center justify-between">
@@ -383,7 +383,7 @@ function DirectorAnimation() {
       </div>
 
       {/* Chat panel */}
-      <div className="w-[44%] flex flex-col bg-[#111111] rounded-2xl border border-white/8 overflow-hidden">
+      <div className="w-[44%] flex flex-col bg-[#111111] rounded-2xl bg-white/[0.02] overflow-hidden">
         <div className="px-3 py-2.5 border-b border-white/5 flex items-center gap-2">
           <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
             <svg width="9" height="9" viewBox="0 0 16 16" fill="none">
@@ -433,7 +433,7 @@ function DirectorAnimation() {
         </div>
 
         <div className="px-2.5 py-2.5 border-t border-white/5">
-          <div className="bg-white/[0.03] border border-white/8 rounded-xl px-3 py-2 flex items-center gap-2">
+          <div className="bg-white/[0.03] bg-white/[0.02] rounded-xl px-3 py-2 flex items-center gap-2">
             <span className="text-[10px] text-white/20 flex-1">Tell Navinta what to change…</span>
             <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -517,7 +517,7 @@ export default function SolutionSection() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div ref={card1Ref}>
               <div
-                className="h-[540px] rounded-2xl p-5 flex flex-col relative overflow-hidden border border-white/8"
+                className="h-[540px] rounded-2xl p-5 flex flex-col relative overflow-hidden bg-white/[0.02]"
                 style={{ background: "linear-gradient(180deg, #111111 0%, #0d0d0d 100%)" }}
               >
                 <PlanningAnimation />
@@ -534,7 +534,7 @@ export default function SolutionSection() {
 
             <div ref={card2Ref}>
               <div
-                className="h-[540px] rounded-2xl p-5 flex flex-col relative overflow-hidden border border-white/8"
+                className="h-[540px] rounded-2xl p-5 flex flex-col relative overflow-hidden bg-white/[0.02]"
                 style={{ background: "linear-gradient(180deg, #111111 0%, #0d0d0d 100%)" }}
               >
                 <DirectorAnimation />
