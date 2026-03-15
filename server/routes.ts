@@ -884,13 +884,11 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
     if (existingProjects.length > 0) {
       // Delete existing content plans and posts for fresh start
       project = existingProjects[0];
-      const existingPlan = await storage.getContentPlan(project.id, userId);
-      if (existingPlan) {
-        const existingPosts = await storage.getPosts(project.id, userId);
-        for (const post of existingPosts) {
-          await storage.deletePost(post.id, userId);
-        }
+      const existingPosts = await storage.getPosts(project.id, userId);
+      for (const post of existingPosts) {
+        await storage.deletePost(post.id, userId);
       }
+      await storage.deleteContentPlansByProject(project.id, userId);
     } else {
       project = await storage.createProject({
         userId,

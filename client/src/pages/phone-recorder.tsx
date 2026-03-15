@@ -220,7 +220,7 @@ export default function PhoneRecorder() {
   const retake = () => {
     setRecordedBlob(null);
     setRecordingTime(0);
-    setPageState("camera");
+    startCamera(facingMode, aspectRatio);
   };
 
   const uploadClip = useCallback(async () => {
