@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { CheckCircle, ArrowRight, User, Mail, Key, Loader2, Sparkles, Video, Wand2, Zap } from "lucide-react";
+import { gsap } from "gsap";
 
 export default function Waitlist() {
   const [, navigate] = useLocation();
@@ -15,11 +16,22 @@ export default function Waitlist() {
   const heroRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const orb1Ref = useRef<HTMLDivElement>(null);
+  const orb2Ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 100);
-    return () => clearTimeout(t);
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      tl.from(orb1Ref.current, { opacity: 0, scale: 0.5, duration: 1.8 }, 0);
+      tl.from(orb2Ref.current, { opacity: 0, scale: 0.5, duration: 1.8 }, 0.3);
+      tl.from(heroRef.current, { y: 40, opacity: 0, duration: 1 }, 0.2);
+      tl.from(featuresRef.current, { y: 30, opacity: 0, duration: 0.8 }, 0.5);
+      tl.from(formRef.current, { y: 30, opacity: 0, duration: 0.8 }, 0.7);
+    });
+
+    return () => ctx.revert();
   }, []);
 
   const handleJoin = async (e: React.FormEvent) => {
@@ -76,27 +88,27 @@ export default function Waitlist() {
 
   if (joined) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4" style={{ fontFamily: "'Inter', sans-serif" }}>
-        <div
-          className="max-w-md w-full text-center transition-all duration-700 ease-out"
-          style={{ opacity: 1, transform: "translateY(0)" }}
-        >
-          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8 animate-[scaleIn_0.5s_ease-out]">
-            <CheckCircle className="w-10 h-10 text-emerald-500" />
+      <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: "#000000", fontFamily: "'Inter', sans-serif" }}>
+        {/* Background orbs */}
+        <div className="absolute top-[20%] left-[20%] w-[400px] h-[400px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 60%)", filter: "blur(60px)" }} />
+
+        <div className="max-w-md w-full text-center relative z-10">
+          <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-8" style={{ animation: "scaleIn 0.5s ease-out" }}>
+            <CheckCircle className="w-10 h-10 text-emerald-400" />
           </div>
-          <h2 className="text-3xl font-bold text-[#111827] mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
+          <h2 className="text-3xl font-bold text-white mb-4">
             You're on the list
           </h2>
-          <p className="text-[#6B7280] text-base leading-relaxed mb-2">
-            Thanks, <span className="font-semibold text-[#111827]">{name}</span>. We'll send your access code to{" "}
-            <span className="font-medium text-[#111827]">{email}</span> when your spot opens up.
+          <p className="text-white/40 text-base leading-relaxed mb-2">
+            Thanks, <span className="font-semibold text-white/80">{name}</span>. We'll send your access code to{" "}
+            <span className="font-medium text-white/80">{email}</span> when your spot opens up.
           </p>
-          <p className="text-sm text-[#9CA3AF] mb-10">Keep an eye on your inbox.</p>
+          <p className="text-sm text-white/20 mb-10">Keep an eye on your inbox.</p>
           <button
             onClick={() => { setJoined(false); setMode("code"); }}
-            className="text-sm text-[#135BEC] hover:underline font-medium"
+            className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
           >
-            Already have a code? Enter it here
+            Already have a code? Enter it here →
           </button>
         </div>
 
@@ -112,92 +124,85 @@ export default function Waitlist() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <nav className="flex items-center justify-between px-6 md:px-12 py-6">
-        <div className="flex items-center gap-2 text-xl font-semibold tracking-tight text-[#111827]">
+    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: "#000000", fontFamily: "'Inter', sans-serif" }}>
+      {/* Background gradient orbs */}
+      <div
+        ref={orb1Ref}
+        className="absolute top-[5%] left-[10%] w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 60%)", filter: "blur(60px)" }}
+      />
+      <div
+        ref={orb2Ref}
+        className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(168,85,247,0.08) 0%, transparent 60%)", filter: "blur(50px)" }}
+      />
+
+      {/* Grid background */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
+        backgroundSize: "60px 60px",
+        maskImage: "radial-gradient(ellipse at 50% 40%, black 20%, transparent 70%)",
+        WebkitMaskImage: "radial-gradient(ellipse at 50% 40%, black 20%, transparent 70%)",
+      }} />
+
+      {/* Navbar */}
+      <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-6">
+        <div className="flex items-center gap-2 text-lg font-semibold tracking-tight text-white">
           <img src="/navinta-logo.png" alt="Navinta AI" className="h-7 w-7" />
-          Navinta AI
+          <span className="logo-text">Navinta AI</span>
         </div>
         <button
           onClick={() => { setMode(mode === "join" ? "code" : "join"); setError(null); }}
-          className="text-sm font-medium text-[#135BEC] hover:text-[#0F4BD6] transition-colors"
+          className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
         >
           {mode === "join" ? "Have a code?" : "Join waitlist"}
         </button>
       </nav>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-4 pb-12">
-        <div
-          ref={heroRef}
-          className="text-center mb-10 max-w-2xl mx-auto transition-all duration-700 ease-out"
-          style={{
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(30px)",
-          }}
-        >
-          <div className="mx-auto mb-8 rounded-3xl min-h-[140px] md:min-h-[180px] flex items-center justify-center relative overflow-hidden">
-            <div
-              className="absolute inset-[-20%] z-0"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 25% 35%, #ddd6fe 0%, transparent 50%), radial-gradient(ellipse at 75% 65%, #fecdd3 0%, transparent 45%), radial-gradient(ellipse at 50% 85%, #cffafe 0%, transparent 55%), #faf5ff",
-              }}
-            />
-            <div className="relative z-10 px-6 py-10">
-              <h1
-                className="text-5xl md:text-6xl font-semibold tracking-tighter text-[#111111] mb-4 select-none"
-              >
-                Navinta AI
-              </h1>
-              <p className="text-lg md:text-xl text-[#444444] max-w-lg mx-auto leading-relaxed">
-                Promote yourself with agency-quality video — without the agency price tag.
-              </p>
-            </div>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 pb-12 relative z-10">
+        {/* Hero */}
+        <div ref={heroRef} className="text-center mb-10 max-w-2xl mx-auto">
+          {/* Status badge */}
+          <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm">
+            <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-sm text-white/60 font-medium">Early access — limited spots</span>
           </div>
+
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[0.95] mb-5">
+            Navinta AI
+          </h1>
+          <p className="text-lg md:text-xl text-white/40 max-w-lg mx-auto leading-relaxed">
+            Agency-quality video production, powered by AI. No editing skills required.
+          </p>
         </div>
 
+        {/* Feature cards */}
         <div
           ref={featuresRef}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl w-full mb-10 transition-all duration-700 ease-out"
-          style={{
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(30px)",
-            transitionDelay: "200ms",
-          }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl w-full mb-10"
         >
-          {features.map((f, i) => (
+          {features.map((f) => (
             <div
               key={f.title}
-              className="flex flex-col items-center text-center p-4 rounded-2xl bg-gray-50/80 border border-gray-100 transition-all duration-500 ease-out hover:shadow-md hover:-translate-y-0.5"
-              style={{
-                opacity: visible ? 1 : 0,
-                transform: visible ? "translateY(0)" : "translateY(20px)",
-                transitionDelay: `${300 + i * 100}ms`,
-              }}
+              className="flex flex-col items-center text-center p-4 rounded-xl bg-white/[0.03] border border-white/8 transition-all duration-500 hover:border-white/15 hover:bg-white/[0.05]"
             >
-              <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center mb-3 shadow-sm">
-                <f.icon className="w-5 h-5 text-[#135BEC]" />
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-3">
+                <f.icon className="w-5 h-5 text-indigo-400" />
               </div>
-              <h3 className="text-sm font-semibold text-[#111827] mb-1">{f.title}</h3>
-              <p className="text-xs text-[#9CA3AF] leading-relaxed">{f.desc}</p>
+              <h3 className="text-sm font-semibold text-white/80 mb-1">{f.title}</h3>
+              <p className="text-xs text-white/30 leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
 
-        <div
-          ref={formRef}
-          className="w-full max-w-md transition-all duration-700 ease-out"
-          style={{
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(30px)",
-            transitionDelay: "500ms",
-          }}
-        >
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg shadow-gray-100/50 p-8">
-            <h2 className="text-2xl font-bold text-[#111827] mb-2 text-center" style={{ fontFamily: "'Playfair Display', serif" }}>
+        {/* Form */}
+        <div ref={formRef} className="w-full max-w-md">
+          <div className="rounded-2xl border border-white/10 bg-[#111111] p-8" style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+            <h2 className="text-xl font-bold text-white mb-2 text-center">
               {mode === "join" ? "Join the Waitlist" : "Enter Access Code"}
             </h2>
-            <p className="text-sm text-[#9CA3AF] text-center mb-6">
+            <p className="text-sm text-white/30 text-center mb-6">
               {mode === "join"
                 ? "Be among the first to create with Navinta AI."
                 : "Enter the code you received to get started."}
@@ -206,36 +211,36 @@ export default function Waitlist() {
             {mode === "join" ? (
               <form onSubmit={handleJoin} className="space-y-3">
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#135BEC]/20 focus:border-[#135BEC] transition-all bg-white"
+                    className="w-full pl-10 pr-4 py-3 border border-white/10 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all bg-white/[0.03]"
                   />
                 </div>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Your email"
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#135BEC]/20 focus:border-[#135BEC] transition-all bg-white"
+                    className="w-full pl-10 pr-4 py-3 border border-white/10 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all bg-white/[0.03]"
                   />
                 </div>
 
                 {error && (
-                  <p className="text-sm text-red-500 px-1">{error}</p>
+                  <p className="text-sm text-red-400 px-1">{error}</p>
                 )}
 
                 <button
                   type="submit"
                   disabled={loading || !name.trim() || !email.trim()}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#111827] text-white rounded-full text-sm font-medium hover:bg-[#1F2937] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg hover:shadow-gray-200/50 active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white text-black rounded-full text-sm font-semibold hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                 >
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -250,25 +255,25 @@ export default function Waitlist() {
             ) : (
               <form onSubmit={handleRedeem} className="space-y-3">
                 <div className="relative">
-                  <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                  <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                   <input
                     type="text"
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
                     placeholder="Enter access code"
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#135BEC]/20 focus:border-[#135BEC] transition-all bg-white tracking-widest font-mono"
+                    className="w-full pl-10 pr-4 py-3 border border-white/10 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all bg-white/[0.03] tracking-widest font-mono"
                   />
                 </div>
 
                 {error && (
-                  <p className="text-sm text-red-500 px-1">{error}</p>
+                  <p className="text-sm text-red-400 px-1">{error}</p>
                 )}
 
                 <button
                   type="submit"
                   disabled={loading || !code.trim()}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#135BEC] text-white rounded-full text-sm font-medium hover:bg-[#0F4BD6] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg hover:shadow-blue-200/50 active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-500 text-white rounded-full text-sm font-semibold hover:bg-indigo-400 hover:shadow-[0_0_30px_rgba(99,102,241,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                 >
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -285,17 +290,41 @@ export default function Waitlist() {
             <div className="mt-5 text-center">
               <button
                 onClick={() => { setMode(mode === "join" ? "code" : "join"); setError(null); }}
-                className="text-sm text-[#6B7280] hover:text-[#111827] transition-colors"
+                className="text-sm text-white/30 hover:text-white/60 transition-colors"
               >
                 {mode === "join" ? "Already have a code?" : "Need to join the waitlist?"}
               </button>
             </div>
           </div>
+
+          {/* Trust signals */}
+          <div className="mt-6 flex items-center justify-center gap-6 text-xs text-white/20">
+            <div className="flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500/50">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>Secure & private</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500/50">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <span>No spam, ever</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500/50">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>Early access perks</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <footer className="py-8 text-center text-sm text-[#9CA3AF]">
-        &copy; 2026 Navinta AI. All rights reserved.
+      {/* Footer */}
+      <footer className="relative z-10 py-8 text-center">
+        <p className="text-sm text-white/15">&copy; 2026 Navinta AI. All rights reserved.</p>
       </footer>
     </div>
   );

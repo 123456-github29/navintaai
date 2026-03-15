@@ -30,15 +30,18 @@ const faqs = [
 export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
-  const labelRef = useRef<HTMLParagraphElement>(null);
+  const headingRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+
     const ctx = gsap.context(() => {
-      gsap.from(labelRef.current, {
-        y: 20,
+      gsap.from(headingRef.current, {
+        y: 30,
         opacity: 0,
-        duration: 0.6,
+        duration: 0.8,
         ease: "power3.out",
         scrollTrigger: { trigger: sectionRef.current, start: "top 80%" },
       });
@@ -60,28 +63,43 @@ export default function FAQSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-24 px-6 bg-white">
+    <section ref={sectionRef} className="py-32 px-6" style={{ background: "#0a0a0a" }}>
       <div className="max-w-3xl mx-auto">
-        <p ref={labelRef} className="text-sm font-medium text-[#666666] uppercase tracking-widest mb-12 text-center">
-          FAQ
-        </p>
+        <div ref={headingRef} className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-4">
+            Frequently asked questions
+          </h2>
+          <p className="text-white/40 text-base">
+            Everything you need to know about Navinta AI.
+          </p>
+        </div>
 
-        <div>
+        <div className="space-y-2">
           {faqs.map((faq, i) => (
             <div
               key={i}
               ref={(el) => { itemRefs.current[i] = el; }}
-              className="border-b border-gray-100"
+              className={`rounded-xl border transition-all duration-300 ${
+                openIndex === i
+                  ? "border-white/15 bg-white/[0.03]"
+                  : "border-white/8 hover:border-white/12"
+              }`}
             >
               <button
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full flex justify-between items-center py-6 text-left"
+                className="w-full flex justify-between items-center p-6 text-left"
               >
-                <span className="text-lg font-medium text-[#111111]">
+                <span className="text-base font-medium text-white/90 pr-4">
                   {faq.q}
                 </span>
-                <span className="text-xl text-[#999999] shrink-0 ml-4 transition-transform duration-300" style={{ transform: openIndex === i ? "rotate(45deg)" : "none" }}>
-                  +
+                <span
+                  className="text-white/30 shrink-0 w-6 h-6 rounded-full border border-white/10 flex items-center justify-center transition-all duration-300"
+                  style={{ transform: openIndex === i ? "rotate(45deg)" : "none" }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
                 </span>
               </button>
               <div
@@ -91,7 +109,7 @@ export default function FAQSection() {
                   opacity: openIndex === i ? 1 : 0,
                 }}
               >
-                <div className="pb-6 text-[#666666] leading-relaxed">
+                <div className="px-6 pb-6 text-sm text-white/40 leading-relaxed">
                   {faq.a}
                 </div>
               </div>

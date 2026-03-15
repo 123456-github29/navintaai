@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 type SessionStatus = "pending" | "paired" | "recording" | "uploaded" | "expired" | "cancelled";
+type AspectRatio = "9:16" | "16:9";
 
 interface SessionInfo {
   id: string;
@@ -11,6 +12,7 @@ interface SessionInfo {
 
 type PageState =
   | "loading"
+  | "setup"
   | "error"
   | "camera"
   | "preview"
@@ -27,6 +29,7 @@ export default function PhoneRecorder() {
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
@@ -39,6 +42,7 @@ export default function PhoneRecorder() {
   const searchParams = new URLSearchParams(window.location.search);
   const sid = searchParams.get("sid");
   const sessionToken = searchParams.get("token");
+  const isComputerMode = searchParams.get("mode") === "computer";
 
   useEffect(() => {
     if (!sid) {
@@ -93,18 +97,29 @@ export default function PhoneRecorder() {
         shotId: data.shotId,
         status: data.status,
       });
-      await startCamera("environment");
+      // Show setup screen so user can pick aspect ratio
+      setPageState("setup");
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to validate session.");
       setPageState("error");
     }
   };
 
-  const startCamera = async (facing: "user" | "environment") => {
+  const getDimensions = (ratio: AspectRatio) => {
+    if (ratio === "9:16") return { width: { ideal: 1080 }, height: { ideal: 1920 } };
+    return { width: { ideal: 1920 }, height: { ideal: 1080 } };
+  };
+
+  const startCamera = async (facing: "user" | "environment", ratio: AspectRatio = aspectRatio) => {
     stopAllTracks();
+    const dims = getDimensions(ratio);
     try {
+      const videoConstraints: MediaTrackConstraints = isComputerMode
+        ? { ...dims }
+        : { facingMode: facing, ...dims };
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1920 } },
+        video: videoConstraints,
         audio: true,
       });
       streamRef.current = mediaStream;
@@ -115,10 +130,10 @@ export default function PhoneRecorder() {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (err: any) {
-      if (facing === "environment") {
+      if (!isComputerMode && facing === "environment") {
         try {
           const fallbackStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user", width: { ideal: 1080 }, height: { ideal: 1920 } },
+            video: { facingMode: "user", ...getDimensions(ratio) },
             audio: true,
           });
           streamRef.current = fallbackStream;
@@ -139,9 +154,9 @@ export default function PhoneRecorder() {
   };
 
   const flipCamera = async () => {
-    if (isRecording) return;
+    if (isRecording || isComputerMode) return;
     const newFacing = facingMode === "user" ? "environment" : "user";
-    await startCamera(newFacing);
+    await startCamera(newFacing, aspectRatio);
   };
 
   const startRecording = () => {
@@ -344,15 +359,87 @@ export default function PhoneRecorder() {
     );
   }
 
+  if (pageState === "setup") {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white px-6">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-semibold mb-2">Choose Frame Size</h1>
+          <p className="text-white/50 text-sm">Select the aspect ratio for your recording</p>
+        </div>
+
+        <div className="flex gap-6 mb-10">
+          {/* 9:16 option */}
+          <button
+            onClick={() => setAspectRatio("9:16")}
+            className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all active:scale-95 ${
+              aspectRatio === "9:16"
+                ? "border-white bg-white/10"
+                : "border-white/20 hover:border-white/40"
+            }`}
+          >
+            <div
+              className={`rounded-lg border-2 flex items-center justify-center ${
+                aspectRatio === "9:16" ? "border-white bg-white/10" : "border-white/30"
+              }`}
+              style={{ width: 48, height: 85 }}
+            >
+              {aspectRatio === "9:16" && (
+                <div className="w-2 h-2 rounded-full bg-white" />
+              )}
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold">9 : 16</p>
+              <p className="text-xs text-white/50">Portrait</p>
+            </div>
+          </button>
+
+          {/* 16:9 option */}
+          <button
+            onClick={() => setAspectRatio("16:9")}
+            className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all active:scale-95 ${
+              aspectRatio === "16:9"
+                ? "border-white bg-white/10"
+                : "border-white/20 hover:border-white/40"
+            }`}
+          >
+            <div
+              className={`rounded-lg border-2 flex items-center justify-center ${
+                aspectRatio === "16:9" ? "border-white bg-white/10" : "border-white/30"
+              }`}
+              style={{ width: 85, height: 48 }}
+            >
+              {aspectRatio === "16:9" && (
+                <div className="w-2 h-2 rounded-full bg-white" />
+              )}
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold">16 : 9</p>
+              <p className="text-xs text-white/50">Landscape</p>
+            </div>
+          </button>
+        </div>
+
+        <button
+          onClick={() => startCamera(isComputerMode ? "user" : "environment", aspectRatio)}
+          className="px-8 py-4 bg-white text-black rounded-full text-sm font-semibold active:scale-95 transition-transform"
+        >
+          Start Camera
+        </button>
+      </div>
+    );
+  }
+
   if (pageState === "preview" && recordedBlob) {
     const previewUrl = URL.createObjectURL(recordedBlob);
+    const isPortrait = aspectRatio === "9:16";
     return (
       <div className="fixed inset-0 bg-black flex flex-col text-white">
-        <div className="flex-1 relative">
+        <div className="flex-1 relative flex items-center justify-center">
           <video
             ref={previewVideoRef}
             src={previewUrl}
-            className="absolute inset-0 w-full h-full object-cover"
+            className={isPortrait ? "h-full w-auto object-contain" : "w-full h-auto object-contain"}
+            style={isPortrait ? { maxHeight: "100%" } : { maxWidth: "100%" }}
             playsInline
             autoPlay
             loop
@@ -385,35 +472,62 @@ export default function PhoneRecorder() {
     );
   }
 
+  // Camera view
+  const isPortrait = aspectRatio === "9:16";
+  const mirrorStyle = !isComputerMode && facingMode === "user" ? "scaleX(-1)" : "none";
+
   return (
     <div className="fixed inset-0 bg-black flex flex-col text-white">
-      <div className="flex-1 relative overflow-hidden">
-        <video
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover"
-          autoPlay
-          playsInline
-          muted
-          style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
-        />
+      <div className="flex-1 relative overflow-hidden flex items-center justify-center">
+        {/* Aspect ratio frame */}
+        <div
+          className="relative overflow-hidden bg-black"
+          style={
+            isPortrait
+              ? { width: "100%", height: "100%" }
+              : {
+                  width: "100%",
+                  maxWidth: "calc(100vh * 16 / 9)",
+                  aspectRatio: "16/9",
+                  margin: "auto",
+                }
+          }
+        >
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-cover"
+            autoPlay
+            playsInline
+            muted
+            style={{ transform: mirrorStyle }}
+          />
 
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-10">
-          {isRecording && (
-            <div className="flex items-center gap-2 bg-red-500/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-              <span className="text-xs font-medium">{formatTime(recordingTime)}</span>
-            </div>
-          )}
-          {!isRecording && <div />}
-          <button
-            onClick={flipCamera}
-            disabled={isRecording}
-            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform disabled:opacity-40"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
+          {/* Aspect ratio badge */}
+          <div className="absolute top-4 left-4 z-10">
+            <span className="text-xs font-medium bg-black/50 text-white/70 px-2 py-1 rounded-full backdrop-blur-sm">
+              {aspectRatio}
+            </span>
+          </div>
+
+          <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+            {isRecording && (
+              <div className="flex items-center gap-2 bg-red-500/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                <span className="text-xs font-medium">{formatTime(recordingTime)}</span>
+              </div>
+            )}
+            {!isComputerMode && (
+              <button
+                onClick={flipCamera}
+                disabled={isRecording}
+                className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform disabled:opacity-40"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
