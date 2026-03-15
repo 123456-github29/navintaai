@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Video, CheckCircle2, Circle, ChevronLeft, ChevronRight, Smartphone, Monitor } from "lucide-react";
@@ -64,7 +63,6 @@ export default function Director() {
     },
   });
 
-  // Auto-play timer
   useEffect(() => {
     if (isAutoPlay && teleprompterData?.cards) {
       const currentCard = teleprompterData.cards[currentCardIndex];
@@ -116,20 +114,22 @@ export default function Director() {
 
   if (postLoading || teleprompterLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-12 w-64" />
-        <Skeleton className="h-96 w-full" />
+      <div className="p-6 md:p-8 min-h-screen" style={{ background: "#050505" }}>
+        <div className="max-w-5xl mx-auto space-y-6">
+          <Skeleton className="h-12 w-64 bg-white/5 rounded-xl" />
+          <Skeleton className="h-96 w-full bg-white/[0.03] rounded-2xl" />
+        </div>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh]">
+      <div className="flex items-center justify-center min-h-[80vh]" style={{ background: "#050505" }}>
         <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-2">Post not found</h2>
+          <h2 className="text-2xl font-semibold text-white mb-4">Post not found</h2>
           <Link href="/dashboard">
-            <Button variant="outline">Back to Dashboard</Button>
+            <Button className="bg-white text-black rounded-full hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">Back to Dashboard</Button>
           </Link>
         </div>
       </div>
@@ -142,131 +142,123 @@ export default function Director() {
   const cards = teleprompterData?.cards || [];
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={`/post/${post.id}`}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{post.title}</h1>
-          <p className="text-sm text-muted-foreground">
-            Recording Director • {completedShots}/{totalShots} shots completed
-          </p>
+    <div className="p-6 md:p-8 min-h-screen" style={{ background: "#050505" }}>
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link href={`/post/${post.id}`}>
+            <Button variant="ghost" size="icon" className="text-white/40 hover:text-white hover:bg-white/5 rounded-xl">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold tracking-tight text-white">{post.title}</h1>
+            <p className="text-sm text-white/30">
+              Director Mode — {completedShots}/{totalShots} shots completed
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Teleprompter Section */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card className="bg-[#111111] text-white border-0">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white/80 text-sm font-medium">Teleprompter</CardTitle>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Teleprompter Section */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="rounded-2xl border border-white/[0.06] overflow-hidden" style={{ background: "#0a0a0a" }}>
+              <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+                <span className="text-sm font-medium text-white/50">Teleprompter</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="border-white/20 text-white/60 text-xs">
+                  <Badge className="bg-white/5 text-white/40 border border-white/8 text-xs rounded-full">
                     {currentCardIndex + 1} / {cards.length}
                   </Badge>
                   {teleprompterData && (
-                    <Badge variant="outline" className="border-white/20 text-white/60 text-xs">
-                      {teleprompterData.totalDuration}s total
+                    <Badge className="bg-white/5 text-white/40 border border-white/8 text-xs rounded-full">
+                      {teleprompterData.totalDuration}s
                     </Badge>
                   )}
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Main teleprompter display */}
-              <div className="min-h-[200px] flex items-center justify-center px-4">
-                {cards.length > 0 ? (
-                  <div className="text-center space-y-4">
-                    <p className="text-2xl md:text-3xl font-medium leading-relaxed">
-                      {cards[currentCardIndex]?.text}
-                    </p>
-                    <Badge className="bg-white/10 text-white/50 text-xs">
-                      {cards[currentCardIndex]?.beatType} • {cards[currentCardIndex]?.durationSec.toFixed(1)}s
-                    </Badge>
-                  </div>
-                ) : (
-                  <p className="text-white/40 text-lg">No script available. Regenerate script from the post detail page.</p>
-                )}
-              </div>
+              <div className="p-8">
+                {/* Main teleprompter display */}
+                <div className="min-h-[200px] flex items-center justify-center">
+                  {cards.length > 0 ? (
+                    <div className="text-center space-y-4 max-w-xl">
+                      <p className="text-2xl md:text-3xl font-medium leading-relaxed text-white">
+                        {cards[currentCardIndex]?.text}
+                      </p>
+                      <Badge className="bg-white/5 text-white/30 border border-white/8 text-xs rounded-full">
+                        {cards[currentCardIndex]?.beatType} — {cards[currentCardIndex]?.durationSec.toFixed(1)}s
+                      </Badge>
+                    </div>
+                  ) : (
+                    <p className="text-white/25 text-lg">No script available. Regenerate from post detail page.</p>
+                  )}
+                </div>
 
-              {/* Controls */}
-              <div className="flex items-center justify-center gap-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="border-white/20 text-white hover:bg-white/10"
-                  onClick={() => setCurrentCardIndex(Math.max(0, currentCardIndex - 1))}
-                  disabled={currentCardIndex === 0}
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-                <Button
-                  className={isAutoPlay ? "bg-red-500 hover:bg-red-600" : "bg-white text-[#111111] hover:bg-white/90"}
-                  onClick={() => {
-                    if (isAutoPlay) {
-                      setIsAutoPlay(false);
-                    } else {
-                      setCurrentCardIndex(0);
-                      setIsAutoPlay(true);
-                    }
-                  }}
-                >
-                  {isAutoPlay ? "Stop" : "Auto-Play"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="border-white/20 text-white hover:bg-white/10"
-                  onClick={() => setCurrentCardIndex(Math.min(cards.length - 1, currentCardIndex + 1))}
-                  disabled={currentCardIndex >= cards.length - 1}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
+                {/* Controls */}
+                <div className="flex items-center justify-center gap-3 mt-8">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-white/10 text-white/50 hover:bg-white/5 hover:text-white rounded-xl bg-transparent"
+                    onClick={() => setCurrentCardIndex(Math.max(0, currentCardIndex - 1))}
+                    disabled={currentCardIndex === 0}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    className={`rounded-full px-8 ${isAutoPlay ? "bg-red-500 hover:bg-red-600 text-white" : "bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"}`}
+                    onClick={() => {
+                      if (isAutoPlay) {
+                        setIsAutoPlay(false);
+                      } else {
+                        setCurrentCardIndex(0);
+                        setIsAutoPlay(true);
+                      }
+                    }}
+                  >
+                    {isAutoPlay ? "Stop" : "Auto-Play"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-white/10 text-white/50 hover:bg-white/5 hover:text-white rounded-xl bg-transparent"
+                    onClick={() => setCurrentCardIndex(Math.min(cards.length - 1, currentCardIndex + 1))}
+                    disabled={currentCardIndex >= cards.length - 1}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Full Script */}
-          {teleprompterData?.fullScript && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Full Script</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+            {/* Full Script */}
+            {teleprompterData?.fullScript && (
+              <div className="rounded-2xl border border-white/[0.06] p-6" style={{ background: "#0a0a0a" }}>
+                <h3 className="text-sm font-semibold text-white/50 mb-4">Full Script</h3>
+                <p className="text-sm leading-relaxed text-white/35 whitespace-pre-wrap">
                   {teleprompterData.fullScript}
                 </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
 
-        {/* Shot List & Recording Section */}
-        <div className="space-y-4">
-          {/* QR Recording Session */}
-          {activeSession && (
-            <Card className="border-blue-200 bg-blue-50/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Video className="h-4 w-4" />
-                  Phone Recording Session
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-xs text-muted-foreground">
+          {/* Shot List & Recording Section */}
+          <div className="space-y-4">
+            {/* QR Recording Session */}
+            {activeSession && (
+              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Video className="h-4 w-4 text-blue-400" />
+                  <span className="text-sm font-semibold text-blue-400">Phone Recording</span>
+                </div>
+                <p className="text-xs text-white/30 mb-3">
                   Open this URL on your phone to record:
                 </p>
-                <div className="bg-white rounded-lg p-3 text-center">
+                <div className="bg-black/30 rounded-xl p-3 text-center mb-3">
                   <a
                     href={activeSession.recordUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 underline break-all"
+                    className="text-xs text-blue-400 underline break-all"
                   >
                     {activeSession.recordUrl}
                   </a>
@@ -274,97 +266,93 @@ export default function Director() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full"
+                  className="w-full border-white/10 text-white/50 hover:bg-white/5 rounded-xl bg-transparent"
                   onClick={() => setActiveSession(null)}
                 >
                   Close
                 </Button>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
 
-          {/* Shot List */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Shot List</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {post.shotList.map((shot) => (
-                <div
-                  key={shot.id}
-                  className={`p-3 rounded-lg border transition-all ${
-                    shot.completed
-                      ? "border-green-200 bg-green-50"
-                      : currentShot?.id === shot.id
-                        ? "border-blue-200 bg-blue-50"
-                        : "border-gray-100"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <button
-                      className="mt-0.5"
-                      onClick={() => updateShotMutation.mutate({
-                        shotId: shot.id,
-                        completed: !shot.completed,
-                      })}
-                    >
-                      {shot.completed ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className="text-xs">Shot {shot.shotNumber}</Badge>
-                        <span className="text-xs text-muted-foreground">{shot.duration}s</span>
+            {/* Shot List */}
+            <div className="rounded-2xl border border-white/[0.06] p-5" style={{ background: "#0a0a0a" }}>
+              <h3 className="text-sm font-semibold text-white/50 mb-4">Shot List</h3>
+              <div className="space-y-3">
+                {post.shotList.map((shot) => (
+                  <div
+                    key={shot.id}
+                    className={`p-3.5 rounded-xl border transition-all ${
+                      shot.completed
+                        ? "border-emerald-500/20 bg-emerald-500/5"
+                        : currentShot?.id === shot.id
+                          ? "border-indigo-500/20 bg-indigo-500/5"
+                          : "border-white/[0.06] bg-white/[0.02]"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <button
+                        className="mt-0.5"
+                        onClick={() => updateShotMutation.mutate({
+                          shotId: shot.id,
+                          completed: !shot.completed,
+                        })}
+                      >
+                        {shot.completed ? (
+                          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-white/20" />
+                        )}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge className="bg-white/5 text-white/40 border border-white/8 text-xs rounded-full">Shot {shot.shotNumber}</Badge>
+                          <span className="text-xs text-white/25">{shot.duration}s</span>
+                        </div>
+                        <p className="text-sm text-white/60">{shot.instruction}</p>
                       </div>
-                      <p className="text-sm">{shot.instruction}</p>
                     </div>
+                    {!shot.completed && (
+                      <div className="mt-3 flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs flex-1 border-white/10 text-white/40 hover:bg-white/5 rounded-xl bg-transparent"
+                          onClick={() => createRecordingSession(shot.id, "phone")}
+                          disabled={sessionLoading}
+                        >
+                          <Smartphone className="h-3 w-3 mr-1" />
+                          Phone
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs flex-1 border-white/10 text-white/40 hover:bg-white/5 rounded-xl bg-transparent"
+                          onClick={() => createRecordingSession(shot.id, "computer")}
+                          disabled={sessionLoading}
+                        >
+                          <Monitor className="h-3 w-3 mr-1" />
+                          Computer
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  {!shot.completed && (
-                    <div className="mt-2 flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs flex-1"
-                        onClick={() => createRecordingSession(shot.id, "phone")}
-                        disabled={sessionLoading}
-                      >
-                        <Smartphone className="h-3 w-3 mr-1" />
-                        Phone
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs flex-1"
-                        onClick={() => createRecordingSession(shot.id, "computer")}
-                        disabled={sessionLoading}
-                      >
-                        <Monitor className="h-3 w-3 mr-1" />
-                        Computer
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                ))}
+              </div>
+            </div>
 
-          {/* Done - go to editor */}
-          {completedShots === totalShots && (
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-4 text-center space-y-3">
-                <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto" />
-                <p className="font-medium text-sm">All shots recorded!</p>
+            {/* Done - go to editor */}
+            {completedShots === totalShots && (
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-center space-y-3">
+                <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
+                <p className="font-semibold text-sm text-white">All shots recorded!</p>
                 <Link href={`/ai-editor/${post.id}`}>
-                  <Button size="sm" className="w-full">
+                  <Button size="sm" className="w-full bg-white text-black rounded-full hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
                     Finish Video
                   </Button>
                 </Link>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
