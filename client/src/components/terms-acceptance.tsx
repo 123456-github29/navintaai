@@ -86,48 +86,48 @@ export function TermsAcceptance({ children }: TermsAcceptanceProps) {
       {showModal && !hasAccepted && !isPublicRoute && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
+            className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-fade-in"
             onClick={handleClose}
           />
           
-          <div className="relative w-full max-w-md bg-white rounded-3xl border border-gray-200 shadow-2xl animate-scale-in">
+          <div className="relative w-full max-w-md rounded-3xl border border-white/10 shadow-2xl animate-scale-in" style={{ background: "linear-gradient(180deg, #111111 0%, #0a0a0a 100%)" }}>
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-50 transition-colors text-[#666666] hover:text-[#111111]"
+              className="absolute top-5 right-5 p-2 rounded-full hover:bg-white/5 transition-colors"
             >
-              <XMarkIcon className="w-5 h-5" />
+              <XMarkIcon className="w-5 h-5 text-white/30" />
             </button>
 
             <div className="p-6 space-y-6">
               <div className="text-center space-y-4 pt-2">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-3xl bg-gray-50 border border-gray-200">
-                  <ShieldCheckIcon className="w-7 h-7 text-[#111111]" />
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-3xl bg-white/5 border border-white/10">
+                  <ShieldCheckIcon className="w-7 h-7 text-white/70" />
                 </div>
-                
+
                 <div className="space-y-1">
-                  <h2 className="text-xl font-bold text-[#111111]">
+                  <h2 className="text-xl font-bold text-white">
                     Welcome to Navinta AI
                   </h2>
-                  <p className="text-sm text-[#666666]">
+                  <p className="text-sm text-white/35">
                     Please review and accept our terms to continue
                   </p>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-3xl">
+                <div className="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
                   <div className="flex-1">
-                    <h3 className="font-medium text-[#111111] text-sm">Privacy Policy</h3>
-                    <Link href="/privacy" className="text-xs text-[#666666] hover:underline">
+                    <h3 className="font-medium text-white text-sm">Privacy Policy</h3>
+                    <Link href="/privacy" className="text-xs text-white/40 hover:underline">
                       Read Privacy Policy
                     </Link>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-3xl">
+                <div className="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
                   <div className="flex-1">
-                    <h3 className="font-medium text-[#111111] text-sm">Terms of Service</h3>
-                    <Link href="/terms" className="text-xs text-[#666666] hover:underline">
+                    <h3 className="font-medium text-white text-sm">Terms of Service</h3>
+                    <Link href="/terms" className="text-xs text-white/40 hover:underline">
                       Read Terms of Service
                     </Link>
                   </div>
@@ -138,20 +138,20 @@ export function TermsAcceptance({ children }: TermsAcceptanceProps) {
                 <Checkbox
                   checked={isChecked}
                   onCheckedChange={(checked) => setIsChecked(checked === true)}
-                  className="mt-0.5 border-gray-200 data-[state=checked]:bg-[#111111] data-[state=checked]:border-[#111111]"
+                  className="mt-0.5 border-white/20 data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-black"
                 />
-                <span className="text-sm text-[#111111] leading-relaxed">
+                <span className="text-sm text-white/70 leading-relaxed">
                   I have read and agree to the{" "}
-                  <Link href="/privacy" className="text-[#111111] font-medium hover:underline">Privacy Policy</Link>
+                  <Link href="/privacy" className="text-white font-medium hover:underline">Privacy Policy</Link>
                   {" "}and{" "}
-                  <Link href="/terms" className="text-[#111111] font-medium hover:underline">Terms of Service</Link>
+                  <Link href="/terms" className="text-white font-medium hover:underline">Terms of Service</Link>
                 </span>
               </label>
 
               <Button
                 onClick={handleAccept}
                 disabled={!isChecked || isSubmitting}
-                className="w-full h-11 bg-[#111111] hover:opacity-90 text-white font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="w-full h-11 bg-white hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] text-black font-semibold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {isSubmitting ? "Saving..." : "Accept & Continue"}
               </Button>

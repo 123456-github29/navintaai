@@ -114,17 +114,17 @@ export default function BillingSuccess() {
   }, [setLocation, syncStatus]);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "#050505" }}>
       <div ref={containerRef} className="max-w-md w-full text-center space-y-6">
-        <div className="success-icon inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100">
-          <CheckCircleIcon className="w-12 h-12 text-emerald-500" />
+        <div className="success-icon inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+          <CheckCircleIcon className="w-12 h-12 text-emerald-400" />
         </div>
 
         <div className="space-y-3">
-          <h1 className="success-title text-3xl font-bold text-[#111111]">
+          <h1 className="success-title text-3xl font-bold text-white">
             {syncStatus === "syncing" ? "Activating your plan..." : "Welcome to the team!"}
           </h1>
-          <p className="success-message text-[#666666]">
+          <p className="success-message text-white/40">
             {syncStatus === "syncing" ? (
               <span className="flex items-center justify-center gap-2">
                 <ArrowPathIcon className="w-4 h-4 animate-spin" />
@@ -142,14 +142,14 @@ export default function BillingSuccess() {
           <Button
             onClick={() => setLocation("/dashboard")}
             disabled={syncStatus === "syncing"}
-            className="w-full h-12 rounded-full bg-[#111111] text-white font-medium hover:opacity-90 transition-all duration-200 disabled:opacity-50"
+            className="w-full h-12 rounded-full bg-white text-black font-medium hover:shadow-[0_0_30px_rgba(255,255,255,0.12)] transition-all duration-200 disabled:opacity-50"
           >
             <SparklesIcon className="w-5 h-5 mr-2" />
             Go to Dashboard
           </Button>
-          <p className="text-sm text-[#666666]">
-            {syncStatus === "syncing" 
-              ? "Please wait while we activate your plan..." 
+          <p className="text-sm text-white/30">
+            {syncStatus === "syncing"
+              ? "Please wait while we activate your plan..."
               : `Redirecting in ${countdown} seconds...`}
           </p>
         </div>
