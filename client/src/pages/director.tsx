@@ -203,9 +203,10 @@ export default function Director() {
     }
   };
 
-  const discardRecording = () => {
+  const discardRecording = async () => {
     setRecordedBlob(null);
     setRecordingTime(0);
+    await startCamera();
   };
 
   const createSessionAndRecord = async (shotId: string, mode: "phone" | "computer") => {
@@ -368,6 +369,95 @@ export default function Director() {
   const currentShot = shotList.find(s => !s.completed) || shotList[0];
   const cards = teleprompterData?.cards || [];
   const previewUrl = recordedBlob ? URL.createObjectURL(recordedBlob) : null;
+
+  // Recording modal
+  if (cameraReady || recordedBlob) {
+    const previewUrl = recordedBlob ? URL.createObjectURL(recordedBlob) : null;
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col text-white z-50">
+        {/* Live camera or preview */}
+        <div className="flex-1 relative overflow-hidden flex items-center justify-center">
+          {!recordedBlob ? (
+            /* Live camera feed */
+            <video
+              ref={videoRef}
+              className="absolute inset-0 w-full h-full object-cover"
+              autoPlay
+              playsInline
+              muted
+            />
+          ) : (
+            /* Preview of recorded video */
+            <video
+              ref={previewVideoRef}
+              src={previewUrl || ""}
+              className="h-full w-auto object-contain"
+              autoPlay
+              loop
+              muted={false}
+              controls={false}
+              onClick={(e) => {
+                const v = e.currentTarget;
+                if (v.paused) v.play();
+                else v.pause();
+              }}
+            />
+          )}
+
+          {/* Recording timer */}
+          {isRecording && (
+            <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-500/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              <span className="text-xs font-medium">
+                {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, "0")}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Controls */}
+        <div className="p-6 pb-8 bg-gradient-to-t from-black/80 to-transparent">
+          {!recordedBlob ? (
+            /* Recording controls */
+            <div className="flex gap-3 items-center justify-center">
+              <button
+                onClick={closeCamera}
+                className="px-6 py-4 rounded-2xl bg-white/10 text-white text-sm font-medium active:scale-95 transition-transform backdrop-blur-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`w-20 h-20 rounded-full border-4 flex items-center justify-center active:scale-90 transition-transform ${
+                  isRecording ? "border-red-500" : "border-white"
+                }`}
+              >
+                <div className={`${isRecording ? "w-8 h-8 rounded-sm" : "w-14 h-14 rounded-full"} bg-red-500`} />
+              </button>
+              <div className="w-20" />
+            </div>
+          ) : (
+            /* Preview controls */
+            <div className="flex gap-3">
+              <button
+                onClick={discardRecording}
+                className="flex-1 py-4 rounded-2xl bg-white/10 text-white text-sm font-medium active:scale-95 transition-transform backdrop-blur-sm"
+              >
+                Retake
+              </button>
+              <button
+                onClick={uploadRecording}
+                disabled={isUploading}
+                className="flex-1 py-4 rounded-2xl bg-white text-black text-sm font-medium active:scale-95 transition-transform disabled:opacity-50"
+              >
+                {isUploading ? `Uploading ${uploadProgress}%` : "Upload"}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 min-h-screen" style={{ background: "#050505" }}>
