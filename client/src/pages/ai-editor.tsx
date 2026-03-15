@@ -556,6 +556,23 @@ export default function AiEditor() {
           </div>
         </div>
 
+        {/* Transcript Display */}
+        {session?.transcript && (
+          <div className="px-6 py-4 bg-white border-t border-gray-100 space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[#111]">Transcript</h3>
+              <Badge variant="outline" className="text-xs border-green-200 text-green-600">
+                Transcribed
+              </Badge>
+            </div>
+            <div className="max-h-32 overflow-y-auto rounded-lg bg-gray-50 p-3 border border-gray-100">
+              <p className="text-xs leading-relaxed text-[#555] whitespace-pre-wrap select-text">
+                {session.transcript}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Edit State Summary Bar */}
         {hasEdits && (
           <div className="px-6 py-3 bg-white border-t border-gray-100">
