@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -69,9 +68,9 @@ const QUICK_ACTIONS = [
 
 function EditOperationBadge({ op }: { op: { type: string; status: string } }) {
   const colors: Record<string, string> = {
-    applied: "bg-green-500/10 text-green-600 border-green-500/20",
-    pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
-    failed: "bg-red-500/10 text-red-600 border-red-500/20",
+    applied: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    pending: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    failed: "bg-red-500/10 text-red-400 border-red-500/20",
   };
   const labels: Record<string, string> = {
     trim: "Trim",
@@ -109,17 +108,14 @@ export default function AiEditor() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Session state
   const [session, setSession] = useState<AiEditSession | null>(null);
   const [messages, setMessages] = useState<AiEditMessage[]>([]);
 
-  // Fetch post data
   const { data: post, isLoading: postLoading } = useQuery<Post>({
     queryKey: ["/api/posts", postId],
     enabled: !!postId,
   });
 
-  // Fetch clips for the post
   const { data: clips } = useQuery<Clip[]>({
     queryKey: ["/api/clips"],
   });
@@ -127,7 +123,6 @@ export default function AiEditor() {
   const postClips = clips?.filter((c) => c.postId === postId) || [];
   const firstClipUrl = (postClips.find((c: any) => c.signedUrl || c.videoPath) as any)?.signedUrl || null;
 
-  // Initialize or resume session
   const initSession = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/ai-edit/sessions", { postId });
@@ -136,7 +131,6 @@ export default function AiEditor() {
     onSuccess: (data) => {
       setSession(data.session);
       setMessages(data.messages);
-      // Auto-transcribe if no transcript
       if (!data.session.transcript) {
         handleTranscribe(data.session.id);
       }
@@ -150,7 +144,6 @@ export default function AiEditor() {
     },
   });
 
-  // Send chat message
   const sendMessage = useMutation({
     mutationFn: async (message: string) => {
       const res = await apiRequest("POST", `/api/ai-edit/sessions/${session!.id}/chat`, {
@@ -173,7 +166,6 @@ export default function AiEditor() {
     },
   });
 
-  // Reset edits
   const resetEdits = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", `/api/ai-edit/sessions/${session!.id}/reset`);
@@ -186,7 +178,6 @@ export default function AiEditor() {
     },
   });
 
-  // Export edited video
   const exportVideo = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", `/api/ai-edit/sessions/${session!.id}/export`);
@@ -197,7 +188,6 @@ export default function AiEditor() {
         title: "Video exported successfully!",
         description: "Your edited video is ready to download.",
       });
-      // Save signed URL for download
       if (data.signedUrl) {
         const a = document.createElement("a");
         a.href = data.signedUrl;
@@ -230,7 +220,6 @@ export default function AiEditor() {
         description: `Detected language: ${data.language || "en"}`,
       });
     } catch (err: any) {
-      // Check if this is a no-media error (no clips/videos recorded yet)
       let errorCode = "";
       try {
         const errorData = err?.data || (err?.message && JSON.parse(err.message));
@@ -253,14 +242,12 @@ export default function AiEditor() {
     }
   }, [toast]);
 
-  // Initialize session on mount
   useEffect(() => {
     if (postId && !session) {
       initSession.mutate();
     }
   }, [postId]);
 
-  // Auto-scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -284,16 +271,15 @@ export default function AiEditor() {
     sendMessage.mutate(prompt);
   };
 
-  // Loading state
   if (postLoading || initSession.isPending) {
     return (
-      <div className="flex h-full bg-white">
-        <div className="w-[420px] border-r border-gray-200 p-4">
-          <Skeleton className="h-8 w-48 mb-4" />
-          <Skeleton className="h-full rounded-2xl" />
+      <div className="flex h-full" style={{ background: "#050505" }}>
+        <div className="w-[420px] border-r border-white/[0.06] p-4">
+          <Skeleton className="h-8 w-48 mb-4 bg-white/5 rounded-xl" />
+          <Skeleton className="h-full rounded-2xl bg-white/[0.03]" />
         </div>
         <div className="flex-1 p-4">
-          <Skeleton className="h-full rounded-2xl" />
+          <Skeleton className="h-full rounded-2xl bg-white/[0.03]" />
         </div>
       </div>
     );
@@ -301,10 +287,10 @@ export default function AiEditor() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#050505" }}>
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-[#111] mb-2">Post not found</h2>
-          <Button onClick={() => setLocation("/dashboard")} className="bg-[#111] hover:bg-[#333] text-white rounded-full">
+          <h2 className="text-2xl font-semibold text-white mb-4">Post not found</h2>
+          <Button onClick={() => setLocation("/dashboard")} className="bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] rounded-full">
             Back to Dashboard
           </Button>
         </div>
@@ -316,32 +302,32 @@ export default function AiEditor() {
   const hasEdits = editState.cuts?.length || editState.filters?.length || editState.speedAdjustments?.length || editState.brollSegments?.length || editState.transitions?.length || editState.musicStyle || editState.captions;
 
   return (
-    <div className="flex h-[calc(100vh-65px)] bg-white overflow-hidden">
+    <div className="flex h-[calc(100vh-65px)] overflow-hidden" style={{ background: "#050505" }}>
       {/* Left Panel: Chat */}
-      <div className="w-[420px] flex flex-col border-r border-gray-200">
+      <div className="w-[420px] flex flex-col border-r border-white/[0.06]">
         {/* Chat Header */}
-        <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+        <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setLocation(`/editor/${postId}`)}
-            className="text-[#666] hover:text-[#111] hover:bg-gray-50 rounded-full shrink-0"
+            className="text-white/40 hover:text-white hover:bg-white/5 rounded-full shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-semibold text-[#111] truncate">AI Editor</h2>
-            <p className="text-xs text-[#666] truncate">{post.title}</p>
+            <h2 className="text-sm font-semibold text-white truncate">AI Editor</h2>
+            <p className="text-xs text-white/30 truncate">{post.title}</p>
           </div>
           <div className="flex items-center gap-1">
             {isTranscribing && (
-              <Badge variant="outline" className="text-xs gap-1 border-blue-200 text-blue-600">
+              <Badge variant="outline" className="text-xs gap-1 border-indigo-500/20 text-indigo-400 bg-indigo-500/10">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Transcribing
               </Badge>
             )}
             {session?.transcript && (
-              <Badge variant="outline" className="text-xs border-green-200 text-green-600">
+              <Badge variant="outline" className="text-xs border-emerald-500/20 text-emerald-400 bg-emerald-500/10">
                 Transcribed
               </Badge>
             )}
@@ -350,14 +336,14 @@ export default function AiEditor() {
 
         {/* No media banner */}
         {noMediaAvailable && (
-          <div className="mx-4 mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+          <div className="mx-4 mt-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
               <div className="space-y-2">
-                <p className="text-sm font-medium text-amber-800">No recorded video found</p>
-                <p className="text-xs text-amber-700">Record your video clips first, then come back to edit. You can still use the chat to plan your edits.</p>
+                <p className="text-sm font-medium text-amber-300">No recorded video found</p>
+                <p className="text-xs text-amber-400/60">Record your video clips first, then come back to edit. You can still use the chat to plan your edits.</p>
                 <Link href={`/director/${postId}`}>
-                  <Button size="sm" variant="outline" className="text-xs border-amber-300 text-amber-800 hover:bg-amber-100">
+                  <Button size="sm" variant="outline" className="text-xs border-amber-500/20 text-amber-300 hover:bg-amber-500/10 bg-transparent rounded-xl">
                     <Video className="h-3 w-3 mr-1" />
                     Go to Recording
                   </Button>
@@ -379,7 +365,7 @@ export default function AiEditor() {
                 <div
                   className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
                     msg.role === "user"
-                      ? "bg-[#111] text-white"
+                      ? "bg-white text-black"
                       : "bg-gradient-to-br from-violet-500 to-purple-600 text-white"
                   }`}
                 >
@@ -392,13 +378,13 @@ export default function AiEditor() {
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
                     msg.role === "user"
-                      ? "bg-[#111] text-white"
-                      : "bg-gray-100 text-[#111]"
+                      ? "bg-white text-black"
+                      : "bg-white/[0.06] text-white/80"
                   }`}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                   {msg.editOperations && msg.editOperations.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-200/20">
+                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-white/10">
                       {msg.editOperations.map((op, i) => (
                         <EditOperationBadge key={i} op={op} />
                       ))}
@@ -413,10 +399,10 @@ export default function AiEditor() {
               <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white">
                 <Bot className="h-3.5 w-3.5" />
               </div>
-              <div className="bg-gray-100 rounded-2xl px-4 py-3">
+              <div className="bg-white/[0.06] rounded-2xl px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#666]" />
-                  <span className="text-sm text-[#666]">Thinking...</span>
+                  <Loader2 className="h-4 w-4 animate-spin text-white/30" />
+                  <span className="text-sm text-white/30">Thinking...</span>
                 </div>
               </div>
             </div>
@@ -428,14 +414,14 @@ export default function AiEditor() {
         {/* Quick Actions */}
         {messages.length <= 2 && (
           <div className="px-4 pb-2">
-            <p className="text-xs text-[#999] mb-2">Quick actions</p>
+            <p className="text-xs text-white/20 mb-2">Quick actions</p>
             <div className="grid grid-cols-2 gap-1.5">
               {QUICK_ACTIONS.map((action) => (
                 <button
                   key={action.label}
                   onClick={() => handleQuickAction(action.prompt)}
                   disabled={sendMessage.isPending || !session}
-                  className="flex items-center gap-2 px-3 py-2 text-xs text-[#555] bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors text-left disabled:opacity-50"
+                  className="flex items-center gap-2 px-3 py-2 text-xs text-white/40 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] rounded-xl transition-colors text-left disabled:opacity-50"
                 >
                   <action.icon className="h-3.5 w-3.5 shrink-0" />
                   {action.label}
@@ -446,7 +432,7 @@ export default function AiEditor() {
         )}
 
         {/* Input Area */}
-        <div className="px-4 py-3 border-t border-gray-100">
+        <div className="px-4 py-3 border-t border-white/[0.06]">
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
               <textarea
@@ -456,7 +442,7 @@ export default function AiEditor() {
                 onKeyDown={handleKeyDown}
                 placeholder="Describe your edit..."
                 rows={1}
-                className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-[#111] placeholder:text-[#999] focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors"
+                className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-colors"
                 style={{ minHeight: "40px", maxHeight: "120px" }}
               />
             </div>
@@ -464,7 +450,7 @@ export default function AiEditor() {
               size="icon"
               onClick={handleSend}
               disabled={!inputValue.trim() || sendMessage.isPending || !session}
-              className="h-10 w-10 rounded-xl bg-[#111] hover:bg-[#333] text-white shrink-0 disabled:opacity-50"
+              className="h-10 w-10 rounded-xl bg-white text-black hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] shrink-0 disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -473,14 +459,14 @@ export default function AiEditor() {
       </div>
 
       {/* Right Panel: Video Preview + Edit State */}
-      <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#0a0a0a" }}>
         {/* Preview Header */}
-        <div className="px-6 py-3 bg-white border-b border-gray-100 flex items-center justify-between">
+        <div className="px-6 py-3 border-b border-white/[0.06] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Sparkles className="h-4 w-4 text-violet-500" />
-            <span className="text-sm font-medium text-[#111]">Preview</span>
+            <Sparkles className="h-4 w-4 text-violet-400" />
+            <span className="text-sm font-medium text-white">Preview</span>
             {hasEdits && (
-              <Badge variant="outline" className="text-xs border-violet-200 text-violet-600">
+              <Badge variant="outline" className="text-xs border-violet-500/20 text-violet-400 bg-violet-500/10">
                 Edits applied
               </Badge>
             )}
@@ -492,7 +478,7 @@ export default function AiEditor() {
                 size="sm"
                 onClick={() => resetEdits.mutate()}
                 disabled={resetEdits.isPending}
-                className="text-xs text-[#666] hover:text-[#111] rounded-lg gap-1.5"
+                className="text-xs text-white/40 hover:text-white hover:bg-white/5 rounded-xl gap-1.5"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Reset
@@ -502,7 +488,7 @@ export default function AiEditor() {
               size="sm"
               onClick={() => exportVideo.mutate()}
               disabled={exportVideo.isPending || !session}
-              className="text-xs bg-[#111] hover:bg-[#333] text-white rounded-lg gap-1.5"
+              className="text-xs bg-white text-black hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] rounded-xl gap-1.5"
             >
               {exportVideo.isPending ? (
                 <>
@@ -521,8 +507,8 @@ export default function AiEditor() {
 
         {/* Video Preview Area */}
         <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
-          <div className="relative w-full max-w-sm aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl">
-            {firstClipUrl ? (
+          <div className="relative w-full max-w-sm aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/[0.06]">
+            {postClips.length > 0 && postClips[0].videoPath ? (
               <>
                 <video
                   ref={videoRef}
@@ -542,11 +528,10 @@ export default function AiEditor() {
                     }
                   }}
                 />
-                {/* Play/pause overlay */}
                 {!isPlaying && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                     <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-                      <Play className="h-7 w-7 text-[#111] ml-1" />
+                      <Play className="h-7 w-7 text-black ml-1" />
                     </div>
                   </div>
                 )}
@@ -569,7 +554,6 @@ export default function AiEditor() {
               </div>
             )}
 
-            {/* Edit state overlay indicators */}
             {hasEdits && (
               <div className="absolute top-3 right-3 flex flex-col gap-1.5">
                 {editState.captions && (
@@ -604,15 +588,15 @@ export default function AiEditor() {
 
         {/* Transcript Display */}
         {session?.transcript && (
-          <div className="px-6 py-4 bg-white border-t border-gray-100 space-y-2">
+          <div className="px-6 py-4 border-t border-white/[0.06] space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-[#111]">Transcript</h3>
-              <Badge variant="outline" className="text-xs border-green-200 text-green-600">
+              <h3 className="text-sm font-semibold text-white">Transcript</h3>
+              <Badge variant="outline" className="text-xs border-emerald-500/20 text-emerald-400 bg-emerald-500/10">
                 Transcribed
               </Badge>
             </div>
-            <div className="max-h-32 overflow-y-auto rounded-lg bg-gray-50 p-3 border border-gray-100">
-              <p className="text-xs leading-relaxed text-[#555] whitespace-pre-wrap select-text">
+            <div className="max-h-32 overflow-y-auto rounded-xl bg-white/[0.03] p-3 border border-white/[0.06]">
+              <p className="text-xs leading-relaxed text-white/40 whitespace-pre-wrap select-text">
                 {session.transcript}
               </p>
             </div>
@@ -621,29 +605,29 @@ export default function AiEditor() {
 
         {/* Edit State Summary Bar */}
         {hasEdits && (
-          <div className="px-6 py-3 bg-white border-t border-gray-100">
+          <div className="px-6 py-3 border-t border-white/[0.06]">
             <div className="flex items-center gap-2 overflow-x-auto">
-              <span className="text-xs text-[#999] shrink-0">Active edits:</span>
+              <span className="text-xs text-white/20 shrink-0">Active edits:</span>
               {editState.cuts?.map((cut: any, i: number) => (
-                <Badge key={`cut-${i}`} variant="outline" className="text-xs shrink-0">
+                <Badge key={`cut-${i}`} variant="outline" className="text-xs shrink-0 border-white/10 text-white/40 bg-transparent">
                   Cut {cut.start}s-{cut.end}s
                 </Badge>
               ))}
               {editState.speedAdjustments?.map((s: any, i: number) => (
-                <Badge key={`speed-${i}`} variant="outline" className="text-xs shrink-0">
+                <Badge key={`speed-${i}`} variant="outline" className="text-xs shrink-0 border-white/10 text-white/40 bg-transparent">
                   {s.speed}x speed ({s.start}s-{s.end}s)
                 </Badge>
               ))}
               {editState.transitions?.map((t: any, i: number) => (
-                <Badge key={`trans-${i}`} variant="outline" className="text-xs shrink-0">
+                <Badge key={`trans-${i}`} variant="outline" className="text-xs shrink-0 border-white/10 text-white/40 bg-transparent">
                   {t.type} transition
                 </Badge>
               ))}
               {editState.captions && (
-                <Badge variant="outline" className="text-xs shrink-0">Captions</Badge>
+                <Badge variant="outline" className="text-xs shrink-0 border-white/10 text-white/40 bg-transparent">Captions</Badge>
               )}
               {editState.musicStyle && (
-                <Badge variant="outline" className="text-xs shrink-0">{editState.musicStyle}</Badge>
+                <Badge variant="outline" className="text-xs shrink-0 border-white/10 text-white/40 bg-transparent">{editState.musicStyle}</Badge>
               )}
             </div>
           </div>

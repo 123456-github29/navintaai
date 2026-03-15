@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -89,7 +88,6 @@ export default function Director() {
     },
   });
 
-  // Auto-play timer
   useEffect(() => {
     if (isAutoPlay && teleprompterData?.cards) {
       const currentCard = teleprompterData.cards[currentCardIndex];
@@ -342,20 +340,22 @@ export default function Director() {
 
   if (postLoading || teleprompterLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-12 w-64" />
-        <Skeleton className="h-96 w-full" />
+      <div className="p-6 md:p-8 min-h-screen" style={{ background: "#050505" }}>
+        <div className="max-w-5xl mx-auto space-y-6">
+          <Skeleton className="h-12 w-64 bg-white/5 rounded-xl" />
+          <Skeleton className="h-96 w-full bg-white/[0.03] rounded-2xl" />
+        </div>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh]">
+      <div className="flex items-center justify-center min-h-[80vh]" style={{ background: "#050505" }}>
         <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-2">Post not found</h2>
+          <h2 className="text-2xl font-semibold text-white mb-4">Post not found</h2>
           <Link href="/dashboard">
-            <Button variant="outline">Back to Dashboard</Button>
+            <Button className="bg-white text-black rounded-full hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">Back to Dashboard</Button>
           </Link>
         </div>
       </div>
@@ -368,316 +368,217 @@ export default function Director() {
   const previewUrl = recordedBlob ? URL.createObjectURL(recordedBlob) : null;
 
   return (
-    <div className="h-[calc(100vh-65px)] flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-4 px-6 py-3 border-b border-gray-100 shrink-0">
-        <Link href={`/post/${post.id}`}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold tracking-tight">{post.title}</h1>
-          <p className="text-xs text-muted-foreground">
-            {completedShots}/{totalShots} shots completed
-          </p>
+    <div className="p-6 md:p-8 min-h-screen" style={{ background: "#050505" }}>
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link href={`/post/${post.id}`}>
+            <Button variant="ghost" size="icon" className="text-white/40 hover:text-white hover:bg-white/5 rounded-xl">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold tracking-tight text-white">{post.title}</h1>
+            <p className="text-sm text-white/30">
+              Director Mode — {completedShots}/{totalShots} shots completed
+            </p>
+          </div>
         </div>
-        <Link href={`/ai-editor/${post.id}`}>
-          <Button size="sm" className="bg-[#111] hover:bg-[#333] text-white rounded-lg">
-            Finish Video
-          </Button>
-        </Link>
-      </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Main area: Camera preview / recording */}
-        <div className="flex-1 flex items-center justify-center bg-[#0a0a0a] relative overflow-hidden">
-          {cameraReady && !recordedBlob ? (
-            <>
-              {/* Live camera feed */}
-              <video
-                ref={videoRef}
-                className="h-full w-auto max-w-full object-contain"
-                autoPlay
-                playsInline
-                muted
-                style={{ transform: "scaleX(-1)" }}
-              />
-
-              {/* Teleprompter overlay */}
-              {showTeleprompter && cards.length > 0 && (
-                <div
-                  className="absolute inset-x-0 bottom-28 flex flex-col items-center pointer-events-none px-8"
-                >
-                  <div className="bg-black/60 backdrop-blur-sm rounded-2xl px-6 py-4 max-w-lg w-full pointer-events-auto">
-                    <p className="text-white text-lg md:text-xl font-medium leading-relaxed text-center">
-                      {cards[currentCardIndex]?.text}
-                    </p>
-                    <div className="flex items-center justify-center gap-3 mt-3">
-                      <button
-                        onClick={() => setCurrentCardIndex(Math.max(0, currentCardIndex - 1))}
-                        disabled={currentCardIndex === 0}
-                        className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 disabled:opacity-30 transition-colors"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                      <span className="text-white/50 text-xs font-medium">
-                        {currentCardIndex + 1} / {cards.length}
-                      </span>
-                      <button
-                        onClick={() => setCurrentCardIndex(Math.min(cards.length - 1, currentCardIndex + 1))}
-                        disabled={currentCardIndex >= cards.length - 1}
-                        className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 disabled:opacity-30 transition-colors"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Teleprompter Section */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="rounded-2xl border border-white/[0.06] overflow-hidden" style={{ background: "#0a0a0a" }}>
+              <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+                <span className="text-sm font-medium text-white/50">Teleprompter</span>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-white/5 text-white/40 border border-white/8 text-xs rounded-full">
+                    {currentCardIndex + 1} / {cards.length}
+                  </Badge>
+                  {teleprompterData && (
+                    <Badge className="bg-white/5 text-white/40 border border-white/8 text-xs rounded-full">
+                      {teleprompterData.totalDuration}s
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div className="p-8">
+                {/* Main teleprompter display */}
+                <div className="min-h-[200px] flex items-center justify-center">
+                  {cards.length > 0 ? (
+                    <div className="text-center space-y-4 max-w-xl">
+                      <p className="text-2xl md:text-3xl font-medium leading-relaxed text-white">
+                        {cards[currentCardIndex]?.text}
+                      </p>
+                      <Badge className="bg-white/5 text-white/30 border border-white/8 text-xs rounded-full">
+                        {cards[currentCardIndex]?.beatType} — {cards[currentCardIndex]?.durationSec.toFixed(1)}s
+                      </Badge>
                     </div>
-                  </div>
+                  ) : (
+                    <p className="text-white/25 text-lg">No script available. Regenerate from post detail page.</p>
+                  )}
                 </div>
-              )}
 
-              {/* Recording indicator */}
-              {isRecording && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-red-500/80 px-4 py-2 rounded-full backdrop-blur-sm">
-                  <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
-                  <span className="text-white text-sm font-medium">{formatTime(recordingTime)}</span>
+                {/* Controls */}
+                <div className="flex items-center justify-center gap-3 mt-8">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-white/10 text-white/50 hover:bg-white/5 hover:text-white rounded-xl bg-transparent"
+                    onClick={() => setCurrentCardIndex(Math.max(0, currentCardIndex - 1))}
+                    disabled={currentCardIndex === 0}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    className={`rounded-full px-8 ${isAutoPlay ? "bg-red-500 hover:bg-red-600 text-white" : "bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"}`}
+                    onClick={() => {
+                      if (isAutoPlay) {
+                        setIsAutoPlay(false);
+                      } else {
+                        setCurrentCardIndex(0);
+                        setIsAutoPlay(true);
+                      }
+                    }}
+                  >
+                    {isAutoPlay ? "Stop" : "Auto-Play"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-white/10 text-white/50 hover:bg-white/5 hover:text-white rounded-xl bg-transparent"
+                    onClick={() => setCurrentCardIndex(Math.min(cards.length - 1, currentCardIndex + 1))}
+                    disabled={currentCardIndex >= cards.length - 1}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
                 </div>
-              )}
-
-              {/* Top controls */}
-              <div className="absolute top-4 right-4 flex items-center gap-2">
-                <button
-                  onClick={() => setShowTeleprompter(!showTeleprompter)}
-                  className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/60 transition-colors"
-                  title={showTeleprompter ? "Hide teleprompter" : "Show teleprompter"}
-                >
-                  {showTeleprompter ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-                <button
-                  onClick={closeCamera}
-                  className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/60 transition-colors"
-                  title="Close camera"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </button>
               </div>
+            </div>
 
-              {/* Record / stop controls */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
-                {!isRecording ? (
-                  <button
-                    onClick={startRecording}
-                    className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-90 transition-transform"
-                  >
-                    <div className="w-14 h-14 rounded-full bg-red-500" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={stopRecording}
-                    className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-90 transition-transform"
-                  >
-                    <div className="w-8 h-8 rounded-sm bg-red-500" />
-                  </button>
-                )}
-              </div>
-            </>
-          ) : recordedBlob && previewUrl ? (
-            <>
-              {/* Preview recorded clip */}
-              <video
-                ref={previewVideoRef}
-                src={previewUrl}
-                className="h-full w-auto max-w-full object-contain"
-                autoPlay
-                loop
-                playsInline
-                onClick={(e) => {
-                  const v = e.currentTarget;
-                  if (v.paused) v.play();
-                  else v.pause();
-                }}
-              />
-
-              {/* Upload progress overlay */}
-              {isUploading && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
-                  <p className="text-white text-lg font-semibold mb-4">Uploading...</p>
-                  <div className="w-64 h-2 bg-white/20 rounded-full overflow-hidden mb-2">
-                    <div
-                      className="h-full bg-white rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-white/60 text-sm">{uploadProgress}%</p>
-                </div>
-              )}
-
-              {/* Preview controls */}
-              {!isUploading && (
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3">
-                  <button
-                    onClick={discardRecording}
-                    className="px-6 py-3 rounded-2xl bg-white/10 text-white text-sm font-medium active:scale-95 transition-transform backdrop-blur-sm"
-                  >
-                    <RotateCcw className="h-4 w-4 inline mr-2" />
-                    Retake
-                  </button>
-                  <button
-                    onClick={uploadRecording}
-                    className="px-6 py-3 rounded-2xl bg-white text-black text-sm font-medium active:scale-95 transition-transform"
-                  >
-                    <CheckCircle2 className="h-4 w-4 inline mr-2" />
-                    Use This Clip
-                  </button>
-                </div>
-              )}
-
-              <div className="absolute top-4 right-4">
-                <button
-                  onClick={closeCamera}
-                  className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/60 transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </button>
-              </div>
-            </>
-          ) : (
-            /* No camera active: show prompt */
-            <div className="text-center space-y-4 px-8">
-              <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mx-auto">
-                <Video className="h-9 w-9 text-white/30" />
-              </div>
-              <div>
-                <p className="text-white/70 text-lg font-medium">Select a shot to start recording</p>
-                <p className="text-white/40 text-sm mt-1">
-                  Choose a shot from the list and click Record to begin
+            {/* Full Script */}
+            {teleprompterData?.fullScript && (
+              <div className="rounded-2xl border border-white/[0.06] p-6" style={{ background: "#0a0a0a" }}>
+                <h3 className="text-sm font-semibold text-white/50 mb-4">Full Script</h3>
+                <p className="text-sm leading-relaxed text-white/35 whitespace-pre-wrap">
+                  {teleprompterData.fullScript}
                 </p>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Right sidebar: Shot List */}
-        <div className="w-[340px] border-l border-gray-200 flex flex-col overflow-hidden bg-white">
-          {/* Phone session banner */}
-          {phoneSessionUrl && (
-            <div className="p-3 bg-blue-50 border-b border-blue-100">
-              <div className="flex items-center gap-2 mb-2">
-                <Smartphone className="h-4 w-4 text-blue-600" />
-                <span className="text-xs font-medium text-blue-800">Phone Recording</span>
-              </div>
-              <a
-                href={phoneSessionUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-blue-600 underline break-all"
-              >
-                {phoneSessionUrl}
-              </a>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full mt-2 text-xs"
-                onClick={() => setPhoneSessionUrl(null)}
-              >
-                Dismiss
-              </Button>
-            </div>
-          )}
-
-          <div className="px-4 py-3 border-b border-gray-100">
-            <h2 className="text-sm font-semibold">Shot List</h2>
-            <p className="text-xs text-muted-foreground">{completedShots}/{totalShots} completed</p>
+            )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {post.shotList.map((shot) => (
-              <div
-                key={shot.id}
-                className={`p-3 rounded-xl border transition-all ${
-                  shot.completed
-                    ? "border-green-200 bg-green-50/50"
-                    : activeShotId === shot.id
-                      ? "border-blue-300 bg-blue-50"
-                      : "border-gray-100 hover:border-gray-200"
-                }`}
-              >
-                <div className="flex items-start gap-2.5">
-                  <button
-                    className="mt-0.5 shrink-0"
-                    onClick={() => updateShotMutation.mutate({
-                      shotId: shot.id,
-                      completed: !shot.completed,
-                    })}
+          {/* Shot List & Recording Section */}
+          <div className="space-y-4">
+            {/* QR Recording Session */}
+            {activeSession && (
+              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Video className="h-4 w-4 text-blue-400" />
+                  <span className="text-sm font-semibold text-blue-400">Phone Recording</span>
+                </div>
+                <p className="text-xs text-white/30 mb-3">
+                  Open this URL on your phone to record:
+                </p>
+                <div className="bg-black/30 rounded-xl p-3 text-center mb-3">
+                  <a
+                    href={activeSession.recordUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-400 underline break-all"
                   >
-                    {shot.completed ? (
-                      <CheckCircle2 className="h-4.5 w-4.5 text-green-500" />
-                    ) : (
-                      <Circle className="h-4.5 w-4.5 text-muted-foreground" />
-                    )}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">Shot {shot.shotNumber}</Badge>
-                      <span className="text-[10px] text-muted-foreground">{shot.duration}s</span>
-                    </div>
-                    <p className="text-xs leading-relaxed">{shot.instruction}</p>
-                  </div>
+                    {activeSession.recordUrl}
+                  </a>
                 </div>
-
-                {/* Record buttons — always visible */}
-                <div className="mt-2 flex gap-2">
-                  {shot.completed && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-[10px] flex-1 h-7"
-                      onClick={() => createSessionAndRecord(shot.id, "computer")}
-                      disabled={sessionLoading || isRecording}
-                    >
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                      Re-record
-                    </Button>
-                  )}
-                  {!shot.completed && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-[10px] flex-1 h-7"
-                        onClick={() => createSessionAndRecord(shot.id, "phone")}
-                        disabled={sessionLoading || isRecording}
-                      >
-                        <Smartphone className="h-3 w-3 mr-1" />
-                        Phone
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-[10px] flex-1 h-7"
-                        onClick={() => createSessionAndRecord(shot.id, "computer")}
-                        disabled={sessionLoading || isRecording}
-                      >
-                        <Monitor className="h-3 w-3 mr-1" />
-                        Record
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Finish Video button at bottom */}
-          {completedShots > 0 && (
-            <div className="p-4 border-t border-gray-100">
-              <Link href={`/ai-editor/${post.id}`}>
-                <Button size="sm" className="w-full bg-[#111] hover:bg-[#333] text-white">
-                  Finish Video
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-white/10 text-white/50 hover:bg-white/5 rounded-xl bg-transparent"
+                  onClick={() => setActiveSession(null)}
+                >
+                  Close
                 </Button>
-              </Link>
+              </div>
+            )}
+
+            {/* Shot List */}
+            <div className="rounded-2xl border border-white/[0.06] p-5" style={{ background: "#0a0a0a" }}>
+              <h3 className="text-sm font-semibold text-white/50 mb-4">Shot List</h3>
+              <div className="space-y-3">
+                {post.shotList.map((shot) => (
+                  <div
+                    key={shot.id}
+                    className={`p-3.5 rounded-xl border transition-all ${
+                      shot.completed
+                        ? "border-emerald-500/20 bg-emerald-500/5"
+                        : currentShot?.id === shot.id
+                          ? "border-indigo-500/20 bg-indigo-500/5"
+                          : "border-white/[0.06] bg-white/[0.02]"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <button
+                        className="mt-0.5"
+                        onClick={() => updateShotMutation.mutate({
+                          shotId: shot.id,
+                          completed: !shot.completed,
+                        })}
+                      >
+                        {shot.completed ? (
+                          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-white/20" />
+                        )}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge className="bg-white/5 text-white/40 border border-white/8 text-xs rounded-full">Shot {shot.shotNumber}</Badge>
+                          <span className="text-xs text-white/25">{shot.duration}s</span>
+                        </div>
+                        <p className="text-sm text-white/60">{shot.instruction}</p>
+                      </div>
+                    </div>
+                    {!shot.completed && (
+                      <div className="mt-3 flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs flex-1 border-white/10 text-white/40 hover:bg-white/5 rounded-xl bg-transparent"
+                          onClick={() => createRecordingSession(shot.id, "phone")}
+                          disabled={sessionLoading}
+                        >
+                          <Smartphone className="h-3 w-3 mr-1" />
+                          Phone
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs flex-1 border-white/10 text-white/40 hover:bg-white/5 rounded-xl bg-transparent"
+                          onClick={() => createRecordingSession(shot.id, "computer")}
+                          disabled={sessionLoading}
+                        >
+                          <Monitor className="h-3 w-3 mr-1" />
+                          Computer
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
+
+            {/* Done - go to editor */}
+            {completedShots === totalShots && (
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-center space-y-3">
+                <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
+                <p className="font-semibold text-sm text-white">All shots recorded!</p>
+                <Link href={`/ai-editor/${post.id}`}>
+                  <Button size="sm" className="w-full bg-white text-black rounded-full hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                    Finish Video
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

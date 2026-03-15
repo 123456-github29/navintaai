@@ -1,10 +1,8 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Upload, Save, Palette } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -23,7 +21,7 @@ export default function BrandKitPage() {
   const form = useForm<InsertBrandKit>({
     resolver: zodResolver(insertBrandKitSchema),
     values: brandKit || {
-      userId: "user-1", // Will be set by backend
+      userId: "user-1",
       brandName: "",
       primaryColor: "#3B82F6",
       secondaryColor: "#10B981",
@@ -34,27 +32,17 @@ export default function BrandKitPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: InsertBrandKit) =>
-      apiRequest("POST", "/api/brand-kit", data),
+    mutationFn: (data: InsertBrandKit) => apiRequest("POST", "/api/brand-kit", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/brand-kit"] });
-      toast({
-        title: "Brand kit saved!",
-        description: "Your brand settings have been updated.",
-      });
+      toast({ title: "Brand kit saved!", description: "Your brand settings have been updated." });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to save brand kit. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to save brand kit.", variant: "destructive" });
     },
   });
 
-  const onSubmit = (data: InsertBrandKit) => {
-    updateMutation.mutate(data);
-  };
+  const onSubmit = (data: InsertBrandKit) => updateMutation.mutate(data);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,193 +59,111 @@ export default function BrandKitPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-32" />
-        <Skeleton className="h-96" />
+      <div className="p-6 md:p-8 min-h-screen" style={{ background: "#050505" }}>
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Skeleton className="h-10 w-48 bg-white/5 rounded-xl" />
+          <Skeleton className="h-64 bg-white/[0.03] rounded-2xl" />
+          <Skeleton className="h-64 bg-white/[0.03] rounded-2xl" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 md:p-8 lg:p-10 min-h-screen" style={{ background: "#050505" }}>
       <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-3xl bg-primary/10 flex items-center justify-center">
-            <Palette className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Brand Kit</h1>
-            <p className="text-muted-foreground">
-              Manage your brand identity and visual assets
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Brand Kit</h1>
+          <p className="text-sm text-white/30 mt-1">Manage your brand identity and visual assets</p>
         </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Brand Identity</CardTitle>
-            <CardDescription>
-              Basic information about your brand
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <Label htmlFor="brandName">Brand Name</Label>
-              <Input
-                id="brandName"
-                {...form.register("brandName")}
-                placeholder="Your brand name"
-                className="h-12"
-                data-testid="input-brand-name"
-              />
-              {form.formState.errors.brandName && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.brandName.message}
-                </p>
-              )}
-            </div>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Brand Identity */}
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-6 md:p-8">
+            <h2 className="text-lg font-semibold text-white mb-1">Brand Identity</h2>
+            <p className="text-sm text-white/25 mb-6">Basic information about your brand</p>
 
-            <div className="space-y-3">
-              <Label htmlFor="logo">Logo</Label>
-              <div className="flex items-start gap-6">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Input
-                      id="logo"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                      data-testid="input-logo"
-                    />
-                    <label htmlFor="logo">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => document.getElementById("logo")?.click()}
-                        data-testid="button-upload-logo"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Logo
-                      </Button>
-                    </label>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    PNG, JPG or SVG (max 5MB)
-                  </p>
-                </div>
-                {(logoPreview || form.watch("logoUrl")) && (
-                  <div className="w-32 h-32 rounded-lg border bg-muted flex items-center justify-center overflow-hidden">
-                    <img
-                      src={logoPreview || form.watch("logoUrl")}
-                      alt="Logo preview"
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs text-white/40 font-medium">Brand Name</label>
+                <Input
+                  {...form.register("brandName")}
+                  placeholder="Your brand name"
+                  className="h-12 bg-white/[0.03] border-white/[0.06] text-white placeholder:text-white/20 rounded-xl focus:ring-indigo-500/30 focus:border-indigo-500/50"
+                  data-testid="input-brand-name"
+                />
+                {form.formState.errors.brandName && (
+                  <p className="text-sm text-red-400">{form.formState.errors.brandName.message}</p>
                 )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Brand Colors</CardTitle>
-            <CardDescription>
-              Colors used in your video graphics and branding
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-3">
-                <Label htmlFor="primaryColor">Primary Color</Label>
-                <div className="flex gap-3">
-                  <input
-                    type="color"
-                    id="primaryColor"
-                    {...form.register("primaryColor")}
-                    className="h-12 w-20 rounded-lg cursor-pointer border"
-                    data-testid="input-primary-color"
-                  />
-                  <Input
-                    value={form.watch("primaryColor")}
-                    onChange={(e) => form.setValue("primaryColor", e.target.value)}
-                    className="flex-1 h-12 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="secondaryColor">Secondary Color</Label>
-                <div className="flex gap-3">
-                  <input
-                    type="color"
-                    id="secondaryColor"
-                    {...form.register("secondaryColor")}
-                    className="h-12 w-20 rounded-lg cursor-pointer border"
-                    data-testid="input-secondary-color"
-                  />
-                  <Input
-                    value={form.watch("secondaryColor")}
-                    onChange={(e) => form.setValue("secondaryColor", e.target.value)}
-                    className="flex-1 h-12 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="accentColor">Accent Color</Label>
-                <div className="flex gap-3">
-                  <input
-                    type="color"
-                    id="accentColor"
-                    {...form.register("accentColor")}
-                    className="h-12 w-20 rounded-lg cursor-pointer border"
-                    data-testid="input-accent-color"
-                  />
-                  <Input
-                    value={form.watch("accentColor")}
-                    onChange={(e) => form.setValue("accentColor", e.target.value)}
-                    className="flex-1 h-12 font-mono"
-                  />
+              <div className="space-y-2">
+                <label className="text-xs text-white/40 font-medium">Logo</label>
+                <div className="flex items-start gap-6">
+                  <div className="flex-1">
+                    <Input id="logo" type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" data-testid="input-logo" />
+                    <Button type="button" variant="outline" className="w-full border-white/10 text-white/50 bg-transparent hover:bg-white/5 rounded-xl" onClick={() => document.getElementById("logo")?.click()} data-testid="button-upload-logo">
+                      <Upload className="h-4 w-4 mr-2" /> Upload Logo
+                    </Button>
+                    <p className="text-xs text-white/20 mt-2">PNG, JPG or SVG (max 5MB)</p>
+                  </div>
+                  {(logoPreview || form.watch("logoUrl")) && (
+                    <div className="w-24 h-24 rounded-xl border border-white/[0.06] bg-white/[0.03] flex items-center justify-center overflow-hidden">
+                      <img src={logoPreview || form.watch("logoUrl")} alt="Logo preview" className="max-w-full max-h-full object-contain" />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="p-6 rounded-lg border bg-card space-y-3">
-              <h4 className="text-sm font-medium">Color Preview</h4>
+          {/* Brand Colors */}
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-6 md:p-8">
+            <h2 className="text-lg font-semibold text-white mb-1">Brand Colors</h2>
+            <p className="text-sm text-white/25 mb-6">Colors used in your video graphics</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {[
+                { id: "primaryColor", label: "Primary" },
+                { id: "secondaryColor", label: "Secondary" },
+                { id: "accentColor", label: "Accent" },
+              ].map((color) => (
+                <div key={color.id} className="space-y-2">
+                  <label className="text-xs text-white/40 font-medium">{color.label}</label>
+                  <div className="flex gap-3">
+                    <input
+                      type="color"
+                      {...form.register(color.id as keyof InsertBrandKit)}
+                      className="h-12 w-16 rounded-xl cursor-pointer border border-white/[0.06] bg-transparent"
+                      data-testid={`input-${color.id.replace(/([A-Z])/g, '-$1').toLowerCase()}`}
+                    />
+                    <Input
+                      value={form.watch(color.id as keyof InsertBrandKit) as string}
+                      onChange={(e) => form.setValue(color.id as keyof InsertBrandKit, e.target.value)}
+                      className="flex-1 h-12 font-mono bg-white/[0.03] border-white/[0.06] text-white rounded-xl"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-5 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+              <h4 className="text-xs text-white/40 font-medium mb-3">Color Preview</h4>
               <div className="flex gap-3">
-                <div
-                  className="flex-1 h-24 rounded-lg"
-                  style={{ backgroundColor: form.watch("primaryColor") }}
-                />
-                <div
-                  className="flex-1 h-24 rounded-lg"
-                  style={{ backgroundColor: form.watch("secondaryColor") }}
-                />
-                <div
-                  className="flex-1 h-24 rounded-lg"
-                  style={{ backgroundColor: form.watch("accentColor") }}
-                />
+                {["primaryColor", "secondaryColor", "accentColor"].map((key) => (
+                  <div key={key} className="flex-1 h-20 rounded-xl" style={{ backgroundColor: form.watch(key as keyof InsertBrandKit) as string }} />
+                ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <div className="flex justify-end">
-          <Button
-            type="submit"
-            size="lg"
-            disabled={updateMutation.isPending}
-            data-testid="button-save"
-          >
-            <Save className="h-5 w-5 mr-2" />
-            {updateMutation.isPending ? "Saving..." : "Save Brand Kit"}
-          </Button>
-        </div>
-      </form>
+          <div className="flex justify-end">
+            <Button type="submit" disabled={updateMutation.isPending} className="bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] rounded-full px-8" data-testid="button-save">
+              <Save className="h-4 w-4 mr-2" />
+              {updateMutation.isPending ? "Saving..." : "Save Brand Kit"}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

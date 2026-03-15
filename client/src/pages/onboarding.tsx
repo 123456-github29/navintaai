@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onboardingSchema, type OnboardingData } from "@shared/schema";
@@ -10,6 +10,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { gsap } from "gsap";
 
 const STEPS = 8;
 
@@ -36,10 +37,10 @@ const CONTENT_GOALS = [
 ];
 
 const DURATION_TYPES = [
-  { value: "quick", label: "Quick hit", description: "15–25 seconds" },
-  { value: "standard", label: "Standard", description: "30–45 seconds" },
-  { value: "story", label: "Story", description: "60–90 seconds" },
-  { value: "deep-dive", label: "Deep dive", description: "90–120 seconds" },
+  { value: "quick", label: "Quick hit", description: "15-25 seconds" },
+  { value: "standard", label: "Standard", description: "30-45 seconds" },
+  { value: "story", label: "Story", description: "60-90 seconds" },
+  { value: "deep-dive", label: "Deep dive", description: "90-120 seconds" },
 ];
 
 const EMOTIONAL_RESULTS = [
@@ -71,14 +72,14 @@ const BRAND_PERSONALITIES = [
   { value: "authentic", label: "Authentic" },
 ];
 
-function OptionButton({ 
-  selected, 
-  onClick, 
+function OptionButton({
+  selected,
+  onClick,
   children,
-  description 
-}: { 
-  selected: boolean; 
-  onClick: () => void; 
+  description
+}: {
+  selected: boolean;
+  onClick: () => void;
   children: React.ReactNode;
   description?: string;
 }) {
@@ -87,18 +88,18 @@ function OptionButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full h-14 px-5 rounded-xl border text-left transition-all duration-200",
-        "hover:border-[#111111]/40 hover:shadow-md",
+        "w-full h-14 px-5 rounded-xl border text-left transition-all duration-300",
+        "hover:border-white/15 hover:bg-white/[0.04]",
         "flex items-center",
-        selected 
-          ? "border-[#111111] bg-gray-50 text-[#111111] shadow-sm" 
-          : "border-gray-200 bg-white text-[#666666]"
+        selected
+          ? "border-white/20 bg-white/[0.06] text-white"
+          : "border-white/[0.06] bg-white/[0.02] text-white/50"
       )}
     >
       <div>
         <span className="text-sm font-medium">{children}</span>
         {description && (
-          <span className="block text-xs text-[#666666]/70 mt-0.5">{description}</span>
+          <span className="block text-xs text-white/25 mt-0.5">{description}</span>
         )}
       </div>
     </button>
@@ -112,12 +113,12 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
         <div
           key={i}
           className={cn(
-            "h-1.5 rounded-full transition-all duration-200",
-            i + 1 === current 
-              ? "w-6 bg-[#111111]" 
-              : i + 1 < current 
-                ? "w-1.5 bg-[#111111]/50" 
-                : "w-1.5 bg-gray-200"
+            "h-1.5 rounded-full transition-all duration-300",
+            i + 1 === current
+              ? "w-8 bg-white"
+              : i + 1 < current
+                ? "w-1.5 bg-white/40"
+                : "w-1.5 bg-white/10"
           )}
         />
       ))}
@@ -129,7 +130,8 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const form = useForm<OnboardingData>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
@@ -146,7 +148,7 @@ export default function Onboarding() {
     },
   });
 
-  const { watch, setValue, trigger } = form;
+  const { watch, setValue } = form;
   const creatorType = watch("creatorType");
   const audienceDescription = watch("audienceDescription");
   const contentGoal = watch("contentGoal");
@@ -157,15 +159,18 @@ export default function Onboarding() {
   const brandDescription = watch("brandDescription");
   const brandPersonality = watch("brandPersonality");
 
+  useEffect(() => {
+    if (contentRef.current) {
+      gsap.from(contentRef.current, { opacity: 0, y: 15, duration: 0.4, ease: "power2.out" });
+    }
+  }, [step]);
+
   const createPlanMutation = useMutation({
     mutationFn: async (data: OnboardingData) => {
-      console.log("[onboarding] Submitting premium onboarding data:", data);
       const response = await apiRequest("POST", "/api/onboarding", data);
-      console.log("[onboarding] Response received:", response.status);
       return response.json();
     },
-    onSuccess: (result) => {
-      console.log("[onboarding] Success:", result);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/content-plan"] });
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       toast({
@@ -175,7 +180,6 @@ export default function Onboarding() {
       setLocation("/dashboard");
     },
     onError: (error: Error) => {
-      console.error("[onboarding] Error:", error.message);
       toast({
         title: "Error",
         description: error.message || "Failed to create content plan. Please try again.",
@@ -217,18 +221,15 @@ export default function Onboarding() {
 
   if (createPlanMutation.isPending) {
     return (
-      <div className="fixed inset-0 bg-white flex items-center justify-center">
+      <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#050505" }}>
         <div className="text-center space-y-8 max-w-sm px-6">
-          <div className="h-12 w-12 mx-auto">
-            <div className="h-12 w-12 rounded-full border-2 border-gray-100 border-t-[#111111] animate-spin" />
+          <div className="relative w-14 h-14 mx-auto">
+            <div className="absolute inset-0 rounded-full border-2 border-white/5" />
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-white animate-spin" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-[#111111]">
-              Creating your plan
-            </h2>
-            <p className="text-sm text-[#666666]">
-              This will take a moment...
-            </p>
+            <h2 className="text-xl font-bold text-white">Creating your plan</h2>
+            <p className="text-sm text-white/30">This will take a moment...</p>
           </div>
         </div>
       </div>
@@ -236,31 +237,30 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col">
-      <div className="absolute top-8 left-0 right-0">
+    <div className="fixed inset-0 flex flex-col" style={{ background: "#050505" }}>
+      {/* Background orb */}
+      <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)", filter: "blur(80px)" }} />
+
+      <div className="absolute top-8 left-0 right-0 z-10">
         <ProgressDots current={step} total={STEPS} />
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-6">
-        <div className="w-full max-w-lg space-y-10">
+      <div className="flex-1 flex items-center justify-center px-6 relative z-10">
+        <div ref={contentRef} className="w-full max-w-lg space-y-10">
           <div className="text-center">
-            <span className="text-[#666666]/50 text-xs font-medium tracking-wider">
+            <span className="text-white/20 text-xs font-medium tracking-widest">
               {step} / {STEPS}
             </span>
           </div>
 
           {step === 1 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#111111] text-center">
+            <div className="space-y-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-white text-center">
                 What best describes you?
               </h1>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {CREATOR_TYPES.map((type) => (
-                  <OptionButton
-                    key={type.value}
-                    selected={creatorType === type.value}
-                    onClick={() => setValue("creatorType", type.value)}
-                  >
+                  <OptionButton key={type.value} selected={creatorType === type.value} onClick={() => setValue("creatorType", type.value)}>
                     {type.label}
                   </OptionButton>
                 ))}
@@ -270,49 +270,37 @@ export default function Onboarding() {
                   placeholder="Tell us more..."
                   value={watch("creatorTypeOther")}
                   onChange={(e) => setValue("creatorTypeOther", e.target.value)}
-                  className="bg-white border-gray-200 text-[#111111] placeholder:text-[#666666]/50 h-12 text-sm rounded-xl"
+                  className="bg-white/[0.03] border-white/[0.06] text-white placeholder:text-white/20 h-12 text-sm rounded-xl focus:ring-indigo-500/30 focus:border-indigo-500/50"
                 />
               )}
             </div>
           )}
 
           {step === 2 && (
-            <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h1 className="text-2xl md:text-3xl font-bold text-[#111111]">
-                  Describe your ideal audience
-                </h1>
-                <p className="text-sm text-[#666666]">
-                  In one sentence, who are you creating for?
-                </p>
+                <h1 className="text-2xl md:text-3xl font-bold text-white">Describe your ideal audience</h1>
+                <p className="text-sm text-white/30">In one sentence, who are you creating for?</p>
               </div>
               <Textarea
                 placeholder="e.g., Founders trying to grow on LinkedIn"
                 value={audienceDescription}
                 onChange={(e) => setValue("audienceDescription", e.target.value)}
-                className="bg-white border-gray-200 text-[#111111] placeholder:text-[#666666]/50 min-h-[100px] text-sm resize-none rounded-xl"
+                className="bg-white/[0.03] border-white/[0.06] text-white placeholder:text-white/20 min-h-[100px] text-sm resize-none rounded-xl focus:ring-indigo-500/30 focus:border-indigo-500/50"
                 maxLength={120}
               />
               <div className="text-right">
-                <span className="text-xs text-[#666666]/60">
-                  {audienceDescription.length}/120
-                </span>
+                <span className="text-xs text-white/20">{audienceDescription.length}/120</span>
               </div>
             </div>
           )}
 
           {step === 3 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#111111] text-center">
-                What should these videos do for you?
-              </h1>
+            <div className="space-y-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-white text-center">What should these videos do for you?</h1>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {CONTENT_GOALS.map((goal) => (
-                  <OptionButton
-                    key={goal.value}
-                    selected={contentGoal === goal.value}
-                    onClick={() => setValue("contentGoal", goal.value)}
-                  >
+                  <OptionButton key={goal.value} selected={contentGoal === goal.value} onClick={() => setValue("contentGoal", goal.value)}>
                     {goal.label}
                   </OptionButton>
                 ))}
@@ -321,18 +309,11 @@ export default function Onboarding() {
           )}
 
           {step === 4 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#111111] text-center">
-                How long should each video feel?
-              </h1>
+            <div className="space-y-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-white text-center">How long should each video feel?</h1>
               <div className="space-y-3">
                 {DURATION_TYPES.map((duration) => (
-                  <OptionButton
-                    key={duration.value}
-                    selected={durationType === duration.value}
-                    onClick={() => setValue("durationType", duration.value)}
-                    description={duration.description}
-                  >
+                  <OptionButton key={duration.value} selected={durationType === duration.value} onClick={() => setValue("durationType", duration.value)} description={duration.description}>
                     {duration.label}
                   </OptionButton>
                 ))}
@@ -341,17 +322,11 @@ export default function Onboarding() {
           )}
 
           {step === 5 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#111111] text-center">
-                How should people feel after watching?
-              </h1>
+            <div className="space-y-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-white text-center">How should people feel after watching?</h1>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {EMOTIONAL_RESULTS.map((emotion) => (
-                  <OptionButton
-                    key={emotion.value}
-                    selected={emotionalResult === emotion.value}
-                    onClick={() => setValue("emotionalResult", emotion.value)}
-                  >
+                  <OptionButton key={emotion.value} selected={emotionalResult === emotion.value} onClick={() => setValue("emotionalResult", emotion.value)}>
                     {emotion.label}
                   </OptionButton>
                 ))}
@@ -360,17 +335,11 @@ export default function Onboarding() {
           )}
 
           {step === 6 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#111111] text-center">
-                How comfortable are you on camera?
-              </h1>
+            <div className="space-y-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-white text-center">How comfortable are you on camera?</h1>
               <div className="space-y-3">
                 {CAMERA_COMFORT.map((comfort) => (
-                  <OptionButton
-                    key={comfort.value}
-                    selected={cameraComfort === comfort.value}
-                    onClick={() => setValue("cameraComfort", comfort.value)}
-                  >
+                  <OptionButton key={comfort.value} selected={cameraComfort === comfort.value} onClick={() => setValue("cameraComfort", comfort.value)}>
                     {comfort.label}
                   </OptionButton>
                 ))}
@@ -379,30 +348,28 @@ export default function Onboarding() {
           )}
 
           {step === 7 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#111111] text-center">
-                Tell us about your brand
-              </h1>
+            <div className="space-y-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-white text-center">Tell us about your brand</h1>
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <label className="text-xs text-[#666666] font-medium">Brand name</label>
+                  <label className="text-xs text-white/30 font-medium">Brand name</label>
                   <Input
                     placeholder="Your brand name"
                     value={brandName}
                     onChange={(e) => setValue("brandName", e.target.value)}
-                    className="bg-white border-gray-200 text-[#111111] placeholder:text-[#666666]/50 h-12 text-sm rounded-xl"
+                    className="bg-white/[0.03] border-white/[0.06] text-white placeholder:text-white/20 h-12 text-sm rounded-xl focus:ring-indigo-500/30 focus:border-indigo-500/50"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs text-[#666666] font-medium">Brand description</label>
+                  <label className="text-xs text-white/30 font-medium">Brand description</label>
                   <Textarea
                     placeholder="What do you stand for? What do you want to be known for?"
                     value={brandDescription}
                     onChange={(e) => setValue("brandDescription", e.target.value)}
-                    className="bg-white border-gray-200 text-[#111111] placeholder:text-[#666666]/50 min-h-[100px] text-sm resize-none rounded-xl"
+                    className="bg-white/[0.03] border-white/[0.06] text-white placeholder:text-white/20 min-h-[100px] text-sm resize-none rounded-xl focus:ring-indigo-500/30 focus:border-indigo-500/50"
                   />
                   <div className="text-right">
-                    <span className="text-xs text-[#666666]/60">
+                    <span className="text-xs text-white/20">
                       {brandDescription.length} {brandDescription.length < 20 && "/ 20 min"}
                     </span>
                   </div>
@@ -412,17 +379,11 @@ export default function Onboarding() {
           )}
 
           {step === 8 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#111111] text-center">
-                What personality should your videos have?
-              </h1>
+            <div className="space-y-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-white text-center">What personality should your videos have?</h1>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {BRAND_PERSONALITIES.map((personality) => (
-                  <OptionButton
-                    key={personality.value}
-                    selected={brandPersonality === personality.value}
-                    onClick={() => setValue("brandPersonality", personality.value)}
-                  >
+                  <OptionButton key={personality.value} selected={brandPersonality === personality.value} onClick={() => setValue("brandPersonality", personality.value)}>
                     {personality.label}
                   </OptionButton>
                 ))}
@@ -432,14 +393,14 @@ export default function Onboarding() {
         </div>
       </div>
 
-      <div className="p-8">
+      <div className="p-8 relative z-10">
         <div className="max-w-xl mx-auto flex gap-3">
           {step > 1 && (
             <Button
               type="button"
               variant="outline"
               onClick={prevStep}
-              className="flex-1 h-12 text-sm font-medium border border-gray-200 text-[#111111] hover:bg-gray-50 rounded-full bg-white"
+              className="flex-1 h-12 text-sm font-medium border border-white/10 text-white/60 hover:bg-white/5 rounded-full bg-transparent"
             >
               Back
             </Button>
@@ -452,9 +413,9 @@ export default function Onboarding() {
               className={cn(
                 "flex-1 h-12 text-sm font-medium rounded-full transition-all",
                 step === 1 ? "w-full" : "",
-                canProceed() 
-                  ? "bg-[#111111] text-white hover:opacity-90" 
-                  : "bg-gray-100 text-[#666666]/50 cursor-not-allowed"
+                canProceed()
+                  ? "bg-white text-black hover:shadow-[0_0_30px_rgba(255,255,255,0.12)]"
+                  : "bg-white/5 text-white/20 cursor-not-allowed"
               )}
             >
               Continue
@@ -466,9 +427,9 @@ export default function Onboarding() {
               disabled={!canProceed()}
               className={cn(
                 "flex-1 h-12 text-sm font-medium rounded-full transition-all",
-                canProceed() 
-                  ? "bg-[#111111] text-white hover:opacity-90" 
-                  : "bg-gray-100 text-[#666666]/50 cursor-not-allowed"
+                canProceed()
+                  ? "bg-white text-black hover:shadow-[0_0_30px_rgba(255,255,255,0.12)]"
+                  : "bg-white/5 text-white/20 cursor-not-allowed"
               )}
             >
               Create content plan
