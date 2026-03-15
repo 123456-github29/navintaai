@@ -1,10 +1,25 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Video, CheckCircle2, Circle, ChevronLeft, ChevronRight, Smartphone, Monitor } from "lucide-react";
+import {
+  ArrowLeft,
+  Video,
+  CheckCircle2,
+  Circle,
+  ChevronLeft,
+  ChevronRight,
+  Smartphone,
+  Monitor,
+  Play,
+  Square,
+  RotateCcw,
+  Eye,
+  EyeOff,
+  RefreshCw,
+} from "lucide-react";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Post } from "@shared/schema";
@@ -22,14 +37,6 @@ interface TeleprompterData {
   wordCount: number;
 }
 
-interface RecordingSession {
-  sessionId: string;
-  qrUrl: string;
-  recordUrl: string;
-  postId: string;
-  shotId: string;
-}
-
 export default function Director() {
   const [, params] = useRoute("/director/:id");
   const postId = params?.id;
@@ -37,9 +44,27 @@ export default function Director() {
 
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(false);
-  const [activeSession, setActiveSession] = useState<RecordingSession | null>(null);
   const [sessionLoading, setSessionLoading] = useState(false);
+  const [showTeleprompter, setShowTeleprompter] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [activeShotId, setActiveShotId] = useState<string | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeSessionToken, setActiveSessionToken] = useState<string | null>(null);
+  const [phoneSessionUrl, setPhoneSessionUrl] = useState<string | null>(null);
+
   const autoPlayTimerRef = useRef<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recordingStartTimeRef = useRef<number>(0);
 
   const { data: post, isLoading: postLoading } = useQuery<Post>({
     queryKey: ["/api/posts", postId],
@@ -83,7 +108,107 @@ export default function Director() {
     };
   }, [isAutoPlay, currentCardIndex, teleprompterData]);
 
-  const createRecordingSession = async (shotId: string, mode: "phone" | "computer" = "phone") => {
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopAllTracks();
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  // Attach stream to video element when camera is ready
+  useEffect(() => {
+    if (streamRef.current && videoRef.current && cameraReady) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [cameraReady]);
+
+  const stopAllTracks = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const startCamera = async () => {
+    stopAllTracks();
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1080 }, height: { ideal: 1920 }, facingMode: "user" },
+        audio: true,
+      });
+      streamRef.current = mediaStream;
+      setCameraReady(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch {
+      toast({
+        title: "Camera access denied",
+        description: "Please allow camera and microphone permissions.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startRecording = () => {
+    if (!streamRef.current) return;
+    chunksRef.current = [];
+
+    const preferredMimeType = "video/webm;codecs=vp8,opus";
+    const fallbackMimeType = "video/webm";
+    const mp4Type = "video/mp4";
+
+    let mimeType = "";
+    if (MediaRecorder.isTypeSupported(preferredMimeType)) {
+      mimeType = preferredMimeType;
+    } else if (MediaRecorder.isTypeSupported(fallbackMimeType)) {
+      mimeType = fallbackMimeType;
+    } else if (MediaRecorder.isTypeSupported(mp4Type)) {
+      mimeType = mp4Type;
+    }
+
+    const options: MediaRecorderOptions = mimeType ? { mimeType } : {};
+    const recorder = new MediaRecorder(streamRef.current, options);
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: mimeType || "video/webm" });
+      setRecordedBlob(blob);
+    };
+
+    recorder.start(1000);
+    mediaRecorderRef.current = recorder;
+    recordingStartTimeRef.current = Date.now();
+    setIsRecording(true);
+    setRecordingTime(0);
+
+    timerRef.current = window.setInterval(() => {
+      setRecordingTime((prev) => prev + 1);
+    }, 1000);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+      setIsRecording(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  };
+
+  const discardRecording = () => {
+    setRecordedBlob(null);
+    setRecordingTime(0);
+  };
+
+  const createSessionAndRecord = async (shotId: string, mode: "phone" | "computer") => {
     setSessionLoading(true);
     try {
       const res = await apiRequest("POST", "/api/recording-sessions", {
@@ -91,15 +216,23 @@ export default function Director() {
         shotId,
       });
       const data = await res.json();
-      if (mode === "computer") {
-        const computerUrl = `${data.recordUrl}&mode=computer`;
-        window.open(computerUrl, "_blank");
-      } else {
-        setActiveSession(data);
+
+      if (mode === "phone") {
+        setPhoneSessionUrl(data.pairUrl);
+        setActiveShotId(shotId);
         toast({
           title: "Recording session created",
-          description: "Open this URL on your phone to start recording.",
+          description: "Open the link on your phone to record.",
         });
+      } else {
+        // Computer mode: start inline camera recording
+        setActiveShotId(shotId);
+        setActiveSessionId(data.sessionId);
+        setActiveSessionToken(null); // computer mode uses session directly
+        setPhoneSessionUrl(null);
+        setRecordedBlob(null);
+        setCurrentCardIndex(0);
+        await startCamera();
       }
     } catch (err: any) {
       toast({
@@ -110,6 +243,99 @@ export default function Director() {
     } finally {
       setSessionLoading(false);
     }
+  };
+
+  const uploadRecording = useCallback(async () => {
+    if (!recordedBlob || !activeSessionId) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const urlRes = await fetch(`/api/recording-sessions/${activeSessionId}/upload-url`);
+      if (!urlRes.ok) {
+        const data = await urlRes.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to get upload URL.");
+      }
+      const { uploadUrl, storagePath } = await urlRes.json();
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", uploadUrl, true);
+        xhr.setRequestHeader("Content-Type", recordedBlob.type || "video/webm");
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Upload failed with status ${xhr.status}`));
+        };
+
+        xhr.onerror = () => reject(new Error("Upload failed."));
+        xhr.timeout = 120000;
+        xhr.send(recordedBlob);
+      });
+
+      const durationSec = Math.max(1, Math.round((Date.now() - recordingStartTimeRef.current) / 1000));
+      const completeRes = await fetch(`/api/recording-sessions/${activeSessionId}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storagePath,
+          duration: durationSec,
+          mimeType: recordedBlob.type || "video/webm",
+        }),
+      });
+
+      if (!completeRes.ok) {
+        const data = await completeRes.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to finalize upload.");
+      }
+
+      // Mark shot as completed
+      if (activeShotId) {
+        updateShotMutation.mutate({ shotId: activeShotId, completed: true });
+      }
+
+      toast({ title: "Clip uploaded!", description: "Your recording has been saved." });
+
+      // Reset state
+      stopAllTracks();
+      setCameraReady(false);
+      setRecordedBlob(null);
+      setActiveShotId(null);
+      setActiveSessionId(null);
+      setRecordingTime(0);
+    } catch (err: any) {
+      toast({
+        title: "Upload failed",
+        description: err.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  }, [recordedBlob, activeSessionId, activeShotId]);
+
+  const closeCamera = () => {
+    stopAllTracks();
+    setCameraReady(false);
+    setRecordedBlob(null);
+    setActiveShotId(null);
+    setActiveSessionId(null);
+    setRecordingTime(0);
+    setIsRecording(false);
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
   if (postLoading || teleprompterLoading) {
@@ -138,8 +364,8 @@ export default function Director() {
 
   const completedShots = post.shotList.filter(s => s.completed).length;
   const totalShots = post.shotList.length;
-  const currentShot = post.shotList.find(s => !s.completed) || post.shotList[0];
   const cards = teleprompterData?.cards || [];
+  const previewUrl = recordedBlob ? URL.createObjectURL(recordedBlob) : null;
 
   return (
     <div className="p-6 md:p-8 min-h-screen" style={{ background: "#050505" }}>

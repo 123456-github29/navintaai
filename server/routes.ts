@@ -2396,11 +2396,17 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
 
     // Import dynamically to avoid circular dependencies
     const { transcribeVideo } = await import("./lib/aiEditor");
-    const { downloadVideoToTemp } = await import("./lib/supabaseStorage");
+    const { downloadVideoToTemp, downloadClipToTemp } = await import("./lib/supabaseStorage");
+    const { join } = await import("path");
 
+    const tempDir = join(process.cwd(), "uploads", "temp");
     let tempPath: string | null = null;
     try {
-      tempPath = await downloadVideoToTemp(videoPath, storageBucket);
+      if (storageBucket === "clips") {
+        tempPath = await downloadClipToTemp(videoPath, tempDir);
+      } else {
+        tempPath = await downloadVideoToTemp(videoPath, tempDir);
+      }
       const result = await transcribeVideo(tempPath);
 
       // Store the transcript on the session
@@ -2472,19 +2478,36 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     );
 
     // Process Luma generations if any
+    const lumaFailures: string[] = [];
     for (const op of editPlan.operations) {
       if (op.type === "luma_generate" && op.params.prompt) {
-        const lumaResult = await generateLumaVideo(
-          op.params.prompt,
-          op.params.duration || 5,
-          op.params.aspect_ratio || "9:16",
-        );
-        op.params.generationId = lumaResult.id;
-        op.params.videoUrl = lumaResult.videoUrl;
-        op.status = lumaResult.status === "failed" ? "failed" : "applied";
+        try {
+          const lumaResult = await generateLumaVideo(
+            op.params.prompt,
+            op.params.duration || 5,
+            op.params.aspect_ratio || "9:16",
+          );
+          if (lumaResult.status === "failed" || lumaResult.id === "luma_disabled" || lumaResult.id === "error") {
+            op.status = "failed";
+            lumaFailures.push(op.params.prompt);
+          } else {
+            op.params.generationId = lumaResult.id;
+            op.params.videoUrl = lumaResult.videoUrl;
+            op.status = "applied";
+          }
+        } catch (err: any) {
+          console.error("[ai-edit] Luma generation error:", err);
+          op.status = "failed";
+          lumaFailures.push(op.params.prompt);
+        }
       } else {
         op.status = "applied";
       }
+    }
+
+    // Append failure info to the AI message if any Luma generations failed
+    if (lumaFailures.length > 0) {
+      editPlan.message += `\n\n⚠️ ${lumaFailures.length} AI clip generation(s) failed. This may be due to a missing or invalid Luma API key.`;
     }
 
     // Apply operations to session state
@@ -2534,6 +2557,10 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     const userId = req.user.sub;
     const { id } = req.params;
     const { generationId } = req.body;
+
+    if (!generationId || typeof generationId !== "string") {
+      throw createError("generationId is required", 400, "MISSING_GENERATION_ID");
+    }
 
     const session = await storage.getAiEditSession(id, userId);
     if (!session) {

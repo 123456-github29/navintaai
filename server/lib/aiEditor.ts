@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { promises as fs } from "fs";
 import path from "path";
+import { utf8Safe } from "../utils/utf8Safe";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -24,24 +25,34 @@ export interface TranscriptionResult {
 export async function transcribeVideo(filePath: string): Promise<TranscriptionResult> {
   const fileStream = await fs.readFile(filePath);
   const file = new File([fileStream], path.basename(filePath), {
-    type: "video/mp4",
+    type: filePath.endsWith(".webm") ? "video/webm" : "video/mp4",
   });
 
-  const response = await openai.audio.transcriptions.create({
-    file,
-    model: "whisper-1",
-    response_format: "verbose_json",
-    timestamp_granularities: ["segment"],
-  });
+  let response;
+  try {
+    response = await openai.audio.transcriptions.create({
+      file,
+      model: "whisper-1",
+      response_format: "verbose_json",
+      timestamp_granularities: ["segment"],
+    });
+  } catch (err: any) {
+    console.error("[transcribe] OpenAI Whisper API error:", err?.message || err);
+    throw new Error(`Transcription failed: ${err?.message || "OpenAI API error"}`);
+  }
+
+  if (!response || !response.text) {
+    throw new Error("Transcription returned empty result");
+  }
 
   const segments: TranscriptSegment[] = (response as any).segments?.map((seg: any) => ({
     start: seg.start,
     end: seg.end,
-    text: seg.text.trim(),
+    text: utf8Safe(seg.text?.trim()),
   })) || [];
 
   return {
-    fullText: response.text,
+    fullText: utf8Safe(response.text),
     segments,
     language: (response as any).language || "en",
     duration: (response as any).duration || 0,

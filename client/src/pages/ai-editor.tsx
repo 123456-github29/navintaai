@@ -121,6 +121,7 @@ export default function AiEditor() {
   });
 
   const postClips = clips?.filter((c) => c.postId === postId) || [];
+  const firstClipUrl = (postClips.find((c: any) => c.signedUrl || c.videoPath) as any)?.signedUrl || null;
 
   const initSession = useMutation({
     mutationFn: async () => {
@@ -511,6 +512,7 @@ export default function AiEditor() {
               <>
                 <video
                   ref={videoRef}
+                  src={firstClipUrl}
                   className="absolute inset-0 w-full h-full object-cover"
                   playsInline
                   loop
