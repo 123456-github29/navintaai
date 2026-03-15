@@ -362,8 +362,10 @@ export default function Director() {
     );
   }
 
-  const completedShots = post.shotList.filter(s => s.completed).length;
-  const totalShots = post.shotList.length;
+  const shotList = Array.isArray(post.shotList) ? post.shotList : [];
+  const completedShots = shotList.filter(s => s.completed).length;
+  const totalShots = shotList.length;
+  const currentShot = shotList.find(s => !s.completed) || shotList[0];
   const cards = teleprompterData?.cards || [];
   const previewUrl = recordedBlob ? URL.createObjectURL(recordedBlob) : null;
 
@@ -469,8 +471,8 @@ export default function Director() {
 
           {/* Shot List & Recording Section */}
           <div className="space-y-4">
-            {/* QR Recording Session */}
-            {activeSession && (
+            {/* Phone Recording Session */}
+            {phoneSessionUrl && (
               <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Video className="h-4 w-4 text-blue-400" />
@@ -481,19 +483,19 @@ export default function Director() {
                 </p>
                 <div className="bg-black/30 rounded-xl p-3 text-center mb-3">
                   <a
-                    href={activeSession.recordUrl}
+                    href={phoneSessionUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-blue-400 underline break-all"
                   >
-                    {activeSession.recordUrl}
+                    {phoneSessionUrl}
                   </a>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full border-white/10 text-white/50 hover:bg-white/5 rounded-xl bg-transparent"
-                  onClick={() => setActiveSession(null)}
+                  onClick={() => setPhoneSessionUrl(null)}
                 >
                   Close
                 </Button>
@@ -504,7 +506,7 @@ export default function Director() {
             <div className="rounded-2xl border border-white/[0.06] p-5" style={{ background: "#0a0a0a" }}>
               <h3 className="text-sm font-semibold text-white/50 mb-4">Shot List</h3>
               <div className="space-y-3">
-                {post.shotList.map((shot) => (
+                {shotList.map((shot) => (
                   <div
                     key={shot.id}
                     className={`p-3.5 rounded-xl border transition-all ${
@@ -543,7 +545,7 @@ export default function Director() {
                           size="sm"
                           variant="outline"
                           className="text-xs flex-1 border-white/10 text-white/40 hover:bg-white/5 rounded-xl bg-transparent"
-                          onClick={() => createRecordingSession(shot.id, "phone")}
+                          onClick={() => createSessionAndRecord(shot.id, "phone")}
                           disabled={sessionLoading}
                         >
                           <Smartphone className="h-3 w-3 mr-1" />
@@ -553,7 +555,7 @@ export default function Director() {
                           size="sm"
                           variant="outline"
                           className="text-xs flex-1 border-white/10 text-white/40 hover:bg-white/5 rounded-xl bg-transparent"
-                          onClick={() => createRecordingSession(shot.id, "computer")}
+                          onClick={() => createSessionAndRecord(shot.id, "computer")}
                           disabled={sessionLoading}
                         >
                           <Monitor className="h-3 w-3 mr-1" />

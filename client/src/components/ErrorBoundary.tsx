@@ -56,7 +56,7 @@ export class ErrorBoundary extends Component<Props, State> {
           >
             Refresh Page
           </button>
-          {process.env.NODE_ENV === 'development' && this.state.error && (
+          {this.state.error && (
             <pre style={{
               marginTop: '2rem',
               padding: '1rem',
@@ -68,6 +68,8 @@ export class ErrorBoundary extends Component<Props, State> {
               textAlign: 'left',
             }}>
               {this.state.error.toString()}
+              {'\n'}
+              {this.state.error.stack}
             </pre>
           )}
         </div>
