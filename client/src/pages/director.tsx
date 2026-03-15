@@ -291,6 +291,7 @@ export default function Director() {
           storagePath,
           duration: durationSec,
           mimeType: recordedBlob.type || "video/webm",
+          token: activeSessionToken,
         }),
       });
 
@@ -323,7 +324,7 @@ export default function Director() {
       setIsUploading(false);
       setUploadProgress(0);
     }
-  }, [recordedBlob, activeSessionId, activeShotId]);
+  }, [recordedBlob, activeSessionId, activeShotId, activeSessionToken]);
 
   const closeCamera = () => {
     stopAllTracks();
