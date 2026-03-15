@@ -134,7 +134,7 @@ export default function Director() {
     stopAllTracks();
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1080 }, height: { ideal: 1920 }, facingMode: "user" },
+        video: { facingMode: "user" },
         audio: true,
       });
       streamRef.current = mediaStream;
@@ -229,7 +229,9 @@ export default function Director() {
         // Computer mode: start inline camera recording
         setActiveShotId(shotId);
         setActiveSessionId(data.sessionId);
-        setActiveSessionToken(null); // computer mode uses session directly
+        // Extract token from pairUrl for use in upload
+        const token = data.pairUrl ? new URL(data.pairUrl).searchParams.get("token") : null;
+        setActiveSessionToken(token);
         setPhoneSessionUrl(null);
         setRecordedBlob(null);
         setCurrentCardIndex(0);
@@ -253,7 +255,7 @@ export default function Director() {
     setUploadProgress(0);
 
     try {
-      const urlRes = await fetch(`/api/recording-sessions/${activeSessionId}/upload-url`);
+      const urlRes = await fetch(`/api/recording-sessions/${activeSessionId}/upload-url?token=${encodeURIComponent(activeSessionToken || "")}`);
       if (!urlRes.ok) {
         const data = await urlRes.json().catch(() => ({}));
         throw new Error(data.error || "Failed to get upload URL.");
@@ -372,53 +374,69 @@ export default function Director() {
 
   // Recording modal
   if (cameraReady || recordedBlob) {
-    const previewUrl = recordedBlob ? URL.createObjectURL(recordedBlob) : null;
+    const recordingPreviewUrl = recordedBlob ? URL.createObjectURL(recordedBlob) : null;
+    const currentCard = cards[currentCardIndex];
     return (
       <div className="fixed inset-0 bg-black flex flex-col text-white z-50">
         {/* Live camera or preview */}
-        <div className="flex-1 relative overflow-hidden flex items-center justify-center">
+        <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-black">
           {!recordedBlob ? (
-            /* Live camera feed */
             <video
               ref={videoRef}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="w-full h-full object-contain"
               autoPlay
               playsInline
               muted
             />
           ) : (
-            /* Preview of recorded video */
             <video
               ref={previewVideoRef}
-              src={previewUrl || ""}
-              className="h-full w-auto object-contain"
+              src={recordingPreviewUrl || ""}
+              className="w-full h-full object-contain"
               autoPlay
               loop
-              muted={false}
               controls={false}
               onClick={(e) => {
                 const v = e.currentTarget;
-                if (v.paused) v.play();
-                else v.pause();
+                if (v.paused) v.play(); else v.pause();
               }}
             />
           )}
 
-          {/* Recording timer */}
-          {isRecording && (
-            <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-500/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-              <span className="text-xs font-medium">
-                {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, "0")}
-              </span>
+          {/* Teleprompter overlay (only during live camera) */}
+          {!recordedBlob && currentCard && showTeleprompter && (
+            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent pointer-events-none">
+              <p className="text-white text-lg font-medium text-center leading-snug drop-shadow-lg">
+                {currentCard.text}
+              </p>
+              <p className="text-white/50 text-xs text-center mt-1">
+                {currentCard.beatType} — {currentCard.durationSec.toFixed(1)}s
+              </p>
             </div>
           )}
+
+          {/* Top-right controls */}
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            {isRecording && (
+              <div className="flex items-center gap-2 bg-red-500/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                <span className="text-xs font-medium">{formatTime(recordingTime)}</span>
+              </div>
+            )}
+            {!recordedBlob && (
+              <button
+                onClick={() => setShowTeleprompter(p => !p)}
+                className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
+              >
+                {showTeleprompter ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Controls */}
-        <div className="p-6 pb-8 bg-gradient-to-t from-black/80 to-transparent">
+        {/* Bottom controls */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 pb-8 bg-gradient-to-t from-black/80 to-transparent">
           {!recordedBlob ? (
-            /* Recording controls */
             <div className="flex gap-3 items-center justify-center">
               <button
                 onClick={closeCamera}
@@ -428,29 +446,26 @@ export default function Director() {
               </button>
               <button
                 onClick={isRecording ? stopRecording : startRecording}
-                className={`w-20 h-20 rounded-full border-4 flex items-center justify-center active:scale-90 transition-transform ${
-                  isRecording ? "border-red-500" : "border-white"
-                }`}
+                className={`w-20 h-20 rounded-full border-4 flex items-center justify-center active:scale-90 transition-transform ${isRecording ? "border-red-500" : "border-white"}`}
               >
                 <div className={`${isRecording ? "w-8 h-8 rounded-sm" : "w-14 h-14 rounded-full"} bg-red-500`} />
               </button>
               <div className="w-20" />
             </div>
           ) : (
-            /* Preview controls */
             <div className="flex gap-3">
               <button
                 onClick={discardRecording}
                 className="flex-1 py-4 rounded-2xl bg-white/10 text-white text-sm font-medium active:scale-95 transition-transform backdrop-blur-sm"
               >
-                Retake
+                Record Again
               </button>
               <button
                 onClick={uploadRecording}
                 disabled={isUploading}
                 className="flex-1 py-4 rounded-2xl bg-white text-black text-sm font-medium active:scale-95 transition-transform disabled:opacity-50"
               >
-                {isUploading ? `Uploading ${uploadProgress}%` : "Upload"}
+                {isUploading ? `Uploading ${uploadProgress}%` : "Use This Clip"}
               </button>
             </div>
           )}
@@ -629,30 +644,46 @@ export default function Director() {
                         <p className="text-sm text-white/60">{shot.instruction}</p>
                       </div>
                     </div>
-                    {!shot.completed && (
-                      <div className="mt-3 flex gap-2">
+                    <div className="mt-3 flex gap-2">
+                      {shot.completed ? (
                         <Button
                           size="sm"
                           variant="outline"
                           className="text-xs flex-1 border-white/10 text-white/40 hover:bg-white/5 rounded-xl bg-transparent"
-                          onClick={() => createSessionAndRecord(shot.id, "phone")}
+                          onClick={() => {
+                            updateShotMutation.mutate({ shotId: shot.id, completed: false });
+                            createSessionAndRecord(shot.id, "computer");
+                          }}
                           disabled={sessionLoading}
                         >
-                          <Smartphone className="h-3 w-3 mr-1" />
-                          Phone
+                          <RotateCcw className="h-3 w-3 mr-1" />
+                          Record Again
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs flex-1 border-white/10 text-white/40 hover:bg-white/5 rounded-xl bg-transparent"
-                          onClick={() => createSessionAndRecord(shot.id, "computer")}
-                          disabled={sessionLoading}
-                        >
-                          <Monitor className="h-3 w-3 mr-1" />
-                          Computer
-                        </Button>
-                      </div>
-                    )}
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs flex-1 border-white/10 text-white/40 hover:bg-white/5 rounded-xl bg-transparent"
+                            onClick={() => createSessionAndRecord(shot.id, "phone")}
+                            disabled={sessionLoading}
+                          >
+                            <Smartphone className="h-3 w-3 mr-1" />
+                            Phone
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs flex-1 border-white/10 text-white/40 hover:bg-white/5 rounded-xl bg-transparent"
+                            onClick={() => createSessionAndRecord(shot.id, "computer")}
+                            disabled={sessionLoading}
+                          >
+                            <Monitor className="h-3 w-3 mr-1" />
+                            Computer
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
