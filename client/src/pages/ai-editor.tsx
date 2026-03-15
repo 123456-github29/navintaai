@@ -23,6 +23,8 @@ import {
   Zap,
   Download,
   CheckCircle2,
+  AlertCircle,
+  Video,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
