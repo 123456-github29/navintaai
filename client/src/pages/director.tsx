@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Video, CheckCircle2, Circle, ChevronLeft, ChevronRight, Smartphone, QrCode } from "lucide-react";
+import { ArrowLeft, Video, CheckCircle2, Circle, ChevronLeft, ChevronRight, Smartphone, Monitor } from "lucide-react";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Post } from "@shared/schema";
@@ -85,7 +85,7 @@ export default function Director() {
     };
   }, [isAutoPlay, currentCardIndex, teleprompterData]);
 
-  const createRecordingSession = async (shotId: string) => {
+  const createRecordingSession = async (shotId: string, mode: "phone" | "computer" = "phone") => {
     setSessionLoading(true);
     try {
       const res = await apiRequest("POST", "/api/recording-sessions", {
@@ -93,11 +93,16 @@ export default function Director() {
         shotId,
       });
       const data = await res.json();
-      setActiveSession(data);
-      toast({
-        title: "Recording session created",
-        description: "Scan the QR code with your phone to start recording.",
-      });
+      if (mode === "computer") {
+        const computerUrl = `${data.recordUrl}&mode=computer`;
+        window.open(computerUrl, "_blank");
+      } else {
+        setActiveSession(data);
+        toast({
+          title: "Recording session created",
+          description: "Open this URL on your phone to start recording.",
+        });
+      }
     } catch (err: any) {
       toast({
         title: "Error",
@@ -248,8 +253,8 @@ export default function Director() {
             <Card className="border-blue-200 bg-blue-50/50">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Smartphone className="h-4 w-4" />
-                  Phone Recording
+                  <Video className="h-4 w-4" />
+                  Phone Recording Session
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -323,11 +328,21 @@ export default function Director() {
                         size="sm"
                         variant="outline"
                         className="text-xs flex-1"
-                        onClick={() => createRecordingSession(shot.id)}
+                        onClick={() => createRecordingSession(shot.id, "phone")}
                         disabled={sessionLoading}
                       >
-                        <Video className="h-3 w-3 mr-1" />
-                        Record on Phone
+                        <Smartphone className="h-3 w-3 mr-1" />
+                        Phone
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs flex-1"
+                        onClick={() => createRecordingSession(shot.id, "computer")}
+                        disabled={sessionLoading}
+                      >
+                        <Monitor className="h-3 w-3 mr-1" />
+                        Computer
                       </Button>
                     </div>
                   )}
