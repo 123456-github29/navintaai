@@ -2358,18 +2358,40 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       return res.json({ transcript: session.transcript });
     }
 
-    // Get clips for the post
+    // Try to find a video source: clips first, then exported videos
+    let videoPath: string | null = null;
+    let storageBucket: string = "clips";
+
+    // 1. Try clips for the post
     const postClips = await storage.getClipsByPost(session.postId);
-    if (postClips.length === 0) {
-      throw createError("No clips found for this post", 400, "NO_CLIPS");
+    const clipWithVideo = postClips.find(c => c.videoPath);
+    if (clipWithVideo?.videoPath) {
+      videoPath = clipWithVideo.videoPath;
+      storageBucket = "clips";
     }
 
-    // Download the first clip's video and transcribe it
-    const clip = postClips[0];
-    const videoPath = clip.videoPath;
-
+    // 2. Fallback: try exported video from session or post
     if (!videoPath) {
-      throw createError("No video file found for clip", 400, "NO_VIDEO_PATH");
+      let video = session.videoId ? await storage.getVideo(session.videoId, userId) : undefined;
+      if (!video) {
+        const postVideos = await storage.getVideos(userId, session.postId);
+        video = postVideos.find(v => v.videoPath) || undefined;
+      }
+      if (video?.videoPath) {
+        videoPath = video.videoPath;
+        storageBucket = video.storageBucket || "renders";
+      }
+    }
+
+    // 3. No media found at all
+    if (!videoPath) {
+      throw createError(
+        postClips.length === 0
+          ? "No recorded clips found. Record your video clips first before finishing."
+          : "Clips exist but no video files are available. Try re-recording your clips.",
+        400,
+        postClips.length === 0 ? "NO_CLIPS" : "NO_VIDEO_PATH"
+      );
     }
 
     // Import dynamically to avoid circular dependencies
@@ -2378,7 +2400,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
 
     let tempPath: string | null = null;
     try {
-      tempPath = await downloadVideoToTemp(videoPath, "clips");
+      tempPath = await downloadVideoToTemp(videoPath, storageBucket);
       const result = await transcribeVideo(tempPath);
 
       // Store the transcript on the session
