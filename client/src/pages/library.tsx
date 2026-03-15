@@ -23,13 +23,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { 
-  ArrowDownTrayIcon, 
-  MagnifyingGlassIcon, 
-  PlayIcon, 
-  CalendarIcon, 
+import {
+  ArrowDownTrayIcon,
+  MagnifyingGlassIcon,
+  PlayIcon,
+  CalendarIcon,
   TrashIcon,
   PencilSquareIcon,
+  ArrowPathIcon,
+  DevicePhoneMobileIcon,
+  ComputerDesktopIcon,
 } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
@@ -414,8 +417,10 @@ function VideoCard({ video }: { video: Video }) {
 function ClipCard({ clip }: { clip: Clip }) {
   const { toast } = useToast();
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [isRerecordOpen, setIsRerecordOpen] = useState(false);
+  const [rerecordSession, setRerecordSession] = useState<{ recordUrl: string } | null>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  
+
   const deleteMutation = useMutation({
     mutationFn: () => apiRequest("DELETE", `/api/clips/${clip.id}`),
     onSuccess: () => {
@@ -434,39 +439,56 @@ function ClipCard({ clip }: { clip: Clip }) {
     },
   });
 
+  const rerecordMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/recording-sessions", {
+        postId: clip.postId,
+        shotId: clip.shotId,
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setRerecordSession(data);
+      setIsRerecordOpen(true);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create recording session. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRerecordComputer = () => {
+    if (!rerecordSession) return;
+    const computerUrl = `${rerecordSession.recordUrl}&mode=computer`;
+    window.open(computerUrl, "_blank");
+  };
+
   const hasVideoData = (clip.videoData && clip.videoData.length > 0) || (clip.videoPath && clip.videoPath.length > 0) || !!(clip as any).signedUrl;
 
   const handleOpenPlayer = async () => {
     if (!clip.id) return;
-    
-    console.log("[ClipCard] Opening player for clip:", clip.id);
-    
-    // Use signed URL from Supabase Storage for direct playback (no auth required)
-    // Falls back to API endpoint for legacy clips without signedUrl
+
     const signedUrl = (clip as any).signedUrl;
     if (signedUrl) {
-      console.log("[ClipCard] Using Supabase signed URL for playback");
       setBlobUrl(signedUrl);
     } else {
-      // Legacy fallback for old clips without signedUrl
-      const videoUrl = `/api/clips/${clip.id}/video`;
-      console.log("[ClipCard] Using legacy video endpoint:", videoUrl);
-      setBlobUrl(videoUrl);
+      setBlobUrl(`/api/clips/${clip.id}/video`);
     }
     setIsPlayerOpen(true);
   };
 
   const handleClosePlayer = (open: boolean) => {
-    if (!open) {
-      setBlobUrl(null);
-    }
+    if (!open) setBlobUrl(null);
     setIsPlayerOpen(open);
   };
 
   return (
     <>
       <div className="space-y-2 group" data-testid={`card-clip-${clip.id}`}>
-        <div 
+        <div
           className="relative aspect-[9/16] bg-gray-50 rounded-xl overflow-hidden transition-all cursor-pointer border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1"
           onClick={handleOpenPlayer}
         >
@@ -489,12 +511,29 @@ function ClipCard({ clip }: { clip: Clip }) {
               <span className="text-[#666666] text-xs">No video data</span>
             </div>
           )}
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Hover actions */}
+          <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Re-record button */}
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-8 w-8 bg-white/90 backdrop-blur-sm border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+              title="Re-record this clip"
+              onClick={(e) => {
+                e.stopPropagation();
+                rerecordMutation.mutate();
+              }}
+              disabled={rerecordMutation.isPending}
+              data-testid={`button-rerecord-clip-${clip.id}`}
+            >
+              <ArrowPathIcon className="h-4 w-4" />
+            </Button>
+            {/* Delete button */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button 
-                  size="icon" 
-                  variant="outline" 
+                <Button
+                  size="icon"
+                  variant="outline"
                   className="h-8 w-8 bg-white/90 backdrop-blur-sm border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                   data-testid={`button-delete-clip-${clip.id}`}
                   onClick={(e) => e.stopPropagation()}
@@ -529,6 +568,7 @@ function ClipCard({ clip }: { clip: Clip }) {
         )}
       </div>
 
+      {/* Clip preview dialog */}
       <Dialog open={isPlayerOpen} onOpenChange={handleClosePlayer}>
         <DialogContent className="max-w-md p-4">
           <DialogHeader>
@@ -542,17 +582,57 @@ function ClipCard({ clip }: { clip: Clip }) {
                 autoPlay
                 playsInline
                 className="w-full h-full object-contain"
-                onLoadedData={() => console.log("[ClipCard] Video loaded successfully")}
                 onError={(e) => {
                   const video = e.currentTarget;
                   console.error("[ClipCard] Video error:", video.error?.message, video.error?.code);
-                  console.error("[ClipCard] Video src length:", blobUrl.length);
                 }}
-                onCanPlay={() => console.log("[ClipCard] Video can play")}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-white">
                 Video data unavailable
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Re-record dialog */}
+      <Dialog open={isRerecordOpen} onOpenChange={setIsRerecordOpen}>
+        <DialogContent className="max-w-sm p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowPathIcon className="h-5 w-5 text-blue-500" />
+              Re-record Clip
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-4">
+            Choose how you want to re-record this clip. The new recording will replace the existing one.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button
+              className="w-full justify-start gap-3"
+              variant="outline"
+              onClick={handleRerecordComputer}
+            >
+              <ComputerDesktopIcon className="h-5 w-5 text-blue-500" />
+              Record on Computer
+            </Button>
+            {rerecordSession && (
+              <div className="space-y-2">
+                <Button
+                  className="w-full justify-start gap-3"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(rerecordSession.recordUrl);
+                    toast({ title: "Link copied!", description: "Open it on your phone to record." });
+                  }}
+                >
+                  <DevicePhoneMobileIcon className="h-5 w-5 text-green-500" />
+                  Record on Phone
+                </Button>
+                <p className="text-xs text-muted-foreground break-all bg-gray-50 rounded p-2">
+                  {rerecordSession.recordUrl}
+                </p>
               </div>
             )}
           </div>

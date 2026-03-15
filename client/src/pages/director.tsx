@@ -322,30 +322,28 @@ export default function Director() {
                       <p className="text-sm">{shot.instruction}</p>
                     </div>
                   </div>
-                  {!shot.completed && (
-                    <div className="mt-2 flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs flex-1"
-                        onClick={() => createRecordingSession(shot.id, "phone")}
-                        disabled={sessionLoading}
-                      >
-                        <Smartphone className="h-3 w-3 mr-1" />
-                        Phone
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs flex-1"
-                        onClick={() => createRecordingSession(shot.id, "computer")}
-                        disabled={sessionLoading}
-                      >
-                        <Monitor className="h-3 w-3 mr-1" />
-                        Computer
-                      </Button>
-                    </div>
-                  )}
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant={shot.completed ? "ghost" : "outline"}
+                      className={`text-xs flex-1 ${shot.completed ? "text-muted-foreground hover:text-foreground" : ""}`}
+                      onClick={() => createRecordingSession(shot.id, "phone")}
+                      disabled={sessionLoading}
+                    >
+                      <Smartphone className="h-3 w-3 mr-1" />
+                      {shot.completed ? "Re-record (Phone)" : "Phone"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={shot.completed ? "ghost" : "outline"}
+                      className={`text-xs flex-1 ${shot.completed ? "text-muted-foreground hover:text-foreground" : ""}`}
+                      onClick={() => createRecordingSession(shot.id, "computer")}
+                      disabled={sessionLoading}
+                    >
+                      <Monitor className="h-3 w-3 mr-1" />
+                      {shot.completed ? "Re-record (Computer)" : "Computer"}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </CardContent>
