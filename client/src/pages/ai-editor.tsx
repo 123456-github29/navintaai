@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,8 @@ import {
   Music,
   Type,
   Zap,
+  Video,
+  AlertCircle,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -100,6 +102,7 @@ export default function AiEditor() {
   const [inputValue, setInputValue] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [noMediaAvailable, setNoMediaAvailable] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -192,12 +195,25 @@ export default function AiEditor() {
         title: "Video transcribed",
         description: `Detected language: ${data.language || "en"}`,
       });
-    } catch {
-      toast({
-        title: "Transcription failed",
-        description: "Could not transcribe the video. You can still make edits.",
-        variant: "destructive",
-      });
+    } catch (err: any) {
+      // Check if this is a no-media error (no clips/videos recorded yet)
+      let errorCode = "";
+      try {
+        const errorData = err?.data || (err?.message && JSON.parse(err.message));
+        errorCode = errorData?.code || "";
+      } catch {
+        // Not a JSON error
+      }
+      if (errorCode === "NO_CLIPS" || errorCode === "NO_VIDEO_PATH" ||
+          (err?.message && (err.message.includes("No recorded clips") || err.message.includes("No video file")))) {
+        setNoMediaAvailable(true);
+      } else {
+        toast({
+          title: "Transcription failed",
+          description: "Could not transcribe the video. You can still make edits.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsTranscribing(false);
     }
@@ -297,6 +313,25 @@ export default function AiEditor() {
             )}
           </div>
         </div>
+
+        {/* No media banner */}
+        {noMediaAvailable && (
+          <div className="mx-4 mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-amber-800">No recorded video found</p>
+                <p className="text-xs text-amber-700">Record your video clips first, then come back to edit. You can still use the chat to plan your edits.</p>
+                <Link href={`/director/${postId}`}>
+                  <Button size="sm" variant="outline" className="text-xs border-amber-300 text-amber-800 hover:bg-amber-100">
+                    <Video className="h-3 w-3 mr-1" />
+                    Go to Recording
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">

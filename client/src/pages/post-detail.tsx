@@ -6,16 +6,27 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Video, CheckCircle2, Circle, Edit, Sparkles } from "lucide-react";
-import type { Post } from "@shared/schema";
+import type { Post, Clip } from "@shared/schema";
+import { getQueryFn } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function PostDetail() {
   const [, params] = useRoute("/post/:id");
   const postId = params?.id;
+  const { isAuthenticated } = useAuth();
 
   const { data: post, isLoading } = useQuery<Post>({
     queryKey: ["/api/posts", postId],
     enabled: !!postId,
   });
+
+  const { data: clips } = useQuery<Clip[]>({
+    queryKey: ["/api/clips"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: isAuthenticated,
+  });
+
+  const postClips = clips?.filter((c) => c.postId === postId) || [];
 
   if (isLoading) {
     return (
@@ -186,28 +197,52 @@ export default function PostDetail() {
       </div>
 
       {completedShots === totalShots && post.status !== "completed" && (
-        <Card className="border-green-500/50 bg-green-500/5">
+        <Card className={postClips.length > 0 ? "border-green-500/50 bg-green-500/5" : "border-amber-500/50 bg-amber-500/5"}>
           <CardContent className="flex items-center justify-between p-6">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-6 w-6 text-green-500" />
+              {postClips.length > 0 ? (
+                <CheckCircle2 className="h-6 w-6 text-green-500" />
+              ) : (
+                <Video className="h-6 w-6 text-amber-500" />
+              )}
               <div>
-                <p className="font-medium">All shots completed!</p>
-                <p className="text-sm text-muted-foreground">Ready to edit and export your video</p>
+                {postClips.length > 0 ? (
+                  <>
+                    <p className="font-medium">All shots completed!</p>
+                    <p className="text-sm text-muted-foreground">Ready to edit and export your video</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium">Shots marked complete — now record your clips</p>
+                    <p className="text-sm text-muted-foreground">Record your video clips to finish editing</p>
+                  </>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Link href={`/ai-editor/${post.id}`}>
-                <Button data-testid="button-finish-video" className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Finish Video
-                </Button>
-              </Link>
-              <Link href={`/editor/${post.id}`}>
-                <Button variant="outline" data-testid="button-edit-video">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Manual Edit
-                </Button>
-              </Link>
+              {postClips.length > 0 ? (
+                <>
+                  <Link href={`/ai-editor/${post.id}`}>
+                    <Button data-testid="button-finish-video" className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Finish Video
+                    </Button>
+                  </Link>
+                  <Link href={`/editor/${post.id}`}>
+                    <Button variant="outline" data-testid="button-edit-video">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Manual Edit
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <Link href={`/director/${post.id}`}>
+                  <Button className="bg-amber-500 hover:bg-amber-600 text-white">
+                    <Video className="h-4 w-4 mr-2" />
+                    Record Clips
+                  </Button>
+                </Link>
+              )}
             </div>
           </CardContent>
         </Card>
