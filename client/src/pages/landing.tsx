@@ -187,7 +187,7 @@ function Navbar({ onSignUp }: { onSignUp: () => void }) {
                 <span className="text-sm text-white/40 hidden sm:inline">
                   {user?.email?.split('@')[0]}
                 </span>
-                <button onClick={signOut} className="px-5 py-2 rounded-full border border-white/10 text-sm font-medium text-white/70 hover:text-white hover:border-white/20 transition-all duration-300">
+                <button onClick={signOut} className="px-5 py-2 rounded-full text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-all duration-300">
                   Sign out
                 </button>
               </div>
@@ -207,7 +207,7 @@ function Navbar({ onSignUp }: { onSignUp: () => void }) {
       {showSignInPrompt && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSignInPrompt(false)} />
-          <div className="relative bg-[#111111] border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+          <div className="relative bg-[#111111] rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
             <button onClick={() => setShowSignInPrompt(false)} aria-label="Close dialog" className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/5 transition-colors">
               <XMarkIcon className="w-5 h-5 text-white/40" aria-hidden="true" />
             </button>
@@ -255,7 +255,7 @@ function SignUpModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#111111] border border-white/10 rounded-2xl shadow-2xl max-w-3xl w-full p-8 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-[#111111] rounded-2xl shadow-2xl max-w-3xl w-full p-8 max-h-[90vh] overflow-y-auto">
         <button onClick={onClose} aria-label="Close dialog" className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/5 transition-colors z-10">
           <XMarkIcon className="w-5 h-5 text-white/40" aria-hidden="true" />
         </button>
@@ -264,7 +264,7 @@ function SignUpModal({
           <p className="text-white/40 mt-2">Start free, upgrade anytime</p>
         </div>
         <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center p-1 rounded-full bg-white/5 border border-white/8">
+          <div className="inline-flex items-center p-1 rounded-full bg-white/5">
             <button onClick={() => onIntervalChange("monthly")} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${interval === "monthly" ? "bg-white text-black" : "text-white/40"}`}>Monthly</button>
             <button onClick={() => onIntervalChange("yearly")} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${interval === "yearly" ? "bg-white text-black" : "text-white/40"}`}>
               Yearly <span className={`text-xs px-1.5 py-0.5 rounded-full ${interval === "yearly" ? "bg-black/10" : "bg-emerald-500/20 text-emerald-400"}`}>-10%</span>
@@ -273,7 +273,7 @@ function SignUpModal({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {plans.map((plan) => (
-            <div key={plan.id} className={`rounded-2xl border p-5 ${plan.popular ? 'border-white/20 bg-white/[0.03]' : 'border-white/8'}`}>
+            <div key={plan.id} className={`rounded-2xl p-5 ${plan.popular ? 'bg-white/[0.06]' : 'bg-white/[0.03]'}`}>
               {plan.popular && <div className="mb-3"><span className="px-3 py-1 rounded-full text-xs font-semibold bg-white text-black">Most popular</span></div>}
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-white">{plan.name}</h3>
@@ -287,7 +287,7 @@ function SignUpModal({
                 {plan.features.map((f, i) => <li key={i} className="flex items-center gap-2 text-sm text-white/40"><span className="text-emerald-400 text-xs">&#10003;</span>{f}</li>)}
               </ul>
               <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSelectPlan(plan.id); }} disabled={loadingPlan === plan.id}
-                className={`w-full py-3 rounded-full text-sm font-medium transition-all disabled:opacity-50 ${plan.popular ? "bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]" : "bg-white/5 border border-white/10 text-white/80 hover:bg-white/10"}`}>
+                className={`w-full py-3 rounded-full text-sm font-medium transition-all disabled:opacity-50 ${plan.popular ? "bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]" : "bg-white/5 text-white/80 hover:bg-white/10"}`}>
                 {loadingPlan === plan.id ? "Redirecting..." : "Subscribe"}
               </button>
             </div>
@@ -347,7 +347,7 @@ function PricingSection({ onPlanSelect, loadingPlan }: { onPlanSelect: (planId: 
         </div>
 
         <div className="flex justify-center mb-12">
-          <div className="inline-flex items-center p-1 rounded-full bg-white/5 border border-white/8">
+          <div className="inline-flex items-center p-1 rounded-full bg-white/5">
             <button onClick={() => setInterval("monthly")} className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${interval === "monthly" ? "bg-white text-black" : "text-white/40 hover:text-white/60"}`}>Monthly</button>
             <button onClick={() => setInterval("yearly")} className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${interval === "yearly" ? "bg-white text-black" : "text-white/40 hover:text-white/60"}`}>
               Yearly <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${interval === "yearly" ? "bg-black/10" : "bg-emerald-500/20 text-emerald-400"}`}>Save 10%</span>
@@ -357,27 +357,27 @@ function PricingSection({ onPlanSelect, loadingPlan }: { onPlanSelect: (planId: 
 
         <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {plans.map((plan) => (
-            <div key={plan.id} className={`pricing-card rounded-2xl p-6 flex flex-col relative border transition-all duration-300 hover:border-white/15 ${plan.popular ? 'border-white/20 bg-white/[0.05]' : 'border-white/8 bg-white/[0.02]'}`}>
+            <div key={plan.id} className={`pricing-card rounded-2xl p-6 flex flex-col relative transition-all duration-300 ${plan.popular ? 'bg-white/[0.08] hover:bg-white/[0.10]' : 'bg-white/[0.04] hover:bg-white/[0.06]'}`}>
               {plan.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2"><span className="px-3 py-1 rounded-full text-xs font-semibold bg-white text-black">Most popular</span></div>}
-              <div className="mb-4">
+              <div className="mb-5">
                 <span className={`px-2.5 py-1 rounded-full text-xs font-semibold inline-block mb-2 ${plan.popular ? 'bg-white/10 text-white' : 'bg-white/5 text-white/50'}`}>{plan.name}</span>
                 <p className="text-sm font-medium text-white/80">{plan.tagline}</p>
                 <p className="text-white/30 text-xs mt-1">{plan.description}</p>
               </div>
-              <div className="mb-4">
-                <span className="text-3xl font-bold text-white">${interval === "monthly" ? plan.monthlyPrice : plan.yearlyPrice}</span>
-                <span className="text-white/30 text-sm">{plan.id === "free" ? " forever" : ` / ${interval === "yearly" ? "year" : "month"}`}</span>
+              <div className="mb-5">
+                <span className="text-4xl font-bold text-white">${interval === "monthly" ? plan.monthlyPrice : plan.yearlyPrice}</span>
+                <span className="text-white/40 text-sm ml-1">{plan.id === "free" ? "forever" : `/ ${interval === "yearly" ? "year" : "mo"}`}</span>
               </div>
-              <ul className="space-y-2 mb-6 flex-1">
+              <ul className="space-y-2.5 mb-6 flex-1">
                 {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs">
+                  <li key={i} className="flex items-start gap-2 text-sm">
                     <span className="text-emerald-400 mt-0.5">&#10003;</span>
-                    <span className="text-white/40">{f}</span>
+                    <span className="text-white/50">{f}</span>
                   </li>
                 ))}
               </ul>
               <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPlanSelect(plan.id, interval); }} disabled={loadingPlan === plan.id}
-                className={`w-full py-3 rounded-full text-sm font-medium transition-all duration-300 disabled:opacity-50 ${plan.popular ? 'bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'}`}>
+                className={`w-full py-3 rounded-full text-sm font-semibold transition-all duration-300 disabled:opacity-50 ${plan.popular ? 'bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'bg-white/[0.08] text-white hover:bg-white/[0.12]'}`}>
                 {loadingPlan === plan.id ? "Redirecting..." : (plan.id === "free" ? "Get Started Free" : "Subscribe")}
               </button>
             </div>

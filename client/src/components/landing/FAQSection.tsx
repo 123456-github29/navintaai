@@ -79,10 +79,10 @@ export default function FAQSection() {
             <div
               key={i}
               ref={(el) => { itemRefs.current[i] = el; }}
-              className={`rounded-xl border transition-all duration-300 ${
+              className={`rounded-xl transition-all duration-300 ${
                 openIndex === i
-                  ? "border-white/15 bg-white/[0.03]"
-                  : "border-white/8 hover:border-white/12"
+                  ? "bg-white/[0.06]"
+                  : "bg-white/[0.02] hover:bg-white/[0.04]"
               }`}
             >
               <button
@@ -93,7 +93,7 @@ export default function FAQSection() {
                   {faq.q}
                 </span>
                 <span
-                  className="text-white/30 shrink-0 w-6 h-6 rounded-full border border-white/10 flex items-center justify-center transition-all duration-300"
+                  className="text-white/30 shrink-0 w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center transition-all duration-300"
                   style={{ transform: openIndex === i ? "rotate(45deg)" : "none" }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

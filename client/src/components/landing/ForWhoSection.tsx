@@ -71,7 +71,7 @@ function AgenciesAnimation({ active }: { active: boolean }) {
         const sc = STAGE_COLORS[stage];
         const prog = progress[i];
         return (
-          <div key={client.name} className="bg-white/[0.03] rounded-2xl border border-white/8 p-4" style={{ transition: "opacity 0.4s ease", opacity: stage === "Delivered" ? 0.7 : 1 }}>
+          <div key={client.name} className="bg-white/[0.03] rounded-2xl bg-white/[0.02] p-4" style={{ transition: "opacity 0.4s ease", opacity: stage === "Delivered" ? 0.7 : 1 }}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: client.color }}>{client.initials}</div>
               <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ function CreatorsAnimation({ active }: { active: boolean }) {
         </div>
       </div>
       {(phase === "transcript" || phase === "cut" || phase === "done") && (
-        <div className="bg-white/[0.03] border border-white/8 rounded-xl p-3">
+        <div className="bg-white/[0.03] bg-white/[0.02] rounded-xl p-3">
           <div className="flex items-center gap-1.5 mb-2">
             <div className="w-3.5 h-3.5 rounded-full bg-indigo-500 flex items-center justify-center">
               <svg width="7" height="7" viewBox="0 0 16 16" fill="white"><path d="M8 1l2.1 4.9L15 7.1l-3.6 3.2.9 5.1L8 13l-4.3 2.4.9-5.1L1 7.1l4.9-1.2L8 1z" /></svg>
@@ -233,7 +233,7 @@ function CoachesAnimation({ active }: { active: boolean }) {
 
   return (
     <div className="w-full h-full flex flex-col gap-4 p-6 justify-center">
-      <div className="bg-white/[0.03] rounded-2xl border border-white/8 p-4">
+      <div className="bg-white/[0.03] rounded-2xl bg-white/[0.02] p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-400 to-purple-400 flex items-center justify-center">
@@ -262,7 +262,7 @@ function CoachesAnimation({ active }: { active: boolean }) {
       {(phase === "clips" || phase === "done") && (
         <div className="space-y-2">
           {SESSION_CLIPS.slice(0, visibleClips).map((clip, i) => (
-            <div key={i} className="flex items-center gap-2.5 bg-white/[0.03] border border-white/8 rounded-xl px-3 py-2" style={{ animation: "clipAppear 0.4s cubic-bezier(0.34,1.56,0.64,1) both" }}>
+            <div key={i} className="flex items-center gap-2.5 bg-white/[0.03] bg-white/[0.02] rounded-xl px-3 py-2" style={{ animation: "clipAppear 0.4s cubic-bezier(0.34,1.56,0.64,1) both" }}>
               <div className="w-6 h-6 rounded-lg shrink-0 flex items-center justify-center text-white text-[8px] font-bold" style={{ backgroundColor: clip.color }}>{clip.platform}</div>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-medium text-white/80 truncate">{clip.label}</p>
@@ -400,7 +400,7 @@ export default function ForWhoSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div
             ref={mockupRef}
-            className="h-[420px] md:h-[520px] rounded-2xl overflow-hidden relative border border-white/8"
+            className="h-[420px] md:h-[520px] rounded-2xl overflow-hidden relative bg-white/[0.02]"
             style={{ background: "linear-gradient(135deg, #111111 0%, #0a0a0a 100%)" }}
           >
             <div key={activeTab} className="w-full h-full" style={{ animation: "panelFadeIn 0.35s ease-out" }}>
@@ -411,7 +411,7 @@ export default function ForWhoSection() {
           </div>
 
           <div ref={contentRef}>
-            <div className="flex gap-1 mb-8 p-1 rounded-xl bg-white/5 border border-white/8 w-fit">
+            <div className="flex gap-1 mb-8 p-1 rounded-xl bg-white/5 bg-white/[0.02] w-fit">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
