@@ -125,6 +125,7 @@ export default function AiEditor() {
   });
 
   const postClips = clips?.filter((c) => c.postId === postId) || [];
+  const firstClipUrl = (postClips.find((c: any) => c.signedUrl || c.videoPath) as any)?.signedUrl || null;
 
   // Initialize or resume session
   const initSession = useMutation({
@@ -521,10 +522,11 @@ export default function AiEditor() {
         {/* Video Preview Area */}
         <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
           <div className="relative w-full max-w-sm aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl">
-            {postClips.length > 0 && postClips[0].videoPath ? (
+            {firstClipUrl ? (
               <>
                 <video
                   ref={videoRef}
+                  src={firstClipUrl}
                   className="absolute inset-0 w-full h-full object-cover"
                   playsInline
                   loop
