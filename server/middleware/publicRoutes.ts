@@ -20,6 +20,10 @@ const PUBLIC_ROUTES = [
   "POST /api/stripe/webhook",
   "POST /api/terms/accept",
   "GET /api/health/queue",
+  // Recording session endpoints - authenticated via session token in query/body, not user auth
+  "GET /api/recording-sessions/:sid",
+  "GET /api/recording-sessions/:sid/upload-url",
+  "POST /api/recording-sessions/:sid/complete",
 ];
 
 /**
