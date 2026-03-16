@@ -2664,9 +2664,8 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     const { promises: fs } = await import("fs");
     const path = await import("path");
     const { randomUUID } = await import("crypto");
-    const { downloadVideoToTemp } = await import("./lib/supabaseStorage");
+    const { downloadClipToTemp, uploadVideoToStorage } = await import("./lib/supabaseStorage");
     const { executeEdits } = await import("./lib/editExecutor");
-    const { uploadVideoToStorage } = await import("./lib/supabaseStorage");
 
     const jobId = randomUUID();
     const tempDir = path.join(process.cwd(), "uploads", "temp");
@@ -2677,7 +2676,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       const clipPaths: string[] = [];
       for (const clip of clips) {
         if (clip.videoPath) {
-          const clipPath = await downloadVideoToTemp(clip.videoPath, tempDir);
+          const clipPath = await downloadClipToTemp(clip.videoPath, tempDir);
           clipPaths.push(clipPath);
         }
       }
@@ -2727,10 +2726,12 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         "videos",
         editedFilename
       );
-      const storagePath = await uploadVideoToStorage(
+      const uploadResult = await uploadVideoToStorage(
         editedVideoPath,
         userId
       );
+      const storagePath = uploadResult.path;
+      const signedUrl = uploadResult.url;
 
       // Create video record
       const videoId = randomUUID();
@@ -2741,12 +2742,6 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         videoPath: storagePath,
         title: `Edited Video - ${new Date().toLocaleString()}`,
       });
-
-      // Get signed URL for playback
-      const { getVideoSignedUrl } = await import(
-        "./lib/supabaseStorage"
-      );
-      const signedUrl = await getVideoSignedUrl(storagePath);
 
       res.json({
         success: true,

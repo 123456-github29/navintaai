@@ -121,7 +121,20 @@ export default function AiEditor() {
   });
 
   const postClips = Array.isArray(clips) ? clips.filter((c) => c.postId === postId) : [];
-  const firstClipUrl = (postClips.find((c: any) => c.signedUrl || c.videoPath) as any)?.signedUrl || null;
+  const firstClip = postClips.find((c: any) => c.signedUrl || c.videoPath) as any;
+
+  // Fetch fresh signed URL if the clips endpoint didn't return one
+  const { data: fetchedClipUrl } = useQuery<string | null>({
+    queryKey: ["/api/clips", firstClip?.id, "url"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/clips/${firstClip!.id}/url`);
+      const data = await res.json();
+      return data.url || null;
+    },
+    enabled: !!firstClip?.id && !firstClip?.signedUrl,
+  });
+
+  const firstClipUrl = firstClip?.signedUrl || fetchedClipUrl || null;
 
   const initSession = useMutation({
     mutationFn: async () => {
