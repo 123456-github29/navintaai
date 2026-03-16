@@ -255,7 +255,8 @@ export default function Director() {
     setUploadProgress(0);
 
     try {
-      const urlRes = await fetch(`/api/recording-sessions/${activeSessionId}/upload-url?token=${encodeURIComponent(activeSessionToken || "")}`);
+      const mimeType = encodeURIComponent(recordedBlob.type || "video/webm");
+      const urlRes = await fetch(`/api/recording-sessions/${activeSessionId}/upload-url?token=${encodeURIComponent(activeSessionToken || "")}&mimeType=${mimeType}`);
       if (!urlRes.ok) {
         const data = await urlRes.json().catch(() => ({}));
         throw new Error(data.error || "Failed to get upload URL.");
@@ -304,6 +305,9 @@ export default function Director() {
       if (activeShotId) {
         updateShotMutation.mutate({ shotId: activeShotId, completed: true });
       }
+
+      // Invalidate clips cache so AI editor picks up the new clip
+      queryClient.invalidateQueries({ queryKey: ["/api/clips"] });
 
       toast({ title: "Clip uploaded!", description: "Your recording has been saved." });
 

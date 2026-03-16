@@ -116,14 +116,20 @@ export default function AiEditor() {
     enabled: !!postId,
   });
 
+  // Fetch clips for this specific post directly from server (avoids pagination/ordering issues)
   const { data: clips } = useQuery<Clip[]>({
-    queryKey: ["/api/clips"],
+    queryKey: ["/api/clips", postId],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/clips?postId=${postId}`);
+      return await res.json();
+    },
+    enabled: !!postId,
   });
 
-  const postClips = Array.isArray(clips) ? clips.filter((c) => c.postId === postId) : [];
+  const postClips = Array.isArray(clips) ? clips : [];
   const firstClip = postClips.find((c: any) => c.signedUrl || c.videoPath) as any;
 
-  // Fetch fresh signed URL if the clips endpoint didn't return one
+  // Fallback: fetch a fresh signed URL if the clips response didn't include one
   const { data: fetchedClipUrl } = useQuery<string | null>({
     queryKey: ["/api/clips", firstClip?.id, "url"],
     queryFn: async () => {
@@ -132,6 +138,7 @@ export default function AiEditor() {
       return data.url || null;
     },
     enabled: !!firstClip?.id && !firstClip?.signedUrl,
+    retry: 1,
   });
 
   const firstClipUrl = firstClip?.signedUrl || fetchedClipUrl || null;
