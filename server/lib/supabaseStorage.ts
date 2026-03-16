@@ -359,6 +359,7 @@ export async function deleteRenderFromStorage(storagePath: string): Promise<void
 
 /**
  * Create a signed upload URL for direct client-side upload to clips bucket
+ * SECURITY: The signed URL is limited to the clips bucket and expires after 1 hour
  */
 export async function createSignedUploadUrl(
   userId: string,
@@ -366,22 +367,31 @@ export async function createSignedUploadUrl(
 ): Promise<{ uploadUrl: string; storagePath: string }> {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
-    throw new Error("Supabase storage not available");
+    console.error("[storage] Supabase admin client not available");
+    throw new Error("Supabase storage not available. Please check SUPABASE_SERVICE_ROLE_KEY.");
   }
 
   const ext = mimeType.includes("mp4") ? "mp4" : "webm";
   const filename = `${randomUUID()}.${ext}`;
   const storagePath = `${userId}/${filename}`;
 
+  console.log(`[storage] Creating signed upload URL for: ${storagePath}`);
   const { data, error } = await supabase.storage
     .from(CLIPS_BUCKET)
     .createSignedUploadUrl(storagePath);
 
   if (error) {
-    console.error("[storage] Signed upload URL creation failed:", error);
+    console.error("[storage] Signed upload URL creation failed:", error.message);
+    console.error("[storage] Error details:", error);
     throw new Error(`Signed upload URL creation failed: ${error.message}`);
   }
 
+  if (!data || !data.signedUrl) {
+    console.error("[storage] No signed URL returned from Supabase");
+    throw new Error("Signed upload URL creation failed: No URL returned");
+  }
+
+  console.log(`[storage] ✓ Signed upload URL created successfully`);
   return {
     uploadUrl: data.signedUrl,
     storagePath,

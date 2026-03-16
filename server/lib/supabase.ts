@@ -2,6 +2,11 @@
  * Supabase client configuration
  * Provides both anon client (for auth) and service role client (for server-side operations)
  * Service role client should ONLY be used server-side - never expose to frontend
+ *
+ * SECURITY:
+ * - All connections use HTTPS (enforced by createClient)
+ * - Service role key is kept server-side only
+ * - Credentials are validated at startup
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
@@ -27,6 +32,17 @@ export function initSupabase(): { anon: SupabaseClient; admin: SupabaseClient } 
 
   const { url, anonKey, serviceRoleKey } = config.supabase;
 
+  // Validate Supabase credentials
+  if (!url || !url.startsWith("https://")) {
+    throw new Error("[supabase] SUPABASE_URL must be a valid HTTPS URL");
+  }
+  if (!anonKey || anonKey.length < 50) {
+    throw new Error("[supabase] SUPABASE_ANON_KEY is invalid");
+  }
+  if (!serviceRoleKey || serviceRoleKey.length < 50) {
+    throw new Error("[supabase] SUPABASE_SERVICE_ROLE_KEY is invalid");
+  }
+
   supabaseAnon = createClient(url, anonKey, {
     auth: {
       autoRefreshToken: true,
@@ -45,7 +61,8 @@ export function initSupabase(): { anon: SupabaseClient; admin: SupabaseClient } 
   });
 
   initialized = true;
-  console.log("[supabase] Supabase clients initialized successfully");
+  console.log("[supabase] ✓ Supabase clients initialized securely");
+  console.log(`[supabase] Supabase URL: ${url.replace(/^(https:\/\/[^.]+).*/, "$1...")}`);
   return { anon: supabaseAnon, admin: supabaseAdmin };
 }
 

@@ -1774,40 +1774,53 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
 
   app.get("/api/recording-sessions/:sid/upload-url", async (req: any, res) => {
     try {
-      const session = await storage.getRecordingSession(req.params.sid);
+      const sid = req.params.sid;
+      console.log(`[recording-sessions/upload-url] Requesting upload URL for session: ${sid}`);
+
+      const session = await storage.getRecordingSession(sid);
 
       if (!session) {
+        console.error(`[recording-sessions/upload-url] Session not found: ${sid}`);
         return res.status(404).json({ error: "Session not found" });
       }
 
       const token = req.query.token as string;
       if (!token || token !== session.sessionToken) {
+        console.error(`[recording-sessions/upload-url] Invalid token for session: ${sid}`);
         return res.status(403).json({ error: "Invalid session token" });
       }
 
       if (new Date() > new Date(session.expiresAt)) {
+        console.error(`[recording-sessions/upload-url] Session expired: ${sid}`);
         return res.status(410).json({ error: "Session expired" });
       }
 
       if (session.status === "uploaded") {
+        console.warn(`[recording-sessions/upload-url] Session already completed: ${sid}`);
         return res.status(400).json({ error: "Session already completed" });
       }
 
       if (!isStorageAvailable()) {
+        console.error(`[recording-sessions/upload-url] Storage not available`);
         return res.status(503).json({ error: "Storage not available" });
       }
 
+      console.log(`[recording-sessions/upload-url] Creating signed upload URL for userId: ${session.userId}`);
       const { uploadUrl, storagePath } = await createSignedUploadUrl(session.userId);
+      console.log(`[recording-sessions/upload-url] Generated storagePath: ${storagePath}`);
 
+      console.log(`[recording-sessions/upload-url] Updating session status to "paired"`);
       await storage.updateRecordingSession(session.id, {
         status: "paired",
         storagePath,
       });
 
+      console.log(`[recording-sessions/upload-url] ✓ Upload URL ready for session: ${sid}`);
       res.json({ uploadUrl, storagePath });
     } catch (error: any) {
-      console.error("[recording-sessions/upload-url] Error:", error);
-      res.status(500).json({ error: "Failed to generate upload URL" });
+      console.error("[recording-sessions/upload-url] Error:", error.message);
+      console.error("[recording-sessions/upload-url] Stack:", error.stack);
+      res.status(500).json({ error: "Failed to generate upload URL", message: error.message });
     }
   });
 
@@ -1819,35 +1832,56 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
   });
 
   app.post("/api/recording-sessions/:sid/complete", completionLimiter, asyncHandler(async (req: any, res) => {
-    const session = await storage.getRecordingSession(req.params.sid);
+    const sid = req.params.sid;
+    console.log(`[recording-sessions/complete] ===== COMPLETING RECORDING SESSION =====`);
+    console.log(`[recording-sessions/complete] Session ID: ${sid}`);
+
+    const session = await storage.getRecordingSession(sid);
 
     if (!session) {
+      console.error(`[recording-sessions/complete] Session not found: ${sid}`);
       return res.status(404).json({ error: "Session not found" });
     }
 
+    console.log(`[recording-sessions/complete] Session found. Status: ${session.status}`);
     const { storagePath, duration, mimeType, token } = req.body;
+    console.log(`[recording-sessions/complete] storagePath: ${storagePath}, duration: ${duration}, mimeType: ${mimeType}`);
 
     if (!token || token !== session.sessionToken) {
+      console.error(`[recording-sessions/complete] Invalid token for session: ${sid}`);
       return res.status(403).json({ error: "Invalid session token" });
     }
 
-    if (new Date() > new Date(session.expiresAt) && session.status !== "paired") {
-      return res.status(410).json({ error: "Session expired" });
-    }
-
+    // CHECK SESSION STATUS FIRST
     if (session.status === "uploaded") {
+      console.warn(`[recording-sessions/complete] Session already completed: ${sid}`);
       return res.status(400).json({ error: "Session already completed" });
     }
 
+    // THEN CHECK EXPIRATION (sessions must be in "paired" status to complete)
+    if (session.status !== "paired") {
+      console.error(`[recording-sessions/complete] Session not in "paired" status: ${session.status}. Did you call /upload-url first?`);
+      return res.status(400).json({ error: "Session not ready. Please request upload URL first." });
+    }
+
+    if (new Date() > new Date(session.expiresAt)) {
+      console.error(`[recording-sessions/complete] Session expired: ${sid}`);
+      return res.status(410).json({ error: "Session expired. Please request a new session." });
+    }
+
     if (!storagePath || !storagePath.startsWith(session.userId + "/")) {
+      console.error(`[recording-sessions/complete] Invalid storage path: ${storagePath} (expected to start with ${session.userId}/)`);
       return res.status(400).json({ error: "Invalid storage path" });
     }
 
+    console.log(`[recording-sessions/complete] Checking user record for userId: ${session.userId}`);
     let user = await storage.getUser(session.userId);
     if (!user) {
+      console.log(`[recording-sessions/complete] Creating user record for: ${session.userId}`);
       await storage.upsertUser({ id: session.userId, email: null });
     }
 
+    console.log(`[recording-sessions/complete] Creating clip record...`);
     const clip = await storage.createClip({
       postId: session.postId,
       userId: session.userId,
@@ -1856,7 +1890,9 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       duration: duration || 0,
       recordedAt: new Date(),
     });
+    console.log(`[recording-sessions/complete] ✓ Clip created: ${clip.id}`);
 
+    console.log(`[recording-sessions/complete] Updating session status to "uploaded"`);
     await storage.updateRecordingSession(session.id, {
       status: "uploaded",
       clipId: clip.id,
@@ -1865,6 +1901,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       mimeType: mimeType || "video/webm",
     });
 
+    console.log(`[recording-sessions/complete] ===== SESSION COMPLETED SUCCESSFULLY =====`);
     res.json({ clip, session: { id: session.id, status: "uploaded" } });
   }));
 

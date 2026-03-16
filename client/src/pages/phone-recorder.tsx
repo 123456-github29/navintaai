@@ -230,13 +230,20 @@ export default function PhoneRecorder() {
     setUploadProgress(0);
 
     try {
+      // STEP 1: Get upload URL
+      console.log(`[upload] Requesting upload URL for session: ${sid}`);
       const urlRes = await fetch(`/api/recording-sessions/${sid}/upload-url?token=${encodeURIComponent(sessionToken || "")}`);
       if (!urlRes.ok) {
         const data = await urlRes.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to get upload URL. Session may have expired.");
+        const errorMsg = data.message || data.error || `Server error: ${urlRes.status}`;
+        console.error(`[upload] Failed to get upload URL:`, errorMsg);
+        throw new Error(`Failed to get upload URL: ${errorMsg}`);
       }
       const { uploadUrl, storagePath } = await urlRes.json();
+      console.log(`[upload] ✓ Got upload URL. Storage path: ${storagePath}`);
 
+      // STEP 2: Upload video blob to Supabase
+      console.log(`[upload] Uploading ${recordedBlob.size} bytes (${recordedBlob.type})...`);
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("PUT", uploadUrl, true);
@@ -244,25 +251,38 @@ export default function PhoneRecorder() {
 
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
-            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+            const progress = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(progress);
+            console.log(`[upload] Progress: ${progress}%`);
           }
         };
 
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
+            console.log(`[upload] ✓ Video uploaded successfully (${xhr.status})`);
             resolve();
           } else {
+            console.error(`[upload] Upload failed with status ${xhr.status}`);
+            console.error(`[upload] Response:`, xhr.responseText);
             reject(new Error(`Upload failed with status ${xhr.status}`));
           }
         };
 
-        xhr.onerror = () => reject(new Error("Upload failed. Check your connection."));
-        xhr.ontimeout = () => reject(new Error("Upload timed out. Please try again."));
+        xhr.onerror = () => {
+          console.error(`[upload] Network error during upload`);
+          reject(new Error("Upload failed. Check your connection."));
+        };
+        xhr.ontimeout = () => {
+          console.error(`[upload] Upload timed out`);
+          reject(new Error("Upload timed out. Please try again."));
+        };
         xhr.timeout = 120000;
 
         xhr.send(recordedBlob);
       });
 
+      // STEP 3: Complete the session
+      console.log(`[upload] Finalizing session...`);
       const durationSec = Math.max(1, Math.round((Date.now() - recordingStartTimeRef.current) / 1000));
       const completeRes = await fetch(`/api/recording-sessions/${sid}/complete`, {
         method: "POST",
@@ -277,16 +297,20 @@ export default function PhoneRecorder() {
 
       if (!completeRes.ok) {
         const data = await completeRes.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to finalize upload.");
+        const errorMsg = data.message || data.error || `Server error: ${completeRes.status}`;
+        console.error(`[upload] Failed to complete session:`, errorMsg);
+        throw new Error(`Failed to finalize upload: ${errorMsg}`);
       }
 
+      console.log(`[upload] ✓ Session completed successfully`);
       stopAllTracks();
       setPageState("success");
     } catch (err: any) {
+      console.error(`[upload] Error:`, err.message);
       setErrorMessage(err.message || "Upload failed. Please try again.");
       setPageState("error");
     }
-  }, [recordedBlob, sid]);
+  }, [recordedBlob, sid, sessionToken]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
