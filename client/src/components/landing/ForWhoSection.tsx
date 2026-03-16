@@ -380,28 +380,33 @@ export default function ForWhoSection() {
       <section
         ref={ctaRef}
         className="relative py-32 px-6 text-center overflow-hidden"
-        style={{ background: "#000000" }}
+        style={{ background: "#FFFFFF" }}
       >
+        <div className="hr-fade absolute top-0 left-0 right-0" />
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full" style={{ background: "radial-gradient(circle, rgba(168,85,247,0.08) 0%, transparent 60%)", filter: "blur(80px)" }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full" style={{ background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)", filter: "blur(80px)" }} />
         </div>
-        <h2 ref={ctaHeadingRef} className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white relative z-10">
+        <h2 ref={ctaHeadingRef} className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 relative z-10">
           Your AI director
           <br />
-          <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent">is ready.</span>
+          <span className="text-indigo-600">is ready.</span>
         </h2>
-        <p className="text-white/40 max-w-lg mx-auto mt-6 text-lg relative z-10">
+        <p className="text-gray-500 max-w-lg mx-auto mt-6 text-lg relative z-10">
           From idea to export in minutes. No editing skills required.
         </p>
       </section>
 
       {/* Tabbed use cases */}
-      <section ref={splitRef} className="py-24 px-6 max-w-6xl mx-auto">
+      <section ref={splitRef} className="py-24 px-6 max-w-6xl mx-auto" style={{ background: "#FFFFFF" }}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div
             ref={mockupRef}
-            className="h-[420px] md:h-[520px] rounded-2xl overflow-hidden relative border border-white/8"
-            style={{ background: "linear-gradient(135deg, #111111 0%, #0a0a0a 100%)" }}
+            className="h-[420px] md:h-[520px] rounded-2xl overflow-hidden relative"
+            style={{
+              background: "linear-gradient(135deg, #111111 0%, #0a0a0a 100%)",
+              border: "1px solid rgba(0,0,0,0.1)",
+              boxShadow: "0 8px 40px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06)",
+            }}
           >
             <div key={activeTab} className="w-full h-full" style={{ animation: "panelFadeIn 0.35s ease-out" }}>
               {activeTab === "agencies" && <AgenciesAnimation active={activeTab === "agencies"} />}
@@ -411,15 +416,16 @@ export default function ForWhoSection() {
           </div>
 
           <div ref={contentRef}>
-            <div className="flex gap-1 mb-8 p-1 rounded-xl bg-white/5 border border-white/8 w-fit">
+            <p className="section-label mb-5">Who it's for</p>
+            <div className="flex gap-1 mb-8 p-1.5 rounded-xl bg-gray-100 border border-gray-200 w-fit">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     activeTab === tab.id
-                      ? "bg-white text-black"
-                      : "text-white/40 hover:text-white/60"
+                      ? "bg-white text-gray-900 shadow-sm border border-gray-200"
+                      : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   {tab.label}
@@ -427,10 +433,10 @@ export default function ForWhoSection() {
               ))}
             </div>
             <div key={activeTab} style={{ animation: "contentFade 0.3s ease-out" }}>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-4" style={{ textWrap: "balance" }}>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4" style={{ textWrap: "balance" }}>
                 {content.heading}
               </h2>
-              <p className="text-white/40 leading-relaxed text-base">
+              <p className="text-gray-500 leading-relaxed text-base">
                 {content.body}
               </p>
             </div>

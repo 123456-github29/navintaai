@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@500&display=swap');
 
@@ -1104,24 +1104,535 @@
   .ai-pulse {
     animation: none !important;
   }
-  
+
   .film-grain::before {
     display: none !important;
   }
-  
+
   .cinematic-vignette::after {
     display: none !important;
   }
-  
+
   .light-sweep {
     display: none !important;
   }
-  
+
   .ambient-light {
     display: none !important;
   }
-  
+
   .text-breathe {
     letter-spacing: normal !important;
+  }
+}
+
+/* ============================================
+   LIGHT THEME LANDING DESIGN SYSTEM
+   Clean, editorial, trustworthy
+   ============================================ */
+
+/* Scroll progress bar */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #4F46E5, #7C3AED);
+  z-index: 9999;
+  transform-origin: left;
+  transition: none;
+}
+
+/* Section reveal utility - used with GSAP */
+.section-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+/* Hero highlight marker effect */
+.hero-highlight {
+  position: relative;
+  display: inline-block;
+}
+
+.hero-highlight-bg {
+  position: absolute;
+  inset: -4px -8px;
+  border-radius: 8px;
+  background: linear-gradient(120deg, rgba(99,102,241,0.12) 0%, rgba(139,92,246,0.10) 100%);
+  transform-origin: left center;
+  z-index: 0;
+}
+
+.hero-highlight-text {
+  position: relative;
+  z-index: 1;
+}
+
+/* Animated underline for key text */
+@keyframes draw-underline {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.animated-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.animated-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  height: 2px;
+  width: 0;
+  background: #4F46E5;
+  border-radius: 2px;
+  animation: draw-underline 1.2s cubic-bezier(0.16, 1, 0.3, 1) 1.8s forwards;
+}
+
+/* Floating animation for hero elements */
+@keyframes float-up-down {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+.float-animation {
+  animation: float-up-down 6s ease-in-out infinite;
+}
+
+.float-animation-slow {
+  animation: float-up-down 8s ease-in-out infinite;
+  animation-delay: -2s;
+}
+
+.float-animation-fast {
+  animation: float-up-down 4s ease-in-out infinite;
+  animation-delay: -1s;
+}
+
+/* Shimmer/shine card hover effect */
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  transition: none;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-shine:hover::before {
+  animation: card-shine-sweep 0.7s ease-out;
+}
+
+@keyframes card-shine-sweep {
+  from { left: -100%; }
+  to { left: 150%; }
+}
+
+/* Light-theme card hover */
+.light-card-hover {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.light-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-color: rgba(79, 70, 229, 0.2);
+}
+
+/* Indigo glow button */
+.btn-indigo {
+  background: #4F46E5;
+  color: white;
+  border-radius: 9999px;
+  font-weight: 600;
+  transition: background 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+
+.btn-indigo:hover {
+  background: #4338CA;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-indigo:active {
+  transform: translateY(0px) scale(0.98);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+}
+
+/* Light outline button */
+.btn-outline-light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  color: #374151;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+  font-weight: 500;
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease, transform 200ms ease;
+}
+
+.btn-outline-light:hover {
+  background: white;
+  border-color: rgba(79, 70, 229, 0.3);
+  color: #111827;
+  transform: translateY(-1px);
+}
+
+/* Number counter pulse on entry */
+@keyframes counter-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.counter-pop {
+  animation: counter-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Section heading reveal - words slide up */
+@keyframes word-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(30px) rotate(2deg);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+    filter: blur(0px);
+  }
+}
+
+/* Waveform bar animation */
+@keyframes waveBar {
+  0% { transform: scaleY(0.5); }
+  100% { transform: scaleY(1); }
+}
+
+/* Clip slide in */
+@keyframes clipSlide {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Caption pop */
+@keyframes captionPop {
+  from { opacity: 0; transform: scale(0.8) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Caption badge */
+@keyframes captionBadge {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Export appear */
+@keyframes exportAppear {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Clip appear */
+@keyframes clipAppear {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Stagger fade up - used for list items */
+@keyframes stagger-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-fade-up {
+  animation: stagger-fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* Magnetic button effect setup */
+.magnetic-btn {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Light section backgrounds */
+.section-white { background: #FFFFFF; }
+.section-off-white { background: #F9FAFB; }
+.section-blue-tint { background: #F5F7FF; }
+.section-dark-navy { background: #0D1117; }
+
+/* Divider lines */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+}
+
+/* Tag/pill light style */
+.pill-light {
+  background: rgba(79, 70, 229, 0.08);
+  border: 1px solid rgba(79, 70, 229, 0.15);
+  color: #4F46E5;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+}
+
+/* Tilt card on hover (3D) */
+.tilt-card {
+  transform-style: preserve-3d;
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Step number badge */
+.step-number {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  color: #4F46E5;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Aurora/gradient mesh background */
+@keyframes aurora-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+    opacity: 0.6;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 0.8;
+  }
+}
+
+.aurora-bg {
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.08) 0%,
+    rgba(139, 92, 246, 0.06) 25%,
+    rgba(59, 130, 246, 0.05) 50%,
+    rgba(99, 102, 241, 0.07) 75%,
+    rgba(139, 92, 246, 0.08) 100%
+  );
+  background-size: 300% 300%;
+  animation: aurora-shift 15s ease-in-out infinite;
+}
+
+/* Spotlight cursor effect */
+.spotlight-section {
+  position: relative;
+  --spotlight-x: 50%;
+  --spotlight-y: 50%;
+}
+
+.spotlight-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    600px circle at var(--spotlight-x) var(--spotlight-y),
+    rgba(99, 102, 241, 0.04),
+    transparent 40%
+  );
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.spotlight-section:hover::after {
+  opacity: 1;
+}
+
+/* Metric card highlight */
+.metric-card {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: border-color 250ms ease, box-shadow 250ms ease;
+}
+
+.metric-card:hover {
+  border-color: rgba(79, 70, 229, 0.2);
+  box-shadow: 0 4px 20px rgba(79, 70, 229, 0.08);
+}
+
+/* Pricing card - light theme */
+.pricing-card-light {
+  background: white;
+  border: 1.5px solid rgba(0, 0, 0, 0.07);
+  border-radius: 1.5rem;
+  padding: 1.75rem;
+  transition: transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+}
+
+.pricing-card-light:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
+}
+
+.pricing-card-light.featured {
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.15), 0 8px 32px rgba(79, 70, 229, 0.12);
+}
+
+/* FAQ item light */
+.faq-item-light {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 0.875rem;
+  overflow: hidden;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.faq-item-light:hover {
+  border-color: rgba(79, 70, 229, 0.2);
+}
+
+.faq-item-light.open {
+  border-color: rgba(79, 70, 229, 0.25);
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.07);
+}
+
+/* Gradient text - USE SPARINGLY - only for accent labels not main headlines */
+.accent-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #4F46E5;
+}
+
+/* Light badge */
+.badge-light {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(79, 70, 229, 0.15);
+  backdrop-filter: blur(8px);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #374151;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Section label */
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6366F1;
+  opacity: 0.8;
+}
+
+/* Large feature number */
+.feature-number {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #9CA3AF;
+  letter-spacing: 0.05em;
+}
+
+/* Horizontal rule with fade */
+.hr-fade {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.07), transparent);
+  border: none;
+  margin: 0;
+}
+
+/* Smooth backdrop for light navbar */
+.navbar-light {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 16px rgba(0, 0, 0, 0.04);
+}
+
+.navbar-light-transparent {
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom: none;
+  box-shadow: none;
+}
+
+/* Word rotation animation for hero */
+@keyframes word-flip-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) rotateX(-40deg);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes word-flip-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) rotateX(40deg);
+    filter: blur(2px);
+  }
+}
+
+/* Border glow on focus/hover */
+.border-glow-indigo:focus,
+.border-glow-indigo:focus-within {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* Smooth transitions for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animated-underline::after,
+  .float-animation,
+  .float-animation-slow,
+  .float-animation-fast,
+  .aurora-bg,
+  .card-shine::before {
+    animation: none !important;
+    transition: none !important;
   }
 }

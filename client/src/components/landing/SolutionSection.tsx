@@ -503,13 +503,14 @@ export default function SolutionSection() {
           to { transform: scaleY(1.3); }
         }
       `}</style>
-      <section ref={sectionRef} className="py-32 px-6" style={{ background: "#0a0a0a" }}>
+      <section ref={sectionRef} className="py-32 px-6" style={{ background: "#F7F8FC" }}>
         <div className="max-w-6xl mx-auto">
           <div ref={headingRef} className="max-w-2xl mb-16">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white mb-5">
+            <p className="section-label mb-4">Features</p>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 mb-5">
               See it in action.
             </h2>
-            <p className="text-lg text-white/40 leading-relaxed">
+            <p className="text-lg text-gray-500 leading-relaxed">
               Watch how Navinta AI transforms your ideas into polished, publish-ready videos — no editing experience required.
             </p>
           </div>
@@ -517,16 +518,20 @@ export default function SolutionSection() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div ref={card1Ref}>
               <div
-                className="h-[540px] rounded-2xl p-5 flex flex-col relative overflow-hidden border border-white/8"
-                style={{ background: "linear-gradient(180deg, #111111 0%, #0d0d0d 100%)" }}
+                className="h-[540px] rounded-2xl p-5 flex flex-col relative overflow-hidden"
+                style={{
+                  background: "linear-gradient(180deg, #111111 0%, #0d0d0d 100%)",
+                  border: "1px solid rgba(0,0,0,0.12)",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+                }}
               >
                 <PlanningAnimation />
               </div>
               <div className="mt-5 px-1">
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
                   AI-powered planning
                 </h3>
-                <p className="text-white/40 text-sm leading-relaxed">
+                <p className="text-gray-500 text-sm leading-relaxed">
                   Describe your goal and Navinta builds a shot-by-shot plan — hooks, transitions, and timing included.
                 </p>
               </div>
@@ -534,16 +539,20 @@ export default function SolutionSection() {
 
             <div ref={card2Ref}>
               <div
-                className="h-[540px] rounded-2xl p-5 flex flex-col relative overflow-hidden border border-white/8"
-                style={{ background: "linear-gradient(180deg, #111111 0%, #0d0d0d 100%)" }}
+                className="h-[540px] rounded-2xl p-5 flex flex-col relative overflow-hidden"
+                style={{
+                  background: "linear-gradient(180deg, #111111 0%, #0d0d0d 100%)",
+                  border: "1px solid rgba(0,0,0,0.12)",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+                }}
               >
                 <DirectorAnimation />
               </div>
               <div className="mt-5 px-1">
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
                   Edit like a director
                 </h3>
-                <p className="text-white/40 text-sm leading-relaxed">
+                <p className="text-gray-500 text-sm leading-relaxed">
                   Tell Navinta what to change in plain language — it tightens cuts, adds b-roll, and polishes your video automatically.
                 </p>
               </div>

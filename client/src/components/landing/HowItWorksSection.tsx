@@ -8,21 +8,25 @@ const steps = [
   {
     number: "01",
     title: "Describe your goal",
+    desc: "Tell the AI what kind of video you need — platform, tone, length.",
     visual: "prompt",
   },
   {
     number: "02",
     title: "Get a shot-by-shot plan",
+    desc: "Receive a structured shot list with timing, messaging, and flow.",
     visual: "plan",
   },
   {
     number: "03",
     title: "Record with AI guidance",
+    desc: "Director Mode guides you through each shot in real time.",
     visual: "record",
   },
   {
     number: "04",
     title: "Export polished video",
+    desc: "Auto-edited, captioned, and formatted for every platform.",
     visual: "export",
   },
 ];
@@ -30,18 +34,18 @@ const steps = [
 function PromptVisual() {
   return (
     <div className="space-y-4">
-      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-        <div className="text-[10px] text-white/30 font-medium uppercase tracking-wider mb-2">Describe your video</div>
-        <div className="text-sm text-white/80 font-medium">30-second brand intro for Instagram Reels</div>
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+        <div className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">Describe your video</div>
+        <div className="text-sm text-gray-800 font-medium leading-snug">30-second brand intro for Instagram Reels</div>
       </div>
       <div className="flex gap-2 flex-wrap">
         {["Instagram Reel", "9:16", "30s", "Professional"].map((tag) => (
-          <span key={tag} className="px-3 py-1.5 rounded-full bg-white/5 border border-white/8 text-[11px] text-white/50 font-medium">
+          <span key={tag} className="pill-light">
             {tag}
           </span>
         ))}
       </div>
-      <button className="w-full bg-white text-black rounded-full py-3 text-sm font-semibold">
+      <button className="w-full bg-indigo-600 text-white rounded-full py-3 text-sm font-semibold hover:bg-indigo-700 transition-colors">
         Generate plan →
       </button>
     </div>
@@ -58,13 +62,15 @@ function PlanVisual() {
         { num: 4, label: "Social proof", time: "0:15 – 0:22" },
         { num: 5, label: "Call to action", time: "0:22 – 0:30" },
       ].map((shot) => (
-        <div key={shot.num} className="flex items-center gap-3 bg-white/[0.03] border border-white/8 rounded-xl px-4 py-3">
-          <span className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0">
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <div key={shot.num} className="flex items-center gap-3 bg-white border border-gray-100 shadow-sm rounded-xl px-4 py-3">
+          <span className="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 text-[11px] font-bold flex items-center justify-center shrink-0">
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </span>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium text-white/80">{shot.label}</div>
-            <div className="text-[10px] text-white/30">{shot.time}</div>
+            <div className="text-xs font-semibold text-gray-800">{shot.label}</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">{shot.time}</div>
           </div>
         </div>
       ))}
@@ -75,7 +81,8 @@ function PlanVisual() {
 function RecordVisual() {
   return (
     <div className="space-y-4">
-      <div className="rounded-xl overflow-hidden relative bg-gradient-to-br from-[#1a1a2e] to-[#16213e]" style={{ aspectRatio: "4/3" }}>
+      {/* Viewfinder - keep dark to look like camera UI */}
+      <div className="rounded-2xl overflow-hidden relative" style={{ aspectRatio: "4/3", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)" }}>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
             <div className="w-16 h-16 rounded-full border-[3px] border-white/20 flex items-center justify-center">
@@ -87,16 +94,16 @@ function RecordVisual() {
         </div>
         <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2.5 py-1">
           <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-white text-[9px] font-medium">REC</span>
+          <span className="text-white text-[9px] font-semibold">REC</span>
         </div>
         <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
           <span className="text-white/90 text-[10px] font-medium bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1">0:02 / 0:03</span>
-          <span className="text-white text-[10px] font-medium bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1">Shot 1: Hook</span>
+          <span className="text-white text-[10px] font-semibold bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1">Shot 1: Hook</span>
         </div>
       </div>
       <div className="flex gap-2">
-        <button className="flex-1 py-2.5 rounded-xl text-xs font-medium text-white/60 border border-white/10 bg-white/5">Retake</button>
-        <button className="flex-1 py-2.5 rounded-xl text-xs font-medium text-black bg-white">Next shot →</button>
+        <button className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-gray-600 border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors">Retake</button>
+        <button className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm">Next shot →</button>
       </div>
     </div>
   );
@@ -105,7 +112,8 @@ function RecordVisual() {
 function ExportVisual() {
   return (
     <div className="space-y-4">
-      <div className="rounded-xl overflow-hidden relative bg-gradient-to-br from-[#0f172a] to-[#1e293b]" style={{ aspectRatio: "4/3" }}>
+      {/* Export preview - keep darker to look like video UI */}
+      <div className="rounded-2xl overflow-hidden relative" style={{ aspectRatio: "4/3", background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" }}>
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
           <div className="flex gap-1 items-end">
             {[40, 65, 50, 75, 55, 70, 45, 60, 80, 50, 65, 55].map((h, i) => (
@@ -113,20 +121,24 @@ function ExportVisual() {
             ))}
           </div>
           <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polygon points="5 3 19 12 5 21 5 3" fill="white" opacity="0.9"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <polygon points="5 3 19 12 5 21 5 3" fill="white" opacity="0.9"/>
+            </svg>
           </div>
         </div>
         <div className="absolute top-3 left-3 flex items-center gap-1.5">
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          <span className="text-[9px] text-emerald-400 font-medium">Complete</span>
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8l4 4 6-7" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="text-[9px] text-emerald-400 font-semibold">Complete</span>
         </div>
       </div>
       <div className="flex gap-2">
         {["9:16", "1:1", "16:9"].map((fmt) => (
-          <span key={fmt} className="flex-1 text-center py-2 rounded-lg bg-white/5 border border-white/8 text-[10px] text-white/50 font-medium">{fmt}</span>
+          <span key={fmt} className="flex-1 text-center py-2 rounded-xl bg-white border border-gray-200 text-[11px] text-gray-600 font-semibold shadow-sm">{fmt}</span>
         ))}
       </div>
-      <button className="w-full py-3 rounded-full text-sm font-semibold text-black bg-white">
+      <button className="w-full py-3 rounded-full text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm">
         Export video →
       </button>
     </div>
@@ -136,6 +148,7 @@ function ExportVisual() {
 export default function HowItWorksSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const [activeStep, setActiveStep] = useState(0);
 
   useEffect(() => {
@@ -143,7 +156,16 @@ export default function HowItWorksSection() {
     if (reduced) return;
 
     const ctx = gsap.context(() => {
-      // Pin the section and scrub through steps
+      // Header reveal
+      gsap.from(headerRef.current, {
+        y: 40,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out",
+        scrollTrigger: { trigger: sectionRef.current, start: "top 80%" },
+      });
+
+      // Pin and scrub through steps
       ScrollTrigger.create({
         trigger: sectionRef.current,
         start: "top top",
@@ -168,59 +190,68 @@ export default function HowItWorksSection() {
       ref={sectionRef}
       id="showcase"
       className="min-h-screen flex items-center relative overflow-hidden py-20"
-      style={{ background: "#000000" }}
+      style={{ background: "#FAFBFF" }}
     >
-      {/* Background accent */}
+      {/* Very subtle background accent */}
       <div className="absolute inset-0 pointer-events-none">
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full"
           style={{
-            background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)",
+            background: "radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 60%)",
             filter: "blur(80px)",
           }}
         />
       </div>
 
       <div ref={containerRef} className="max-w-6xl mx-auto px-6 w-full relative z-10">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white mb-4">
+        <div ref={headerRef} className="text-center mb-16">
+          <p className="section-label mb-4">How it works</p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 mb-4">
             Four steps. One video.
           </h2>
-          <p className="text-lg text-white/40 max-w-lg mx-auto">
+          <p className="text-lg text-gray-500 max-w-lg mx-auto">
             Watch your idea become a polished, publish-ready video.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
           {/* Steps list */}
           <div className="space-y-2">
             {steps.map((step, i) => (
               <button
                 key={step.number}
                 onClick={() => setActiveStep(i)}
-                className={`w-full text-left p-6 rounded-2xl transition-all duration-500 border ${
+                className={`w-full text-left p-5 rounded-2xl transition-all duration-400 border ${
                   i === activeStep
-                    ? "bg-white/[0.05] border-white/10"
-                    : "bg-transparent border-transparent hover:bg-white/[0.02]"
+                    ? "bg-white border-indigo-100 shadow-md shadow-indigo-50"
+                    : "bg-transparent border-transparent hover:bg-white/60 hover:border-gray-100"
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <span className={`text-sm font-mono font-bold transition-colors duration-500 ${
-                    i === activeStep ? "text-indigo-400" : "text-white/20"
+                  <span className={`text-xs font-mono font-bold transition-colors duration-400 ${
+                    i === activeStep ? "text-indigo-500" : "text-gray-300"
                   }`}>
                     {step.number}
                   </span>
-                  <span className={`text-lg font-semibold transition-colors duration-500 ${
-                    i === activeStep ? "text-white" : "text-white/30"
-                  }`}>
-                    {step.title}
-                  </span>
+                  <div className="flex-1">
+                    <span className={`text-base font-semibold transition-colors duration-400 block ${
+                      i === activeStep ? "text-gray-900" : "text-gray-400"
+                    }`}>
+                      {step.title}
+                    </span>
+                    {i === activeStep && (
+                      <span className="text-sm text-gray-500 mt-0.5 block">{step.desc}</span>
+                    )}
+                  </div>
+                  {i === activeStep && (
+                    <div className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+                  )}
                 </div>
                 {/* Progress bar */}
                 {i === activeStep && (
-                  <div className="mt-4 ml-9">
-                    <div className="h-0.5 bg-white/5 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full w-full" />
+                  <div className="mt-3 ml-[2.25rem]">
+                    <div className="h-0.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-400 rounded-full w-full" />
                     </div>
                   </div>
                 )}
@@ -228,22 +259,32 @@ export default function HowItWorksSection() {
             ))}
           </div>
 
-          {/* Visual */}
+          {/* Visual panel */}
           <div className="relative">
             <div
-              className="rounded-2xl border border-white/10 bg-[#111111] p-6 min-h-[480px] flex flex-col justify-center"
+              className="rounded-2xl bg-white p-6 min-h-[480px] flex flex-col justify-center relative overflow-hidden"
               style={{
-                boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(99,102,241,0.05)",
+                border: "1px solid rgba(0,0,0,0.07)",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.05), 0 20px 60px rgba(99,102,241,0.04)",
               }}
             >
+              {/* Step label in corner */}
+              <div className="absolute top-4 right-4">
+                <span className="feature-number">{`Step ${activeStep + 1} of 4`}</span>
+              </div>
+
               {visuals.map((visual, i) => (
                 <div
                   key={i}
                   className="absolute inset-6 flex flex-col justify-center"
                   style={{
                     opacity: i === activeStep ? 1 : 0,
-                    transform: i === activeStep ? "translateY(0) scale(1)" : "translateY(20px) scale(0.98)",
-                    transition: "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
+                    transform: i === activeStep
+                      ? "translateY(0) scale(1)"
+                      : i < activeStep
+                        ? "translateY(-16px) scale(0.97)"
+                        : "translateY(16px) scale(0.97)",
+                    transition: "all 0.55s cubic-bezier(0.4, 0, 0.2, 1)",
                     pointerEvents: i === activeStep ? "auto" : "none",
                   }}
                 >

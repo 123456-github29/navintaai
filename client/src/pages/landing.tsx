@@ -6,6 +6,31 @@ import { useAuth } from "@/hooks/useAuth";
 import { ContactModal } from "@/components/ContactModal";
 import { Key, Loader2, ArrowRight, Mail, User, CheckCircle, X, Check } from "lucide-react";
 
+function ScrollProgressBar() {
+  const barRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const update = () => {
+      const scrolled = window.scrollY;
+      const total = document.body.scrollHeight - window.innerHeight;
+      const progress = total > 0 ? scrolled / total : 0;
+      if (barRef.current) {
+        barRef.current.style.transform = `scaleX(${progress})`;
+      }
+    };
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
+  return (
+    <div
+      ref={barRef}
+      className="scroll-progress-bar"
+      style={{ transform: "scaleX(0)" }}
+    />
+  );
+}
+
 gsap.registerPlugin(ScrollTrigger);
 
 import HeroSection from "@/components/landing/HeroSection";
@@ -37,7 +62,8 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen text-white antialiased" style={{ fontFamily: "'Inter', sans-serif", background: "#000000" }}>
+    <div className="min-h-screen text-gray-900 antialiased" style={{ fontFamily: "'Inter', sans-serif", background: "#FFFFFF" }}>
+      <ScrollProgressBar />
       <Navbar onJoinWaitlist={() => setShowWaitlistModal(true)} onGetStarted={handleGetStarted} waitlistApproved={waitlistApproved} />
       <HeroSection onGetStarted={handleGetStarted} waitlistApproved={waitlistApproved} />
       <ProblemSection />
@@ -72,26 +98,26 @@ function Navbar({ onJoinWaitlist, onGetStarted, waitlistApproved }: { onJoinWait
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
-            ? "py-3 bg-black/70 backdrop-blur-2xl border-b border-white/[0.06]"
-            : "py-5 bg-transparent"
+            ? "py-3 navbar-light"
+            : "py-5 navbar-light-transparent"
         }`}
       >
         <div className="max-w-7xl mx-auto flex justify-between items-center px-6 md:px-12">
-          <div className="flex items-center gap-2.5 text-lg font-semibold tracking-tight text-white">
+          <div className="flex items-center gap-2.5 text-lg font-semibold tracking-tight text-gray-900">
             <img src="/navinta-logo.png" alt="Navinta AI" className="h-7 w-7" />
             <span className="logo-text">Navinta AI</span>
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-[0.85rem] font-medium">
-            <a href="#showcase" className="text-white/40 hover:text-white transition-colors duration-300">Features</a>
-            <a href="#pricing" className="text-white/40 hover:text-white transition-colors duration-300">Pricing</a>
-            <button onClick={() => setShowContactModal(true)} className="text-white/40 hover:text-white transition-colors duration-300">
+            <a href="#showcase" className="text-gray-500 hover:text-gray-900 transition-colors duration-200">Features</a>
+            <a href="#pricing" className="text-gray-500 hover:text-gray-900 transition-colors duration-200">Pricing</a>
+            <button onClick={() => setShowContactModal(true)} className="text-gray-500 hover:text-gray-900 transition-colors duration-200">
               Contact
             </button>
             {!waitlistApproved && (
-              <button onClick={onJoinWaitlist} className="text-white/40 hover:text-white transition-colors duration-300">
+              <button onClick={onJoinWaitlist} className="text-gray-500 hover:text-gray-900 transition-colors duration-200">
                 Join Waitlist
               </button>
             )}
@@ -103,19 +129,19 @@ function Navbar({ onJoinWaitlist, onGetStarted, waitlistApproved }: { onJoinWait
                 {waitlistApproved && (
                   <button
                     onClick={() => setLocation("/dashboard")}
-                    className="px-5 py-2 rounded-full bg-white text-black text-sm font-semibold hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] transition-all duration-300"
+                    className="px-5 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-all duration-200"
                   >
                     Dashboard
                   </button>
                 )}
-                <button onClick={signOut} className="px-5 py-2 rounded-full border border-white/10 text-sm font-medium text-white/50 hover:text-white hover:border-white/20 transition-all duration-300">
+                <button onClick={signOut} className="px-5 py-2 rounded-full border border-gray-200 text-sm font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 transition-all duration-200">
                   Sign out
                 </button>
               </div>
             ) : (
               <button
                 onClick={onGetStarted}
-                className="px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all duration-300"
+                className="px-6 py-2.5 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 hover:shadow-[0_4px_16px_rgba(79,70,229,0.3)] transition-all duration-200"
                 data-testid="button-login"
               >
                 {waitlistApproved ? "Sign in" : "Get Early Access"}
@@ -432,22 +458,27 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
   };
 
   return (
-    <section id="pricing" className="relative py-24 px-6" style={{ background: "#000000" }}>
+    <section id="pricing" className="relative py-28 px-6" style={{ background: "#F7F8FC" }}>
+      {/* Subtle top border */}
+      <div className="hr-fade absolute top-0 left-0 right-0" />
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4">
+          <p className="section-label mb-4">Pricing</p>
+          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-4">
             Simple, transparent pricing
           </h2>
-          <p className="text-lg text-white/35 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
             Choose the plan that fits your creative workflow. Upgrade or downgrade anytime.
           </p>
 
           <div className="flex justify-center mt-8">
-            <div className="inline-flex items-center p-1 rounded-full bg-white/[0.03] border border-white/[0.06]">
+            <div className="inline-flex items-center p-1.5 rounded-full bg-white border border-gray-200 shadow-sm">
               <button
                 onClick={() => setInterval("monthly")}
                 className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                  interval === "monthly" ? "bg-white text-black" : "text-white/40 hover:text-white/60"
+                  interval === "monthly"
+                    ? "bg-gray-900 text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 Monthly
@@ -455,12 +486,16 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
               <button
                 onClick={() => setInterval("yearly")}
                 className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                  interval === "yearly" ? "bg-white text-black" : "text-white/40 hover:text-white/60"
+                  interval === "yearly"
+                    ? "bg-gray-900 text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 Yearly
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  interval === "yearly" ? "bg-black/10 text-black" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  interval === "yearly"
+                    ? "bg-white/20 text-white"
+                    : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                 }`}>
                   Save 10%
                 </span>
@@ -469,19 +504,17 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {landingPlans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative flex flex-col p-6 rounded-2xl border-2 transition-all duration-300 ${
-                plan.popular
-                  ? "border-white/20 bg-white/[0.04] shadow-[0_0_30px_rgba(255,255,255,0.03)]"
-                  : "border-white/[0.06] bg-white/[0.025]"
+              className={`relative flex flex-col rounded-2xl transition-all duration-300 pricing-card-light ${
+                plan.popular ? "featured" : ""
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-black">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                  <span className="px-4 py-1.5 rounded-full text-xs font-semibold bg-indigo-600 text-white shadow-md">
                     Most Popular
                   </span>
                 </div>
@@ -489,17 +522,17 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
 
               <div className="space-y-4 mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                  <p className="text-sm text-white/25">{plan.tagline}</p>
+                  <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+                  <p className="text-sm text-gray-400 mt-0.5">{plan.tagline}</p>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-white">
+                  <span className="text-4xl font-bold text-gray-900 tracking-tight">
                     {plan.monthlyPrice === 0
                       ? "Free"
                       : `$${interval === "monthly" ? plan.monthlyPrice : (plan.yearlyPrice / 12).toFixed(2)}`}
                   </span>
                   {plan.monthlyPrice > 0 && (
-                    <span className="text-white/30">
+                    <span className="text-gray-400 text-sm">
                       /{interval === "yearly" ? "mo, billed yearly" : "month"}
                     </span>
                   )}
@@ -510,10 +543,10 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
                 type="button"
                 onClick={() => handleChoosePlan(plan.id)}
                 disabled={loadingPlan === plan.id}
-                className={`w-full h-12 rounded-full font-medium text-sm transition-all duration-200 flex items-center justify-center ${
+                className={`w-full h-12 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center ${
                   plan.popular
-                    ? "bg-white text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-                    : "bg-transparent border border-white/10 text-white/60 hover:bg-white/5"
+                    ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-[0_6px_20px_rgba(79,70,229,0.3)]"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {loadingPlan === plan.id ? (
@@ -525,18 +558,18 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
                 )}
               </button>
 
-              <div className="mt-6 pt-6 border-t border-white/[0.06] flex-1">
+              <div className="mt-6 pt-6 border-t border-gray-100 flex-1">
                 <ul className="space-y-3">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-3">
-                      <Check className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-white/60">{feature}</span>
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">{feature}</span>
                     </li>
                   ))}
                   {plan.excluded.map((feature, index) => (
                     <li key={`excluded-${index}`} className="flex items-start gap-3">
-                      <X className="h-4 w-4 text-white/10 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-white/20">{feature}</span>
+                      <X className="h-4 w-4 text-gray-300 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-400">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -551,19 +584,19 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
 
 function Footer() {
   return (
-    <footer className="py-12 px-6 border-t border-white/[0.04]" style={{ background: "#000000" }}>
+    <footer className="py-14 px-6" style={{ background: "#F7F8FC", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <img src="/navinta-logo.png" alt="Navinta AI" className="h-5 w-5 opacity-40" />
-            <span className="text-sm text-white/20 font-medium">Navinta AI</span>
+          <div className="flex items-center gap-2.5">
+            <img src="/navinta-logo.png" alt="Navinta AI" className="h-6 w-6 opacity-70" />
+            <span className="text-sm text-gray-500 font-semibold">Navinta AI</span>
           </div>
-          <div className="flex gap-8 text-sm text-white/20">
-            <a href="/contact" className="hover:text-white/50 transition-colors">Contact</a>
-            <a href="/privacy" className="hover:text-white/50 transition-colors">Privacy</a>
-            <a href="/terms" className="hover:text-white/50 transition-colors">Terms</a>
+          <div className="flex gap-8 text-sm text-gray-400">
+            <a href="/contact" className="hover:text-gray-700 transition-colors duration-200">Contact</a>
+            <a href="/privacy" className="hover:text-gray-700 transition-colors duration-200">Privacy</a>
+            <a href="/terms" className="hover:text-gray-700 transition-colors duration-200">Terms</a>
           </div>
-          <p className="text-sm text-white/15">&copy; 2026 Navinta AI</p>
+          <p className="text-sm text-gray-400">&copy; 2026 Navinta AI</p>
         </div>
       </div>
     </footer>

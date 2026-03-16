@@ -19,8 +19,8 @@ function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffi
           const obj = { val: 0 };
           gsap.to(obj, {
             val: end,
-            duration: 2,
-            ease: "power2.out",
+            duration: 2.2,
+            ease: "power3.out",
             onUpdate: () => setValue(Math.round(obj.val)),
           });
           observer.disconnect();
@@ -68,7 +68,7 @@ export default function ProblemSection() {
     const totalWidth = track.scrollWidth / 2;
     const tween = gsap.to(track, {
       x: -totalWidth,
-      duration: 25,
+      duration: 28,
       ease: "none",
       repeat: -1,
       modifiers: {
@@ -84,6 +84,16 @@ export default function ProblemSection() {
         ease: "power3.out",
         scrollTrigger: { trigger: sectionRef.current, start: "top 80%" },
       });
+
+      // Stagger the individual metric items
+      gsap.from(".metric-item", {
+        y: 30,
+        opacity: 0,
+        duration: 0.7,
+        stagger: 0.1,
+        ease: "power3.out",
+        scrollTrigger: { trigger: metricsRef.current, start: "top 85%" },
+      });
     }, sectionRef);
 
     return () => {
@@ -95,48 +105,52 @@ export default function ProblemSection() {
   const items = [...logos, ...logos];
 
   const metrics = [
-    { value: 5000, suffix: "+", label: "Videos created" },
-    { value: 3, suffix: "min", label: "Avg. time to export" },
-    { value: 94, suffix: "%", label: "Creators ship weekly" },
-    { value: 10, suffix: "x", label: "Faster than traditional" },
+    { value: 5000, suffix: "+", label: "Videos created", icon: "▲" },
+    { value: 3, suffix: "min", label: "Avg. time to export", icon: "◎" },
+    { value: 94, suffix: "%", label: "Creators ship weekly", icon: "✦" },
+    { value: 10, suffix: "x", label: "Faster than traditional", icon: "→" },
   ];
 
   return (
-    <section ref={sectionRef} className="py-20 relative overflow-hidden" style={{ background: "#0a0a0a" }}>
+    <section ref={sectionRef} className="py-24 relative overflow-hidden" style={{ background: "#FFFFFF" }}>
+      {/* Top divider */}
+      <div className="hr-fade absolute top-0 left-0 right-0" />
+
       {/* Metrics */}
-      <div ref={metricsRef} className="max-w-6xl mx-auto px-6 mb-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div ref={metricsRef} className="max-w-5xl mx-auto px-6 mb-20">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {metrics.map((metric) => (
-            <div key={metric.label} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+            <div key={metric.label} className="metric-item metric-card text-center group">
+              <div className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
                 <AnimatedCounter end={metric.value} suffix={metric.suffix} />
               </div>
-              <div className="text-sm text-white/40 mt-2 font-medium">{metric.label}</div>
+              <div className="text-sm text-gray-500 mt-2 font-medium">{metric.label}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Divider */}
-      <div className="max-w-6xl mx-auto px-6 mb-16">
-        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      <div className="max-w-5xl mx-auto px-6 mb-16">
+        <div className="hr-fade" />
       </div>
 
-      {/* Logo strip */}
+      {/* Label */}
       <div className="text-center mb-10">
-        <p className="text-sm text-white/30 font-medium uppercase tracking-[0.2em]">
+        <p className="section-label">
           Trusted by ambitious teams everywhere
         </p>
       </div>
 
+      {/* Marquee strip */}
       <div className="relative">
-        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10 pointer-events-none" />
-        <div ref={trackRef} className="flex gap-16 whitespace-nowrap w-max">
+        <div className="absolute left-0 top-0 bottom-0 w-32 pointer-events-none z-10" style={{ background: "linear-gradient(to right, #FFFFFF, transparent)" }} />
+        <div className="absolute right-0 top-0 bottom-0 w-32 pointer-events-none z-10" style={{ background: "linear-gradient(to left, #FFFFFF, transparent)" }} />
+        <div ref={trackRef} className="flex gap-14 whitespace-nowrap w-max">
           {items.map((label, i) => (
             <span
               key={`${label}-${i}`}
-              className="text-sm font-semibold tracking-[0.15em] uppercase text-white/15 select-none hover:text-white/30 transition-colors duration-500"
+              className="text-sm font-semibold tracking-[0.14em] uppercase text-gray-300 select-none hover:text-gray-500 transition-colors duration-400"
             >
               {label}
             </span>
