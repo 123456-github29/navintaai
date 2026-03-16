@@ -41,7 +41,7 @@ export default function FAQSection() {
       gsap.from(headingRef.current, {
         y: 30,
         opacity: 0,
-        duration: 0.8,
+        duration: 0.9,
         ease: "power3.out",
         scrollTrigger: { trigger: sectionRef.current, start: "top 80%" },
       });
@@ -49,12 +49,12 @@ export default function FAQSection() {
       itemRefs.current.forEach((el, i) => {
         if (!el) return;
         gsap.from(el, {
-          y: 30,
+          y: 24,
           opacity: 0,
           duration: 0.6,
-          delay: i * 0.08,
+          delay: i * 0.07,
           ease: "power3.out",
-          scrollTrigger: { trigger: sectionRef.current, start: "top 75%" },
+          scrollTrigger: { trigger: sectionRef.current, start: "top 78%" },
         });
       });
     }, sectionRef);
@@ -63,13 +63,17 @@ export default function FAQSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-32 px-6" style={{ background: "#0a0a0a" }}>
+    <section ref={sectionRef} className="py-32 px-6" style={{ background: "#FAFBFF" }}>
+      {/* Top divider */}
+      <div className="hr-fade absolute left-0 right-0" style={{ position: "relative", marginBottom: 0 }} />
+
       <div className="max-w-3xl mx-auto">
-        <div ref={headingRef} className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-4">
+        <div ref={headingRef} className="text-center mb-14">
+          <p className="section-label mb-4">FAQ</p>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4">
             Frequently asked questions
           </h2>
-          <p className="text-white/40 text-base">
+          <p className="text-gray-500 text-base">
             Everything you need to know about Navinta AI.
           </p>
         </div>
@@ -79,37 +83,37 @@ export default function FAQSection() {
             <div
               key={i}
               ref={(el) => { itemRefs.current[i] = el; }}
-              className={`rounded-xl border transition-all duration-300 ${
-                openIndex === i
-                  ? "border-white/15 bg-white/[0.03]"
-                  : "border-white/8 hover:border-white/12"
-              }`}
+              className={`faq-item-light ${openIndex === i ? "open" : ""}`}
             >
               <button
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full flex justify-between items-center p-6 text-left"
+                className="w-full flex justify-between items-center px-6 py-5 text-left"
               >
-                <span className="text-base font-medium text-white/90 pr-4">
+                <span className="text-base font-semibold text-gray-800 pr-4">
                   {faq.q}
                 </span>
                 <span
-                  className="text-white/30 shrink-0 w-6 h-6 rounded-full border border-white/10 flex items-center justify-center transition-all duration-300"
+                  className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    openIndex === i
+                      ? "bg-indigo-600 text-white"
+                      : "bg-gray-100 text-gray-400"
+                  }`}
                   style={{ transform: openIndex === i ? "rotate(45deg)" : "none" }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
                 </span>
               </button>
               <div
-                className="overflow-hidden transition-all duration-400 ease-in-out"
+                className="overflow-hidden transition-all duration-300 ease-in-out"
                 style={{
                   maxHeight: openIndex === i ? "200px" : "0px",
                   opacity: openIndex === i ? 1 : 0,
                 }}
               >
-                <div className="px-6 pb-6 text-sm text-white/40 leading-relaxed">
+                <div className="px-6 pb-5 text-sm text-gray-500 leading-relaxed border-t border-gray-100 pt-4">
                   {faq.a}
                 </div>
               </div>

@@ -70,18 +70,27 @@ export function AppSidebar() {
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
-    <Sidebar className="border-r border-white/[0.06]" style={{ background: "#0a0a0a" }}>
-      <SidebarHeader className="p-5 border-b border-white/[0.06]">
+    <Sidebar
+      className="border-r"
+      style={{
+        background: "#FFFFFF",
+        borderColor: "rgba(0,0,0,0.07)",
+      }}
+    >
+      <SidebarHeader
+        className="p-5 border-b"
+        style={{ borderColor: "rgba(0,0,0,0.06)" }}
+      >
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <img src="/navinta-logo.png" alt="Navinta AI" className="h-7 w-7" />
-          <span className="text-white text-lg font-semibold tracking-tight">Navinta AI</span>
+          <span className="text-gray-900 text-lg font-bold tracking-tight">Navinta AI</span>
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-6">
+      <SidebarContent className="px-3 py-5">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
+            <SidebarMenu className="gap-0.5">
               {menuItems.map((item) => {
                 const isActive = location === item.url || (item.url === "/dashboard" && location === "/");
                 return (
@@ -89,14 +98,14 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      className={`h-10 px-4 rounded-xl transition-all duration-200 ${
+                      className={`h-10 px-3.5 rounded-xl transition-all duration-200 ${
                         isActive
-                          ? 'bg-white/10 text-white font-medium border border-white/[0.08]'
-                          : 'text-white/35 hover:bg-white/5 hover:text-white/60 border border-transparent'
+                          ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100'
+                          : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 border border-transparent'
                       }`}
                     >
                       <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
-                        <item.icon className={`h-[18px] w-[18px] ${isActive ? 'text-white' : ''}`} />
+                        <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
                         <span className="text-sm">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -110,7 +119,7 @@ export function AppSidebar() {
         {/* Bottom items */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
+            <SidebarMenu className="gap-0.5">
               {bottomItems.map((item) => {
                 const isActive = location === item.url;
                 return (
@@ -118,14 +127,14 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      className={`h-10 px-4 rounded-xl transition-all duration-200 ${
+                      className={`h-10 px-3.5 rounded-xl transition-all duration-200 ${
                         isActive
-                          ? 'bg-white/10 text-white font-medium border border-white/[0.08]'
-                          : 'text-white/35 hover:bg-white/5 hover:text-white/60 border border-transparent'
+                          ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100'
+                          : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 border border-transparent'
                       }`}
                     >
                       <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
-                        <item.icon className="h-[18px] w-[18px]" />
+                        <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
                         <span className="text-sm">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -137,19 +146,22 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 mt-auto border-t border-white/[0.06]">
-        <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors duration-200 cursor-pointer mb-2">
+      <SidebarFooter
+        className="p-4 mt-auto border-t"
+        style={{ borderColor: "rgba(0,0,0,0.06)" }}
+      >
+        <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors duration-200 cursor-pointer mb-2">
           <Avatar className="h-9 w-9 rounded-xl">
             <AvatarImage src={userAvatar} className="rounded-xl" />
-            <AvatarFallback className="rounded-xl bg-white/10 text-white/60 text-xs font-semibold">
+            <AvatarFallback className="rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold">
               {userInitials}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate text-white/80">
+            <p className="text-sm font-semibold truncate text-gray-800">
               {userName}
             </p>
-            <p className="text-xs text-white/25 truncate">
+            <p className="text-xs text-gray-400 truncate">
               {user?.email}
             </p>
           </div>
@@ -157,7 +169,7 @@ export function AppSidebar() {
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start gap-3 h-10 px-4 text-white/25 hover:text-white/50 hover:bg-white/5 rounded-xl transition-all duration-200"
+          className="w-full justify-start gap-3 h-10 px-3.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-200"
           onClick={signOut}
           data-testid="button-logout"
         >
