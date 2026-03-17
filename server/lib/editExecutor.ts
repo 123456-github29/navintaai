@@ -28,6 +28,7 @@ export interface EditState {
     lumaGenerationId?: string;
     url?: string;
   }>;
+  transcriptSegments?: Array<{ start: number; end: number; text: string }>;
 }
 
 function escapeDrawtext(text: string): string {
@@ -95,6 +96,19 @@ function buildFilterGraph(
         filterStr += `:enable='between(t,${startTime},${endTime})'`;
         videoFilters.push(filterStr);
       }
+    }
+  }
+
+  // Burn captions from transcript segments
+  if (editState.captions && editState.transcriptSegments && editState.transcriptSegments.length > 0) {
+    const segments = editState.transcriptSegments.slice(0, 60); // cap to avoid extremely long filter chains
+    for (const seg of segments) {
+      const rawText = (seg.text || "").trim();
+      if (!rawText) continue;
+      const escapedText = escapeDrawtext(rawText);
+      videoFilters.push(
+        `drawtext=text='${escapedText}':x=(w-text_w)/2:y=h-th-120:enable='between(t,${seg.start},${seg.end})':fontsize=42:fontcolor=white:box=1:boxcolor=black@0.6:boxborderw=8:line_spacing=4`
+      );
     }
   }
 
