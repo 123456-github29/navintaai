@@ -1,15 +1,19 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   AbsoluteFill,
   OffthreadVideo,
   Sequence,
-  useCurrentFrame,
   useVideoConfig,
-  interpolate,
 } from "remotion";
 import { z } from "zod";
 import { CaptionLayer, type CaptionSegment } from "./components/Caption";
-import { ColorGradeOverlay, CinematicBars, type GradeLook } from "./components/ColorGrade";
+import {
+  useVideoFilter,
+  VignetteOverlay,
+  CinematicBars,
+  type GradeLook,
+  type FilterSpec,
+} from "./components/ColorGrade";
 import { FilmGrain } from "./components/FilmGrain";
 import { BRollLayer, type BRollSegment } from "./components/BRollOverlay";
 import { TransitionLayer, type TransitionSpec } from "./components/TransitionOverlay";
@@ -86,9 +90,9 @@ export type VideoEditorProps = z.infer<typeof schema>;
 // ------ Helper: compute video segments from cuts ------
 
 interface VideoSegment {
-  srcStart: number; // seconds into source
+  srcStart: number;  // seconds into source video
   srcEnd: number;
-  timelineStart: number; // frame on timeline
+  timelineStart: number; // frame index on the output timeline
   durationFrames: number;
   speed: number;
 }
@@ -101,14 +105,12 @@ function computeSegments(
   const segments: VideoSegment[] = [];
   let timelineCursor = 0;
 
-  if (cuts.length === 0) return []; // handled by caller
-
   const sorted = [...cuts].sort((a, b) => a.start - b.start);
 
   for (const cut of sorted) {
     if (cut.end <= cut.start) continue;
 
-    // Find speed for this segment
+    // Use a speed adjustment that fully contains this cut
     const speedAdj = speedAdjustments.find(
       (s) => s.start <= cut.start && s.end >= cut.end
     );
@@ -148,78 +150,73 @@ export const VideoEditorComposition: React.FC<VideoEditorProps> = ({
   lowerThirdTitle,
   lowerThirdSubtitle,
 }) => {
-  const { fps, durationInFrames, width, height } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
-  const hasCuts = cuts.length > 0;
-  const segments = hasCuts
-    ? computeSegments(cuts, speedAdjustments, fps)
-    : [];
+  // Resolve look from prop or auto-detect from filter types
+  const resolvedLook: GradeLook = useMemo(() => {
+    if (gradeLook !== "none") return gradeLook;
+    for (const f of filters) {
+      if (f.type === "cinematic") return "cinematic";
+      if (f.type === "vintage") return "vintage";
+      if (f.type === "warm") return "warm";
+      if (f.type === "cool") return "cool";
+      if (f.type === "dramatic") return "dramatic";
+    }
+    return "none";
+  }, [gradeLook, filters]);
 
-  // Resolve filter look from filters array (auto-detect look from filter types)
-  const resolvedLook: GradeLook =
-    gradeLook !== "none"
-      ? gradeLook
-      : (() => {
-          const types = (filters || []).map((f) => f.type);
-          if (types.includes("cinematic")) return "cinematic";
-          if (types.includes("vintage")) return "vintage";
-          if (types.includes("warm")) return "warm";
-          if (types.includes("cool")) return "cool";
-          return "none";
-        })();
+  // Compute cut segments once per render (not per frame)
+  const segments = useMemo(
+    () => (cuts.length > 0 ? computeSegments(cuts, speedAdjustments, fps) : []),
+    [cuts, speedAdjustments, fps]
+  );
+
+  // Get the video CSS filter string — this MUST be called as a hook (calls useCurrentFrame internally)
+  const videoFilter = useVideoFilter(filters as FilterSpec[], resolvedLook);
+
+  const hasCuts = segments.length > 0;
+  const showVignette =
+    resolvedLook === "cinematic" ||
+    resolvedLook === "dramatic" ||
+    resolvedLook === "teal_orange";
 
   return (
     <AbsoluteFill style={{ background: "#000", overflow: "hidden" }}>
-      {/* === Video Layer === */}
-      {hasCuts ? (
-        // Render each cut segment as a sequence
-        segments.map((seg, i) => (
-          <Sequence
-            key={i}
-            from={seg.timelineStart}
-            durationInFrames={seg.durationFrames}
-          >
-            <AbsoluteFill>
-              <OffthreadVideo
-                src={videoSrc}
-                startFrom={Math.round(seg.srcStart * fps)}
-                endAt={Math.round(seg.srcEnd * fps)}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
-                playbackRate={seg.speed}
-              />
-            </AbsoluteFill>
-          </Sequence>
-        ))
-      ) : (
-        // No cuts - render full video
-        <AbsoluteFill>
+
+      {/* === Video Layer — filter applied HERE so it actually affects the video === */}
+      <AbsoluteFill style={videoFilter ? { filter: videoFilter } : undefined}>
+        {hasCuts ? (
+          segments.map((seg, i) => (
+            <Sequence
+              key={i}
+              from={seg.timelineStart}
+              durationInFrames={seg.durationFrames}
+            >
+              <AbsoluteFill>
+                <OffthreadVideo
+                  src={videoSrc}
+                  // startFrom / endAt are in frames for OffthreadVideo
+                  startFrom={Math.round(seg.srcStart * fps)}
+                  endAt={Math.round(seg.srcEnd * fps)}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  playbackRate={seg.speed}
+                />
+              </AbsoluteFill>
+            </Sequence>
+          ))
+        ) : (
           <OffthreadVideo
             src={videoSrc}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
-        </AbsoluteFill>
-      )}
+        )}
+      </AbsoluteFill>
 
       {/* === B-Roll Layer === */}
-      <BRollLayer
-        segments={brollSegments as BRollSegment[]}
-        timelineOffset={0}
-      />
+      <BRollLayer segments={brollSegments as BRollSegment[]} timelineOffset={0} />
 
-      {/* === Color Grade Overlay === */}
-      <ColorGradeOverlay
-        filters={filters}
-        totalDuration={totalDurationInSeconds}
-        look={resolvedLook}
-      />
+      {/* === Vignette (gradient overlay — works fine as empty div) === */}
+      {showVignette && <VignetteOverlay />}
 
       {/* === Film Grain === */}
       {showFilmGrain && <FilmGrain opacity={0.04} />}

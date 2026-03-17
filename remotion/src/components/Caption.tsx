@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   useCurrentFrame,
   useVideoConfig,
   interpolate,
   spring,
-  Easing,
 } from "remotion";
 
 export type CaptionStyle =
@@ -46,7 +45,8 @@ function WordHighlightCaption({
   baseTextColor: string;
   outlineColor: string;
 }) {
-  const words = text.split(" ");
+  // Memoize word split — only recomputes when text changes, not on every frame
+  const words = useMemo(() => text.split(" "), [text]);
 
   if (style === "viral" || style === "highlighted") {
     // Word-by-word highlight (CapCut style)

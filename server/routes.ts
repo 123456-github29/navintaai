@@ -2684,33 +2684,20 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         throw createError("No valid clips to export", 400, "NO_VALID_CLIPS");
       }
 
-      // For multi-clip, use the first clip as main video source and pass all clips as cuts
-      // Remotion handles each clip as a sequential sequence
       const totalDuration = clips.reduce((sum, c) => sum + (c.duration || 0), 0);
 
-      // Build cut list spanning all clips concatenated
-      let cursor = 0;
-      const allClipsCuts = clips
-        .filter((c) => c.videoPath && c.duration)
-        .map((c) => {
-          const cut = { start: cursor, end: cursor + (c.duration || 0) };
-          cursor += c.duration || 0;
-          return cut;
-        });
-
-      // Use first clip as video source; multi-clip handled by editState cuts
+      // Remotion renders a single video source; for multi-clip sessions we use
+      // the first clip and apply whatever cuts are in the edit state against it.
+      // Full multi-source support requires a future redesign.
       const primaryClipPath = clipPaths[0];
+      if (clipPaths.length > 1) {
+        console.warn(`[ai-edit export] Multi-clip session (${clipPaths.length} clips) — only first clip rendered. Future: concatenate all clips.`);
+      }
 
       // Execute edits with Remotion
       const editedFilename = await executeEdits(
         primaryClipPath,
-        {
-          ...(session.currentEditState || {}),
-          // If multiple clips, merge their cuts with editState cuts
-          cuts: clipPaths.length > 1
-            ? allClipsCuts
-            : (session.currentEditState?.cuts || []),
-        },
+        session.currentEditState || {},
         totalDuration
       );
 

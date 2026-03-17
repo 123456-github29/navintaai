@@ -3,45 +3,34 @@ import {
   useCurrentFrame,
   useVideoConfig,
   interpolate,
-  spring,
   OffthreadVideo,
   Sequence,
 } from "remotion";
 
 export interface BRollSegment {
-  timestamp: number; // seconds into main video when to show broll
+  timestamp: number; // seconds into the main video timeline
   duration: number;  // seconds
   url?: string;
 }
 
-interface BRollProps {
-  segments: BRollSegment[];
-}
-
-function SingleBRoll({
-  segment,
-  offsetFrames,
-}: {
-  segment: BRollSegment;
-  offsetFrames: number; // frame offset within the sequence
-}) {
-  const frame = useCurrentFrame();
-  const { fps, width, height } = useVideoConfig();
+// Inside a <Sequence>, useCurrentFrame() starts at 0 for the segment's duration.
+function SingleBRoll({ segment }: { segment: BRollSegment }) {
+  const frame = useCurrentFrame(); // local frame within this Sequence
+  const { fps } = useVideoConfig();
 
   const totalFrames = Math.round(segment.duration * fps);
-  const localFrame = frame;
 
   // Fade in/out
   const fadeDuration = Math.min(10, totalFrames * 0.2);
   const opacity = interpolate(
-    localFrame,
+    frame,
     [0, fadeDuration, totalFrames - fadeDuration, totalFrames],
     [0, 1, 1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
-  // Ken Burns effect: slow zoom in
-  const scale = interpolate(localFrame, [0, totalFrames], [1.0, 1.06], {
+  // Ken Burns: slow zoom in over the clip
+  const scale = interpolate(frame, [0, totalFrames], [1.0, 1.06], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -68,11 +57,7 @@ function SingleBRoll({
       >
         <OffthreadVideo
           src={segment.url}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
           muted
         />
       </div>
@@ -80,7 +65,7 @@ function SingleBRoll({
   );
 }
 
-export const BRollLayer: React.FC<BRollProps & { timelineOffset: number }> = ({
+export const BRollLayer: React.FC<{ segments: BRollSegment[]; timelineOffset: number }> = ({
   segments,
   timelineOffset,
 }) => {
@@ -97,12 +82,8 @@ export const BRollLayer: React.FC<BRollProps & { timelineOffset: number }> = ({
           const durationFrames = Math.round(seg.duration * fps);
 
           return (
-            <Sequence
-              key={i}
-              from={startFrame}
-              durationInFrames={durationFrames}
-            >
-              <SingleBRoll segment={seg} offsetFrames={startFrame} />
+            <Sequence key={i} from={startFrame} durationInFrames={durationFrames}>
+              <SingleBRoll segment={seg} />
             </Sequence>
           );
         })}

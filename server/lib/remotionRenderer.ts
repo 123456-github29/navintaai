@@ -19,6 +19,7 @@ const REMOTION_ENTRY = path.resolve(process.cwd(), "remotion/src/index.ts");
 
 // Cached bundle location (re-used across renders to avoid re-bundling)
 let _bundleCache: string | null = null;
+// Single in-flight Promise so concurrent callers share one bundle run
 let _bundleInProgress: Promise<string> | null = null;
 
 async function getBundle(): Promise<string> {
@@ -38,9 +39,15 @@ async function getBundle(): Promise<string> {
     });
     console.log(`[remotion] Bundle ready: ${bundled}`);
     _bundleCache = bundled;
-    _bundleInProgress = null;
     return bundled;
-  })();
+  })().catch((err) => {
+    // Reset so the next caller can retry
+    _bundleInProgress = null;
+    throw err;
+  }).finally(() => {
+    // Always clear the in-flight marker once settled
+    _bundleInProgress = null;
+  });
 
   return _bundleInProgress;
 }
@@ -48,8 +55,6 @@ async function getBundle(): Promise<string> {
 // Pre-warm the bundle on first import
 getBundle().catch((err) => {
   console.warn("[remotion] Pre-bundle failed (will retry on first render):", err.message);
-  _bundleCache = null;
-  _bundleInProgress = null;
 });
 
 // ----------------------------------------------------------------
@@ -123,27 +128,40 @@ function mapCaptionStyle(
 }
 
 // ----------------------------------------------------------------
-//  Helper: get video duration using probe
+//  Helper: get video duration using ffprobe (cached by path)
 // ----------------------------------------------------------------
 
-async function getVideoDuration(filePath: string): Promise<number> {
-  try {
-    const { getVideoMetadata } = await import("@remotion/media-utils");
-    // media-utils runs in browser context, so fall back to ffprobe for server
-    // We use a direct ffprobe call via child_process
+// Cache duration lookups to avoid spawning ffprobe on every render for the same file
+const _durationCache = new Map<string, number>();
+
+type ExecFileAsync = (cmd: string, args: string[]) => Promise<{ stdout: string }>;
+
+// Lazily-imported to avoid requiring child_process at module load time
+let _execFileAsync: ExecFileAsync | null = null;
+async function getExecFileAsync(): Promise<ExecFileAsync> {
+  if (!_execFileAsync) {
     const { execFile } = await import("child_process");
     const { promisify } = await import("util");
-    const execFileAsync = promisify(execFile);
+    _execFileAsync = promisify(execFile) as unknown as ExecFileAsync;
+  }
+  return _execFileAsync;
+}
+
+async function getVideoDuration(filePath: string): Promise<number> {
+  const cached = _durationCache.get(filePath);
+  if (cached !== undefined) return cached;
+
+  try {
+    const execFileAsync = await getExecFileAsync();
     const { stdout } = await execFileAsync("ffprobe", [
-      "-v",
-      "error",
-      "-show_entries",
-      "format=duration",
-      "-of",
-      "default=noprint_wrappers=1:nokey=1",
+      "-v", "error",
+      "-show_entries", "format=duration",
+      "-of", "default=noprint_wrappers=1:nokey=1",
       filePath,
     ]);
-    return parseFloat(stdout.trim()) || 60;
+    const duration = parseFloat(stdout.trim()) || 60;
+    _durationCache.set(filePath, duration);
+    return duration;
   } catch {
     return 60; // fallback
   }

@@ -3,7 +3,6 @@ import {
   useCurrentFrame,
   useVideoConfig,
   interpolate,
-  spring,
   Sequence,
   Easing,
 } from "remotion";

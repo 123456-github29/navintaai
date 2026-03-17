@@ -1,5 +1,5 @@
 import React from "react";
-import { useCurrentFrame, useVideoConfig, interpolate } from "remotion";
+import { useCurrentFrame, useVideoConfig } from "remotion";
 
 export type GradeLook =
   | "none"
@@ -12,25 +12,16 @@ export type GradeLook =
   | "neon"
   | "teal_orange";
 
-interface FilterSpec {
+export interface FilterSpec {
   type: string;
   value?: number;
   startTime?: number;
   endTime?: number;
 }
 
-interface ColorGradeProps {
-  filters: FilterSpec[];
-  totalDuration: number; // seconds
-  look?: GradeLook;
-}
+// ----- CSS filter string builders -----
 
-function buildCssFilter(
-  filters: FilterSpec[],
-  currentTime: number
-): string {
-  const parts: string[] = [];
-
+function buildDynamicFilter(filters: FilterSpec[], currentTime: number): string {
   let brightness = 1;
   let contrast = 1;
   let saturation = 1;
@@ -42,7 +33,6 @@ function buildCssFilter(
     if (currentTime < start || currentTime > end) continue;
 
     const v = f.value ?? 1;
-
     switch (f.type) {
       case "brightness":
         brightness = Math.max(0, Math.min(3, v));
@@ -56,9 +46,6 @@ function buildCssFilter(
       case "blur":
         blur = Math.max(0, v * 5);
         break;
-      case "sharpen":
-        // Sharpen not directly available as CSS, skip for CSS approach
-        break;
       case "vintage":
         brightness = 0.9;
         contrast = 1.1;
@@ -70,119 +57,91 @@ function buildCssFilter(
         brightness = 0.95;
         break;
       case "warm":
-        // Warm look: slightly orange tint via sepia
+        saturation = 1.3;
+        brightness = 1.05;
         break;
       case "cool":
-        // Cool look: blue tint via hue-rotate
+        saturation = 0.9;
+        brightness = 1.05;
         break;
     }
   }
 
-  parts.push(`brightness(${brightness})`);
-  parts.push(`contrast(${contrast})`);
-  parts.push(`saturate(${saturation})`);
+  const parts = [
+    `brightness(${brightness})`,
+    `contrast(${contrast})`,
+    `saturate(${saturation})`,
+  ];
   if (blur > 0) parts.push(`blur(${blur}px)`);
-
   return parts.join(" ");
 }
 
-function getLookStyle(look: GradeLook): React.CSSProperties {
+function getLookFilter(look: GradeLook): string {
   switch (look) {
     case "cinematic":
-      return {
-        filter:
-          "contrast(1.15) saturate(0.85) brightness(0.95)",
-        mixBlendMode: "normal",
-      };
+      return "contrast(1.15) saturate(0.85) brightness(0.95)";
     case "vintage":
-      return {
-        filter: "sepia(0.35) contrast(1.1) brightness(0.9) saturate(0.8)",
-      };
+      return "sepia(0.35) contrast(1.1) brightness(0.9) saturate(0.8)";
     case "warm":
-      return {
-        filter: "sepia(0.2) saturate(1.3) brightness(1.05) hue-rotate(-10deg)",
-      };
+      return "sepia(0.2) saturate(1.3) brightness(1.05) hue-rotate(-10deg)";
     case "cool":
-      return {
-        filter: "saturate(0.9) brightness(1.05) hue-rotate(15deg)",
-      };
+      return "saturate(0.9) brightness(1.05) hue-rotate(15deg)";
     case "dramatic":
-      return {
-        filter: "contrast(1.4) saturate(0.7) brightness(0.9)",
-      };
+      return "contrast(1.4) saturate(0.7) brightness(0.9)";
     case "matte":
-      return {
-        filter: "contrast(0.9) saturate(0.8) brightness(1.1)",
-      };
+      return "contrast(0.9) saturate(0.8) brightness(1.1)";
     case "neon":
-      return {
-        filter: "saturate(2.5) contrast(1.3) brightness(1.1)",
-      };
+      return "saturate(2.5) contrast(1.3) brightness(1.1)";
     case "teal_orange":
-      // Teal & Orange grade - Hollywood blockbuster look
-      return {
-        filter: "contrast(1.2) saturate(1.4) brightness(0.95) hue-rotate(5deg)",
-      };
+      return "contrast(1.2) saturate(1.4) brightness(0.95) hue-rotate(5deg)";
     default:
-      return {};
+      return "";
   }
 }
 
-export const ColorGradeOverlay: React.FC<ColorGradeProps> = ({
-  filters,
-  totalDuration,
-  look = "none",
-}) => {
+// ----- Hook: call inside a Remotion component to get the video filter string -----
+
+export function useVideoFilter(
+  filters: FilterSpec[],
+  look: GradeLook
+): string {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const currentTime = frame / fps;
 
-  const dynamicFilter = buildCssFilter(filters || [], currentTime);
-  const lookStyle = getLookStyle(look);
+  const dynamic = filters.length > 0 ? buildDynamicFilter(filters, currentTime) : "";
+  const lookFilter = getLookFilter(look);
 
-  // Vignette overlay for cinematic look
-  const showVignette = look === "cinematic" || look === "dramatic" || look === "teal_orange";
+  if (!dynamic && !lookFilter) return "";
+  if (!dynamic) return lookFilter;
+  if (!lookFilter) return dynamic;
+  // Both: merge — apply dynamic on top of look
+  return `${lookFilter} ${dynamic}`;
+}
 
-  return (
-    <>
-      {/* Dynamic filter layer */}
-      {filters && filters.length > 0 && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            filter: dynamicFilter,
-            pointerEvents: "none",
-            zIndex: 2,
-            ...lookStyle,
-          }}
-        />
-      )}
+// ----- Vignette overlay (fine as an empty overlay — uses background gradient, not filter) -----
 
-      {/* Vignette */}
-      {showVignette && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.65) 100%)",
-            pointerEvents: "none",
-            zIndex: 3,
-          }}
-        />
-      )}
-    </>
-  );
-};
+export const VignetteOverlay: React.FC<{ intensity?: number }> = ({
+  intensity = 0.65,
+}) => (
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      background: `radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,${intensity}) 100%)`,
+      pointerEvents: "none",
+      zIndex: 3,
+    }}
+  />
+);
 
-// Cinematic letterbox bars (16:9 look inside 9:16 canvas)
+// ----- Cinematic letterbox bars -----
+
 export const CinematicBars: React.FC<{ visible?: boolean; barHeight?: number }> = ({
   visible = true,
   barHeight = 60,
 }) => {
   if (!visible) return null;
-
   return (
     <>
       <div
