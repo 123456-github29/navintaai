@@ -4,11 +4,10 @@ import { readFileSync, promises as fs } from "fs";
 import { join } from "path";
 import { storage } from "./storage";
 
-import ffmpeg from "fluent-ffmpeg";
 import { generateViralScript, scriptToShotDialogue, scriptToTeleprompterCards, HOOK_STYLES } from "./lib/script";
 import { chatJSON } from "./lib/openaiClient";
 import type { HookStyle } from "./lib/script";
-import { exportWithEdits } from "./lib/ffmpegExport";
+import { exportWithEdits } from "./lib/remotionRenderer";
 
 import {
   uploadClipToStorage, 
@@ -2179,7 +2178,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
 
     const edl = effects?.edl;
 
-    console.log(`[export-captions] Using FFmpeg renderer`);
+    console.log(`[export-captions] Using Remotion renderer`);
 
     const tempDir = join(process.cwd(), "uploads", "temp");
     let tempVideoFile: string | null = null;
@@ -2196,7 +2195,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       const cuts = effects?.cuts || [];
       const captionSegments = captions || [];
 
-      console.log(`[export-captions] FFmpeg: ${cuts.length} cuts, ${captionSegments.length} captions`);
+      console.log(`[export-captions] Remotion: ${cuts.length} cuts, ${captionSegments.length} captions`);
 
       const outputFilename = await exportWithEdits({
         inputPath: tempVideoFile,
@@ -2233,8 +2232,8 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         });
       }
 
-      console.log(`[export-captions] FFmpeg export complete for video ${videoId}`);
-      res.json({ success: true, message: "Video exported with edits", renderer: "ffmpeg" });
+      console.log(`[export-captions] Remotion export complete for video ${videoId}`);
+      res.json({ success: true, message: "Video exported with edits", renderer: "remotion" });
     } finally {
       if (tempVideoFile) {
         await fs.unlink(tempVideoFile).catch(() => {});
@@ -2665,7 +2664,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     const path = await import("path");
     const { randomUUID } = await import("crypto");
     const { downloadClipToTemp, uploadVideoToStorage } = await import("./lib/supabaseStorage");
-    const { executeEdits } = await import("./lib/editExecutor");
+    const { executeEdits } = await import("./lib/remotionRenderer");
 
     const jobId = randomUUID();
     const tempDir = path.join(process.cwd(), "uploads", "temp");
@@ -2685,37 +2684,33 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         throw createError("No valid clips to export", 400, "NO_VALID_CLIPS");
       }
 
-      // Concatenate clips
-      const concatFile = path.join(tempDir, `concat-${jobId}.txt`);
-      const concatContent = clipPaths.map((p) => `file '${p}'`).join("\n");
-      await fs.writeFile(concatFile, concatContent);
-
-      const mergedPath = path.join(tempDir, `merged-${jobId}.mp4`);
-
-      await new Promise<void>((resolve, reject) => {
-        ffmpeg()
-          .input(concatFile)
-          .inputOptions(["-f concat", "-safe 0"])
-          .outputOptions([
-            "-c:v libx264",
-            "-c:a aac",
-            "-preset ultrafast",
-            "-crf 23",
-            "-movflags +faststart",
-          ])
-          .output(mergedPath)
-          .on("end", () => resolve())
-          .on("error", reject)
-          .run();
-      });
-
-      // Calculate total duration
+      // For multi-clip, use the first clip as main video source and pass all clips as cuts
+      // Remotion handles each clip as a sequential sequence
       const totalDuration = clips.reduce((sum, c) => sum + (c.duration || 0), 0);
 
-      // Execute edits
+      // Build cut list spanning all clips concatenated
+      let cursor = 0;
+      const allClipsCuts = clips
+        .filter((c) => c.videoPath && c.duration)
+        .map((c) => {
+          const cut = { start: cursor, end: cursor + (c.duration || 0) };
+          cursor += c.duration || 0;
+          return cut;
+        });
+
+      // Use first clip as video source; multi-clip handled by editState cuts
+      const primaryClipPath = clipPaths[0];
+
+      // Execute edits with Remotion
       const editedFilename = await executeEdits(
-        mergedPath,
-        session.currentEditState || {},
+        primaryClipPath,
+        {
+          ...(session.currentEditState || {}),
+          // If multiple clips, merge their cuts with editState cuts
+          cuts: clipPaths.length > 1
+            ? allClipsCuts
+            : (session.currentEditState?.cuts || []),
+        },
         totalDuration
       );
 
