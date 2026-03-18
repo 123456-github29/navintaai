@@ -113,6 +113,8 @@ export default function AiEditor() {
 
   const [session, setSession] = useState<AiEditSession | null>(null);
   const [messages, setMessages] = useState<AiEditMessage[]>([]);
+  const [lumaPolling, setLumaPolling] = useState(false);
+  const lumaPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: post, isLoading: postLoading } = useQuery<Post>({
     queryKey: ["/api/posts", postId],
@@ -300,6 +302,72 @@ export default function AiEditor() {
     video.addEventListener("timeupdate", onTimeUpdate);
     return () => video.removeEventListener("timeupdate", onTimeUpdate);
   }, [videoRef.current]);
+
+  // Poll Luma AI for pending b-roll generations
+  const startLumaPolling = useCallback(() => {
+    if (lumaPollingRef.current) return; // already polling
+    setLumaPolling(true);
+    lumaPollingRef.current = setInterval(async () => {
+      if (!session) return;
+      const state = session.currentEditState as any;
+      const pendingSegments = (state?.brollSegments || []).filter(
+        (s: any) => s.lumaGenerationId && !s.url
+      );
+      if (pendingSegments.length === 0) {
+        // All done, stop polling
+        if (lumaPollingRef.current) clearInterval(lumaPollingRef.current);
+        lumaPollingRef.current = null;
+        setLumaPolling(false);
+        return;
+      }
+      // Check status for each pending segment
+      let anyUpdated = false;
+      for (const seg of pendingSegments) {
+        try {
+          const res = await apiRequest("POST", `/api/ai-edit/sessions/${session.id}/luma-status`, {
+            generationId: seg.lumaGenerationId,
+          });
+          const result = await res.json();
+          if (result.status === "completed" && result.videoUrl) {
+            seg.url = result.videoUrl;
+            anyUpdated = true;
+          } else if (result.status === "failed") {
+            // Mark as no longer pending to stop polling it
+            seg.lumaGenerationId = null;
+            anyUpdated = true;
+          }
+        } catch {
+          // Ignore individual poll errors
+        }
+      }
+      if (anyUpdated) {
+        setSession((prev) =>
+          prev ? { ...prev, currentEditState: { ...state } } : prev
+        );
+      }
+    }, 5000); // poll every 5 seconds
+  }, [session]);
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      if (lumaPollingRef.current) {
+        clearInterval(lumaPollingRef.current);
+        lumaPollingRef.current = null;
+      }
+    };
+  }, []);
+
+  // Start polling whenever edit state has pending Luma generations
+  useEffect(() => {
+    const state = session?.currentEditState as any;
+    const hasPending = (state?.brollSegments || []).some(
+      (s: any) => s.lumaGenerationId && !s.url
+    );
+    if (hasPending) {
+      startLumaPolling();
+    }
+  }, [session?.currentEditState, startLumaPolling]);
 
   // Detect video duration for Remotion preview
   useEffect(() => {
@@ -661,6 +729,9 @@ export default function AiEditor() {
                 {editState.brollSegments?.length > 0 && (
                   <div className="px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[10px] flex items-center gap-1">
                     <Film className="h-2.5 w-2.5" /> {editState.brollSegments.length} B-roll
+                    {lumaPolling && (
+                      <Loader2 className="h-2.5 w-2.5 animate-spin ml-0.5" />
+                    )}
                   </div>
                 )}
               </div>
