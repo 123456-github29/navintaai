@@ -104,6 +104,7 @@ export default function AiEditor() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [noMediaAvailable, setNoMediaAvailable] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -233,7 +234,16 @@ export default function AiEditor() {
       const res = await apiRequest("POST", `/api/ai-edit/sessions/${sessionId}/transcribe`);
       const data = await res.json();
       setSession((prev) =>
-        prev ? { ...prev, transcript: data.transcript } : prev,
+        prev
+          ? {
+              ...prev,
+              transcript: data.transcript,
+              currentEditState: {
+                ...(prev.currentEditState || {}),
+                transcriptSegments: data.segments,
+              },
+            }
+          : prev,
       );
       toast({
         title: "Video transcribed",
@@ -271,6 +281,14 @@ export default function AiEditor() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const onTimeUpdate = () => setCurrentTime(video.currentTime);
+    video.addEventListener("timeupdate", onTimeUpdate);
+    return () => video.removeEventListener("timeupdate", onTimeUpdate);
+  }, [videoRef.current]);
 
   const handleSend = () => {
     const msg = inputValue.trim();
@@ -320,6 +338,13 @@ export default function AiEditor() {
 
   const editState = session?.currentEditState || {};
   const hasEdits = editState.cuts?.length || editState.filters?.length || editState.speedAdjustments?.length || editState.brollSegments?.length || editState.transitions?.length || editState.musicStyle || editState.captions;
+
+  const currentCaption =
+    editState.captions && editState.transcriptSegments
+      ? (editState.transcriptSegments as Array<{ start: number; end: number; text: string }>).find(
+          (s) => currentTime >= s.start && currentTime <= s.end,
+        )?.text ?? null
+      : null;
 
   return (
     <div className="flex h-[calc(100vh-65px)] overflow-hidden" style={{ background: "#050505" }}>
@@ -578,6 +603,15 @@ export default function AiEditor() {
                         : "No clips recorded yet"}
                     </p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Live caption overlay */}
+            {currentCaption && (
+              <div className="absolute bottom-10 left-0 right-0 flex justify-center px-3 pointer-events-none">
+                <div className="bg-black/75 text-white text-xs font-black px-3 py-1.5 rounded text-center max-w-[90%] leading-snug uppercase tracking-wide" style={{ textShadow: "1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>
+                  {currentCaption}
                 </div>
               </div>
             )}
