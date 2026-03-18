@@ -179,11 +179,12 @@ export default function AiEditor() {
       .map((clip: any) => {
         const url = getClipUrl(clip);
         if (!url) return null;
-        const duration = clipDurations[clip.id] || clip.duration || 0;
-        if (duration <= 0) return null;
+        // Use detected duration first, fallback to stored duration, then 0
+        const duration = clipDurations[clip.id] !== undefined ? clipDurations[clip.id] : (clip.duration || 0);
+        // Even if duration is 0, still include the source (duration will be detected on-the-fly by browser)
         return { src: url, durationInSeconds: duration };
       })
-      .filter(Boolean) as VideoSource[];
+      .filter((source): source is VideoSource => source !== null);
   }, [clipsWithVideo, fetchedClipUrls, clipDurations]);
 
   const initSession = useMutation({
@@ -729,12 +730,12 @@ export default function AiEditor() {
                 videoDuration={videoDuration}
                 videoSources={allVideoSources.length > 1 ? allVideoSources : undefined}
               />
-            ) : firstClipUrl && allVideoSources.length > 1 && videoDuration > 0 ? (
-              /* Multi-shot preview without edits — use Remotion to stitch clips seamlessly */
+            ) : firstClipUrl && allVideoSources.length > 1 ? (
+              /* Multi-shot preview — use Remotion to stitch clips seamlessly (with or without duration) */
               <RemotionPreview
                 videoUrl={firstClipUrl}
                 editState={{}}
-                videoDuration={videoDuration}
+                videoDuration={videoDuration || Object.values(clipDurations).reduce((a, b) => a + b, 0) || 10}
                 videoSources={allVideoSources}
               />
             ) : firstClipUrl ? (
