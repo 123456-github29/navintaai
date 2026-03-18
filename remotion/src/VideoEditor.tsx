@@ -165,11 +165,20 @@ export const VideoEditorComposition: React.FC<VideoEditorProps> = ({
     return "none";
   }, [gradeLook, filters]);
 
-  // Compute cut segments once per render (not per frame)
-  const segments = useMemo(
-    () => (cuts.length > 0 ? computeSegments(cuts, speedAdjustments, fps) : []),
-    [cuts, speedAdjustments, fps]
-  );
+  // Compute cut segments once per render (not per frame).
+  // If there are no explicit cuts but there ARE speed adjustments, synthesise a
+  // single full-video segment so the speed is applied.
+  const segments = useMemo(() => {
+    if (cuts.length > 0) {
+      return computeSegments(cuts, speedAdjustments, fps);
+    }
+    if (speedAdjustments.length > 0) {
+      // No cuts — treat entire video as one segment, but apply speed adjustments
+      const syntheticCut = { start: 0, end: totalDurationInSeconds };
+      return computeSegments([syntheticCut], speedAdjustments, fps);
+    }
+    return [];
+  }, [cuts, speedAdjustments, fps, totalDurationInSeconds]);
 
   // Get the video CSS filter string — this MUST be called as a hook (calls useCurrentFrame internally)
   const videoFilter = useVideoFilter(filters as FilterSpec[], resolvedLook);

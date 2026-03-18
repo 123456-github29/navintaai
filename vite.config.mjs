@@ -42,6 +42,7 @@ export default defineConfig(async ({ mode }) => {
           path.resolve(import.meta.dirname, "client"),
           path.resolve(import.meta.dirname, "shared"),
           path.resolve(import.meta.dirname, "node_modules"),
+          path.resolve(import.meta.dirname, "remotion"),
         ],
         deny: ["**/.*"],
       },

@@ -7,7 +7,7 @@ import { storage } from "./storage";
 import { generateViralScript, scriptToShotDialogue, scriptToTeleprompterCards, HOOK_STYLES } from "./lib/script";
 import { chatJSON } from "./lib/openaiClient";
 import type { HookStyle } from "./lib/script";
-import { exportWithEdits } from "./lib/remotionRenderer";
+import { exportWithEdits, type EditState } from "./lib/remotionRenderer";
 
 import {
   uploadClipToStorage, 
@@ -1891,7 +1891,6 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       shotId: session.shotId,
       videoPath: storagePath,
       duration: duration || 0,
-      recordedAt: new Date(),
     });
     console.log(`[recording-sessions/complete] ✓ Clip created: ${clip.id}`);
 
@@ -2391,9 +2390,15 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       throw createError("Session not found", 404, "SESSION_NOT_FOUND");
     }
 
-    // If transcript already exists, return it
+    // If transcript already exists, return it along with stored segments/duration
     if (session.transcript) {
-      return res.json({ transcript: session.transcript });
+      const cached = (session.currentEditState as any) || {};
+      return res.json({
+        transcript: session.transcript,
+        segments: cached.transcriptSegments || [],
+        duration: cached.videoDuration || 0,
+        language: "en",
+      });
     }
 
     // Try to find a video source: clips first, then exported videos
@@ -2447,11 +2452,12 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       }
       const result = await transcribeVideo(tempPath);
 
-      // Merge segments into currentEditState so export can burn captions
+      // Merge segments + duration into currentEditState so export can burn captions
       const existingState = (session.currentEditState as any) || {};
       const updatedEditState = {
         ...existingState,
         transcriptSegments: result.segments,
+        videoDuration: result.duration || 0,
       };
 
       // Store the transcript and segments on the session
@@ -2508,9 +2514,20 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       .filter(m => m.role !== "system")
       .map(m => ({ role: m.role, content: m.content }));
 
-    // Get video duration from clips
+    // Get video duration - try clips first, fall back to transcript segments or edit state
     const postClips = await storage.getClipsByPost(session.postId);
-    const videoDuration = postClips.reduce((sum, c) => sum + c.duration, 0);
+    let videoDuration = postClips.reduce((sum, c) => sum + (c.duration || 0), 0);
+    if (videoDuration <= 0) {
+      // Fall back to last transcript segment end time
+      const editState = (session.currentEditState as any) || {};
+      const segments = editState.transcriptSegments || [];
+      if (segments.length > 0) {
+        videoDuration = Math.ceil(segments[segments.length - 1].end);
+      }
+    }
+    if (videoDuration <= 0) {
+      videoDuration = 60; // safe fallback
+    }
 
     // Plan the edits using OpenAI
     const { planEdits, applyOperationsToState, generateLumaVideo } = await import("./lib/aiEditor");
@@ -2713,7 +2730,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       // Execute edits with Remotion
       const editedFilename = await executeEdits(
         primaryClipPath,
-        session.currentEditState || {},
+        (session.currentEditState || {}) as EditState,
         totalDuration
       );
 
@@ -2734,9 +2751,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       const signedUrl = uploadResult.url;
 
       // Create video record
-      const videoId = randomUUID();
-      await storage.createVideo({
-        id: videoId,
+      const createdVideo = await storage.createVideo({
         postId: session.postId,
         userId,
         videoPath: storagePath,
@@ -2745,7 +2760,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
 
       res.json({
         success: true,
-        videoId,
+        videoId: createdVideo.id,
         videoPath: storagePath,
         signedUrl,
         message: "Video exported successfully!",

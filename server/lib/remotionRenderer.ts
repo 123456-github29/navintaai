@@ -398,6 +398,42 @@ export async function exportWithEdits(options: ExportOptions): Promise<string> {
 //  Public API - replaces editExecutor.executeEdits
 // ----------------------------------------------------------------
 
+/**
+ * Converts "sections to remove" into "sections to keep".
+ * The AI generates cuts as intervals to REMOVE from the video.
+ * The Remotion composition expects cuts as intervals to KEEP (play).
+ */
+function invertCuts(
+  cutsToRemove: Array<{ start: number; end: number }>,
+  totalDuration: number
+): Array<{ start: number; end: number }> {
+  if (cutsToRemove.length === 0) return [];
+
+  const sorted = [...cutsToRemove]
+    .filter((c) => c.end > c.start)
+    .sort((a, b) => a.start - b.start);
+
+  const kept: Array<{ start: number; end: number }> = [];
+  let cursor = 0;
+
+  for (const cut of sorted) {
+    const start = Math.max(0, cut.start);
+    const end = Math.min(totalDuration, cut.end);
+    if (start >= end) continue;
+
+    if (start > cursor) {
+      kept.push({ start: cursor, end: start });
+    }
+    cursor = Math.max(cursor, end);
+  }
+
+  if (cursor < totalDuration) {
+    kept.push({ start: cursor, end: totalDuration });
+  }
+
+  return kept;
+}
+
 export async function executeEdits(
   inputFile: string,
   editState: EditState,
@@ -410,10 +446,11 @@ export async function executeEdits(
   const outputFilename = `edited-${jobId}.mp4`;
   const outputPath = path.join(VIDEOS_DIR, outputFilename);
 
-  // Map cuts
-  const cuts = (editState.cuts || [])
+  // Map cuts: AI stores "sections to remove", Remotion needs "sections to keep"
+  const rawCuts = (editState.cuts || [])
     .filter((c) => c.end > c.start)
     .sort((a, b) => a.start - b.start);
+  const cuts = rawCuts.length > 0 ? invertCuts(rawCuts, videoDuration) : [];
 
   // Map filters with params flattening
   const filters = (editState.filters || []).map((f) => ({
