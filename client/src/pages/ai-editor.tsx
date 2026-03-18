@@ -154,6 +154,11 @@ export default function AiEditor() {
     onSuccess: (data) => {
       setSession(data.session);
       setMessages(Array.isArray(data.messages) ? data.messages : []);
+      // Pre-seed videoDuration from stored editState if transcript already exists
+      const storedDuration = (data.session?.currentEditState as any)?.videoDuration;
+      if (storedDuration && storedDuration > 0) {
+        setVideoDuration((prev) => Math.max(prev, storedDuration));
+      }
       if (data.session && !data.session.transcript) {
         handleTranscribe(data.session.id);
       }
@@ -236,7 +241,7 @@ export default function AiEditor() {
       const res = await apiRequest("POST", `/api/ai-edit/sessions/${sessionId}/transcribe`);
       const data = await res.json();
       if (data.duration && data.duration > 0) {
-        setVideoDuration((prev) => prev > 0 ? prev : data.duration);
+        setVideoDuration((prev) => Math.max(prev, data.duration));
       }
       setSession((prev) =>
         prev

@@ -2390,9 +2390,15 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       throw createError("Session not found", 404, "SESSION_NOT_FOUND");
     }
 
-    // If transcript already exists, return it
+    // If transcript already exists, return it along with stored segments/duration
     if (session.transcript) {
-      return res.json({ transcript: session.transcript });
+      const cached = (session.currentEditState as any) || {};
+      return res.json({
+        transcript: session.transcript,
+        segments: cached.transcriptSegments || [],
+        duration: cached.videoDuration || 0,
+        language: "en",
+      });
     }
 
     // Try to find a video source: clips first, then exported videos
