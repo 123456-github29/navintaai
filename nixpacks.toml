@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_20", "npm-10_x", "chromium", "nss", "alsa-lib", "at-spi2-atk", "libdrm", "mesa", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXrandr", "xorg.libXfixes", "libxkbcommon", "pango", "cairo", "cups"]
+nixPkgs = ["nodejs_20", "npm-10_x", "chromium"]
 
 [phases.install]
 cmds = ["npm ci"]

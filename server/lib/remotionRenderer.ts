@@ -7,6 +7,7 @@
  */
 
 import { promises as fs } from "fs";
+import { execSync } from "child_process";
 import path from "path";
 import { randomUUID } from "crypto";
 
@@ -216,7 +217,6 @@ interface RenderVideoOptions {
 // Remotion's bundled chrome-headless-shell won't work in containerised
 // environments where its shared library dependencies aren't present.
 function findSystemChromium(): string | undefined {
-  const { execSync } = require("child_process");
   const candidates = [
     process.env.REMOTION_CHROME_EXECUTABLE,
     process.env.PUPPETEER_EXECUTABLE_PATH,
