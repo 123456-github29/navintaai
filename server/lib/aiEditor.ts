@@ -159,6 +159,21 @@ AVAILABLE OPERATIONS:
 9. **luma_generate** — Generate a cinematic AI clip. Params: { prompt: string, duration: number (3-10), timestamp: number, aspect_ratio?: "16:9"|"9:16"|"1:1" }
    Use for: "generate an intro", "AI clip", "create a cinematic shot"
 
+9. **add_vfx** — Add visual effects / VFX assets as overlays. Params: { type: string, color?: string (hex), secondaryColor?: string (hex), intensity?: number (0-1, default 0.5), timestamp?: number (seconds, default 0), duration?: number (seconds, default full video), speed?: number (animation speed multiplier, default 1) }
+   Available VFX types:
+   - "light_leak" = warm drifting light wash (great for cinematic/dreamy looks). Default color: #ff9f43
+   - "bokeh" = soft floating circles of light (great for romantic/aesthetic). Default color: #ffffff
+   - "color_wash" = animated gradient color overlay. Params: color + secondaryColor. Default: #6c5ce7 + #00cec9
+   - "particles" = floating sparkle specs (great for magical/fantasy). Default color: #ffffff
+   - "lens_flare" = bright directional light streak (great for dramatic/epic). Default color: #fff5e6
+   - "chromatic_aberration" = RGB channel split glitch effect (great for edgy/cyberpunk looks)
+   - "smoke" = drifting fog/haze overlay (great for moody/mysterious). Default color: #aaaaaa
+   - "prism" = rainbow light refraction band (great for creative/artistic)
+   - "duotone" = two-color tinting overlay. Params: color + secondaryColor. Default: #6c5ce7 + #fdcb6e
+   - "glow_pulse" = rhythmic radial glow (great for music/energy). Default color: #e84393
+   Use for: "add some sparkles", "make the background fancy", "add light leaks", "add bokeh", "make it dreamy", "add VFX", "color overlay", "add fog", "make it glow", "add particles", "cyberpunk look", "rainbow effect"
+   Map user intent: "dreamy/romantic" → light_leak + bokeh, "epic/dramatic" → lens_flare, "magical" → particles, "edgy/cyberpunk" → chromatic_aberration + glow_pulse, "moody" → smoke, "colorful/fancy" → color_wash or prism, "aesthetic" → bokeh + light_leak
+
 RESPONSE FORMAT — always return valid JSON (no markdown):
 {
   "message": "Brief, friendly explanation of what you're doing",

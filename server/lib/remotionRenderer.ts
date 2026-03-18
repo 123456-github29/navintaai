@@ -123,6 +123,15 @@ export interface EditState {
     lumaGenerationId?: string;
     url?: string;
   }>;
+  vfxAssets?: Array<{
+    type: string;
+    color?: string;
+    secondaryColor?: string;
+    intensity?: number;
+    timestamp?: number;
+    duration?: number;
+    speed?: number;
+  }>;
 }
 
 // ----------------------------------------------------------------
@@ -228,6 +237,15 @@ interface RenderVideoOptions {
     lumaGenerationId?: string;
   }>;
   speedAdjustments?: Array<{ start: number; end: number; speed: number }>;
+  vfxAssets?: Array<{
+    type: string;
+    color?: string;
+    secondaryColor?: string;
+    intensity?: number;
+    timestamp?: number;
+    duration?: number;
+    speed?: number;
+  }>;
   totalDurationInSeconds: number;
   fps?: number;
   outputPath: string;
@@ -296,6 +314,7 @@ async function renderVideo(opts: RenderVideoOptions): Promise<void> {
     filters: opts.filters ?? [],
     transitions: opts.transitions ?? [],
     brollSegments: opts.brollSegments ?? [],
+    vfxAssets: opts.vfxAssets ?? [],
     speedAdjustments: opts.speedAdjustments ?? [],
     totalDurationInSeconds: opts.totalDurationInSeconds,
     gradeLook: opts.gradeLook ?? "none",
@@ -569,8 +588,26 @@ export async function executeEdits(
           }))
       : [];
 
+  // Map VFX assets with validated types
+  const validVfxTypes = [
+    "light_leak", "bokeh", "color_wash", "particles", "lens_flare",
+    "chromatic_aberration", "smoke", "prism", "duotone", "glow_pulse",
+  ] as const;
+
+  const vfxAssets = (editState.vfxAssets || [])
+    .filter((v) => validVfxTypes.includes(v.type as typeof validVfxTypes[number]))
+    .map((v) => ({
+      type: v.type,
+      color: v.color,
+      secondaryColor: v.secondaryColor,
+      intensity: v.intensity,
+      timestamp: v.timestamp,
+      duration: v.duration,
+      speed: v.speed,
+    }));
+
   console.log(
-    `[remotion] executeEdits: ${cuts.length} cuts, ${filters.length} filters, ${transitions.length} transitions, ${brollSegments.length} b-roll, ${captions.length} captions`
+    `[remotion] executeEdits: ${cuts.length} cuts, ${filters.length} filters, ${transitions.length} transitions, ${brollSegments.length} b-roll, ${vfxAssets.length} vfx, ${captions.length} captions`
   );
 
   // Map segment transitions for cross-segment blending
@@ -588,6 +625,7 @@ export async function executeEdits(
     filters,
     transitions,
     brollSegments,
+    vfxAssets,
     speedAdjustments: editState.speedAdjustments || [],
     totalDurationInSeconds: videoDuration,
     fps: 30,

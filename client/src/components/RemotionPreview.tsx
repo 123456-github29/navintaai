@@ -34,6 +34,15 @@ interface EditState {
     lumaGenerationId?: string;
     url?: string;
   }>;
+  vfxAssets?: Array<{
+    type: string;
+    color?: string;
+    secondaryColor?: string;
+    intensity?: number;
+    timestamp?: number;
+    duration?: number;
+    speed?: number;
+  }>;
 }
 
 interface RemotionPreviewProps {
@@ -159,6 +168,24 @@ function buildInputProps(
           }))
       : [];
 
+  const validVfxTypes = [
+    "light_leak", "bokeh", "color_wash", "particles", "lens_flare",
+    "chromatic_aberration", "smoke", "prism", "duotone", "glow_pulse",
+  ] as const;
+  type ValidVfxType = (typeof validVfxTypes)[number];
+
+  const vfxAssets = (editState.vfxAssets || [])
+    .filter((v) => validVfxTypes.includes(v.type as ValidVfxType))
+    .map((v) => ({
+      type: v.type as ValidVfxType,
+      color: v.color,
+      secondaryColor: v.secondaryColor,
+      intensity: v.intensity,
+      timestamp: v.timestamp,
+      duration: v.duration,
+      speed: v.speed,
+    }));
+
   return {
     videoSrc: videoUrl,
     cuts,
@@ -167,6 +194,7 @@ function buildInputProps(
     transitions,
     segmentTransitions,
     brollSegments,
+    vfxAssets,
     speedAdjustments: editState.speedAdjustments || [],
     totalDurationInSeconds: videoDuration,
     gradeLook,
