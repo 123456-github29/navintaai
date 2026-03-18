@@ -249,6 +249,11 @@ export default function AiEditor() {
       setMessages((prev) => [...prev, data.userMessage, data.assistantMessage]);
       if (data.editState) {
         setSession((prev) => prev ? { ...prev, currentEditState: data.editState } : prev);
+        // Sync videoDuration from edit state so the Remotion preview can render
+        const dur = data.editState.videoDuration;
+        if (dur && dur > 0) {
+          setVideoDuration((prev) => Math.max(prev, dur));
+        }
       }
     },
     onError: () => {
@@ -544,7 +549,7 @@ export default function AiEditor() {
   }
 
   const editState = session?.currentEditState || {};
-  const hasEdits = editState.cuts?.length || editState.filters?.length || editState.speedAdjustments?.length || editState.brollSegments?.length || editState.transitions?.length || editState.segmentTransitions?.length || editState.musicStyle || editState.captions;
+  const hasEdits = editState.cuts?.length || editState.filters?.length || editState.speedAdjustments?.length || editState.brollSegments?.length || editState.transitions?.length || editState.segmentTransitions?.length || editState.vfxAssets?.length || editState.musicStyle || editState.captions;
 
   return (
     <div className="flex h-[calc(100vh-65px)] overflow-hidden" style={{ background: "#050505" }}>
@@ -880,6 +885,11 @@ export default function AiEditor() {
                     {lumaPolling && (
                       <Loader2 className="h-2.5 w-2.5 animate-spin ml-0.5" />
                     )}
+                  </div>
+                )}
+                {editState.vfxAssets?.length > 0 && (
+                  <div className="px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[10px] flex items-center gap-1">
+                    <Sparkles className="h-2.5 w-2.5" /> {editState.vfxAssets.length} VFX
                   </div>
                 )}
               </div>
