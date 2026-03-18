@@ -2530,90 +2530,40 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       videoDuration = 60; // safe fallback
     }
 
-    // Plan the edits using OpenAI
-    const { planEdits, applyOperationsToState, generateLumaVideo } = await import("./lib/aiEditor");
+    // Generate video editing JSON using OpenAI
+    const { generateRemotionJSON } = await import("./lib/aiEditor");
 
-    const editPlan = await planEdits(
+    const currentEditState = (session.currentEditState as any) || {};
+    const transcriptSegments = currentEditState.transcriptSegments || [];
+
+    const { json: generatedJSON, message: aiMessage } = await generateRemotionJSON(
       message.trim(),
       session.transcript || "",
-      session.currentEditState,
-      chatHistory,
+      transcriptSegments,
+      videoUrl || "",
       videoDuration,
     );
 
-    // Process b-roll and Luma generations — both use Luma AI for video generation
-    const lumaFailures: string[] = [];
-    for (const op of editPlan.operations) {
-      if (op.type === "add_broll" && op.params.query) {
-        // Generate b-roll via Luma AI (supports camera control & cinematic footage)
-        try {
-          const brollPrompt = `Cinematic b-roll footage of ${op.params.query}, smooth camera movement, high quality, professional`;
-          const lumaResult = await generateLumaVideo(
-            brollPrompt,
-            op.params.duration || 5,
-            "9:16",
-          );
-          if (lumaResult.status === "failed" || lumaResult.id === "luma_disabled" || lumaResult.id === "error") {
-            op.status = "failed";
-            lumaFailures.push(op.params.query);
-          } else {
-            op.params.generationId = lumaResult.id;
-            op.params.videoUrl = lumaResult.videoUrl;
-            op.status = "applied";
-            console.log(`[ai-edit] Luma b-roll generation started for "${op.params.query}": id=${lumaResult.id}`);
-          }
-        } catch (err: any) {
-          console.error("[ai-edit] Luma b-roll generation error:", err?.message || err);
-          op.status = "failed";
-          lumaFailures.push(op.params.query);
-        }
-      } else if (op.type === "luma_generate" && op.params.prompt) {
-        try {
-          const lumaResult = await generateLumaVideo(
-            op.params.prompt,
-            op.params.duration || 5,
-            op.params.aspect_ratio || "9:16",
-          );
-          if (lumaResult.status === "failed" || lumaResult.id === "luma_disabled" || lumaResult.id === "error") {
-            op.status = "failed";
-            lumaFailures.push(op.params.prompt);
-          } else {
-            op.params.generationId = lumaResult.id;
-            op.params.videoUrl = lumaResult.videoUrl;
-            op.status = "applied";
-          }
-        } catch (err: any) {
-          console.error("[ai-edit] Luma generation error:", err);
-          op.status = "failed";
-          lumaFailures.push(op.params.prompt);
-        }
-      } else {
-        op.status = "applied";
-      }
-    }
-
-    // Append failure info to the AI message if any Luma generations failed
-    if (lumaFailures.length > 0) {
-      editPlan.message += `\n\n⚠️ ${lumaFailures.length} AI clip generation(s) failed. This may be due to a missing or invalid Luma API key.`;
-    }
-
-    // Apply operations to session state
-    const newState = applyOperationsToState(
-      session.currentEditState || {},
-      editPlan.operations,
-    );
+    // Merge generated JSON with existing state to preserve transcriptSegments and other fields
+    const newState = {
+      ...currentEditState,
+      ...generatedJSON,
+      transcriptSegments, // Always preserve transcript segments for caption rendering
+      videoSrc: generatedJSON.videoSrc || videoUrl || currentEditState.videoSrc,
+      totalDurationInSeconds: generatedJSON.totalDurationInSeconds || videoDuration,
+    };
 
     // Update session with new state
     await storage.updateAiEditSession(id, userId, {
       currentEditState: newState,
     });
 
-    // Save assistant message with edit operations
+    // Save assistant message
     const assistantMsg = await storage.createAiEditMessage({
       sessionId: id,
       role: "assistant",
-      content: editPlan.message,
-      editOperations: editPlan.operations,
+      content: aiMessage,
+      editOperations: [], // New JSON-based system doesn't track operations separately
     });
 
     res.json({
