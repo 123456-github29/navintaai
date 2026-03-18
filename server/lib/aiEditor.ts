@@ -104,8 +104,9 @@ AVAILABLE OPERATIONS:
 6. **add_transition** — Add a transition effect at a timestamp. Params: { type: "fade"|"dissolve"|"wipe"|"zoom"|"flash"|"glitch", timestamp: number, duration: number (0.3-2.0) }
    Use for: "add transitions", "fade in", "add a glitch effect"
 
-7. **add_broll** — Insert AI-generated B-roll footage. Params: { query: string, timestamp: number, duration: number (2-10) }
+7. **add_broll** — Insert AI-generated B-roll footage via Luma AI. Params: { query: string, timestamp: number, duration: number (2-10) }
    Use for: "add b-roll", "add stock footage", "insert relevant clips", "add visuals"
+   The query will be used as a Luma AI generation prompt, so make it descriptive and cinematic (e.g., "a monkey swinging through jungle vines, cinematic lighting" not just "monkey")
 
 8. **luma_generate** — Generate a cinematic AI clip. Params: { prompt: string, duration: number (3-10), timestamp: number, aspect_ratio?: "16:9"|"9:16"|"1:1" }
    Use for: "generate an intro", "AI clip", "create a cinematic shot"

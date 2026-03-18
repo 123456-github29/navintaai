@@ -2540,10 +2540,33 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       videoDuration,
     );
 
-    // Process Luma generations if any
+    // Process b-roll and Luma generations — both use Luma AI for video generation
     const lumaFailures: string[] = [];
     for (const op of editPlan.operations) {
-      if (op.type === "luma_generate" && op.params.prompt) {
+      if (op.type === "add_broll" && op.params.query) {
+        // Generate b-roll via Luma AI (supports camera control & cinematic footage)
+        try {
+          const brollPrompt = `Cinematic b-roll footage of ${op.params.query}, smooth camera movement, high quality, professional`;
+          const lumaResult = await generateLumaVideo(
+            brollPrompt,
+            op.params.duration || 5,
+            "9:16",
+          );
+          if (lumaResult.status === "failed" || lumaResult.id === "luma_disabled" || lumaResult.id === "error") {
+            op.status = "failed";
+            lumaFailures.push(op.params.query);
+          } else {
+            op.params.generationId = lumaResult.id;
+            op.params.videoUrl = lumaResult.videoUrl;
+            op.status = "applied";
+            console.log(`[ai-edit] Luma b-roll generation started for "${op.params.query}": id=${lumaResult.id}`);
+          }
+        } catch (err: any) {
+          console.error("[ai-edit] Luma b-roll generation error:", err?.message || err);
+          op.status = "failed";
+          lumaFailures.push(op.params.query);
+        }
+      } else if (op.type === "luma_generate" && op.params.prompt) {
         try {
           const lumaResult = await generateLumaVideo(
             op.params.prompt,
