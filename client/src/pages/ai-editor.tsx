@@ -59,11 +59,11 @@ interface SessionResponse {
 }
 
 const QUICK_ACTIONS = [
-  { label: "Trim silence", icon: Scissors, prompt: "Remove all silent parts and pauses from the video" },
+  { label: "Trim silence", icon: Scissors, prompt: "Remove all silent parts and dead space from the video, and add smooth transitions between the remaining clips so it looks polished" },
   { label: "Add captions", icon: Type, prompt: "Add auto-generated captions to the video with a bold, viral style" },
   { label: "Speed up", icon: Zap, prompt: "Speed up the boring parts and slow down the exciting moments" },
   { label: "Add B-roll", icon: Film, prompt: "Suggest and add relevant B-roll footage at key moments in the video" },
-  { label: "Cinematic look", icon: Wand2, prompt: "Apply a cinematic color grade and add smooth transitions between clips" },
+  { label: "Polish it", icon: Wand2, prompt: "Make this video look professionally edited — cut dead space, add smooth transitions between clips, apply a cinematic color grade, and add viral-style captions" },
   { label: "AI clip", icon: Film, prompt: "Generate a short AI cinematic intro clip using Luma" },
 ];
 
@@ -81,6 +81,7 @@ function EditOperationBadge({ op }: { op: { type: string; status: string } }) {
     add_music: "Music",
     add_filter: "Filter",
     add_transition: "Transition",
+    set_segment_transitions: "Transitions",
     add_broll: "B-Roll",
     luma_generate: "AI Clip",
   };
@@ -450,7 +451,7 @@ export default function AiEditor() {
   }
 
   const editState = session?.currentEditState || {};
-  const hasEdits = editState.cuts?.length || editState.filters?.length || editState.speedAdjustments?.length || editState.brollSegments?.length || editState.transitions?.length || editState.musicStyle || editState.captions;
+  const hasEdits = editState.cuts?.length || editState.filters?.length || editState.speedAdjustments?.length || editState.brollSegments?.length || editState.transitions?.length || editState.segmentTransitions?.length || editState.musicStyle || editState.captions;
 
   return (
     <div className="flex h-[calc(100vh-65px)] overflow-hidden" style={{ background: "#050505" }}>
@@ -793,6 +794,11 @@ export default function AiEditor() {
                   {t.type} transition
                 </Badge>
               ))}
+              {editState.segmentTransitions?.length > 0 && (
+                <Badge variant="outline" className="text-xs shrink-0 border-violet-500/10 text-violet-400/60 bg-transparent">
+                  {editState.segmentTransitions.length} smooth transition{editState.segmentTransitions.length > 1 ? "s" : ""}
+                </Badge>
+              )}
               {editState.captions && (
                 <Badge variant="outline" className="text-xs shrink-0 border-white/10 text-white/40 bg-transparent">Captions</Badge>
               )}

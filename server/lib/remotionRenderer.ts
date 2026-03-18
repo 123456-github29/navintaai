@@ -107,6 +107,14 @@ export interface EditState {
     endTime?: number;
   }>;
   transitions?: Array<{ type: string; timestamp: number; duration: number }>;
+  segmentTransitions?: Array<{
+    afterSegmentIndex: number;
+    type: string;
+    durationInFrames?: number;
+    timing?: string;
+  }>;
+  autoTransitions?: boolean;
+  defaultTransitionType?: string;
   brollSegments?: Array<{
     timestamp: number;
     duration: number;
@@ -214,6 +222,14 @@ interface RenderVideoOptions {
   showCinematicBars?: boolean;
   lowerThirdTitle?: string;
   lowerThirdSubtitle?: string;
+  segmentTransitions?: Array<{
+    afterSegmentIndex: number;
+    type: string;
+    durationInFrames?: number;
+    timing?: string;
+  }>;
+  autoTransitions?: boolean;
+  defaultTransitionType?: string;
 }
 
 // Find the system-installed Chromium (installed via nixpkgs).
@@ -273,6 +289,9 @@ async function renderVideo(opts: RenderVideoOptions): Promise<void> {
     showCinematicBars: opts.showCinematicBars ?? false,
     lowerThirdTitle: opts.lowerThirdTitle,
     lowerThirdSubtitle: opts.lowerThirdSubtitle,
+    segmentTransitions: opts.segmentTransitions ?? [],
+    autoTransitions: opts.autoTransitions ?? true,
+    defaultTransitionType: opts.defaultTransitionType ?? "fade",
   };
 
   const composition = await selectComposition({
@@ -287,8 +306,31 @@ async function renderVideo(opts: RenderVideoOptions): Promise<void> {
     },
   });
 
-  // Override duration to match actual video
-  composition.durationInFrames = Math.max(1, totalFrames);
+  // Compute actual duration accounting for cuts and transition overlaps
+  let actualFrames = totalFrames;
+  const cuts = opts.cuts ?? [];
+  if (cuts.length > 0) {
+    // If cuts are present, total duration is the sum of kept segments
+    actualFrames = Math.round(
+      cuts.reduce((sum, c) => sum + (c.end - c.start), 0) * fps
+    );
+  }
+  // Subtract transition overlap frames (TransitionSeries overlaps segments)
+  if (cuts.length > 1) {
+    const segTransitions = inputProps.segmentTransitions ?? [];
+    const useAuto = inputProps.autoTransitions !== false;
+    let overlapFrames = 0;
+    for (let i = 0; i < cuts.length - 1; i++) {
+      const explicit = segTransitions.find((st: any) => st.afterSegmentIndex === i);
+      if (explicit) {
+        if (explicit.type !== "none") overlapFrames += explicit.durationInFrames || 12;
+      } else if (useAuto && inputProps.defaultTransitionType !== "none") {
+        overlapFrames += 12;
+      }
+    }
+    actualFrames = Math.max(1, actualFrames - overlapFrames);
+  }
+  composition.durationInFrames = Math.max(1, actualFrames);
   composition.fps = fps;
   composition.width = 1080;
   composition.height = 1920;
@@ -517,6 +559,14 @@ export async function executeEdits(
     `[remotion] executeEdits: ${cuts.length} cuts, ${filters.length} filters, ${transitions.length} transitions, ${brollSegments.length} b-roll, ${captions.length} captions`
   );
 
+  // Map segment transitions for cross-segment blending
+  const segmentTransitions = (editState.segmentTransitions || []).map((st: any) => ({
+    afterSegmentIndex: st.afterSegmentIndex,
+    type: st.type || "fade",
+    durationInFrames: st.durationInFrames || 12,
+    timing: st.timing || "spring",
+  }));
+
   await renderVideo({
     videoSrc: inputFile,
     cuts,
@@ -531,6 +581,9 @@ export async function executeEdits(
     gradeLook,
     showFilmGrain: true,
     showCinematicBars: false,
+    segmentTransitions,
+    autoTransitions: editState.autoTransitions ?? true,
+    defaultTransitionType: editState.defaultTransitionType || "fade",
   });
 
   console.log(`[remotion] executeEdits complete: ${outputFilename}`);
