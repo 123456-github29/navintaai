@@ -2540,10 +2540,27 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       videoDuration,
     );
 
-    // Process Luma generations if any
+    // Process b-roll and Luma generations
+    const { searchVideos } = await import("./lib/pexels");
     const lumaFailures: string[] = [];
     for (const op of editPlan.operations) {
-      if (op.type === "luma_generate" && op.params.prompt) {
+      if (op.type === "add_broll" && op.params.query) {
+        // Fetch stock footage from Pexels for b-roll
+        try {
+          const videos = await searchVideos(op.params.query, 3);
+          if (videos.length > 0) {
+            op.params.videoUrl = videos[0].url;
+            op.status = "applied";
+            console.log(`[ai-edit] B-roll found for "${op.params.query}": ${videos[0].url}`);
+          } else {
+            op.status = "failed";
+            console.warn(`[ai-edit] No Pexels results for b-roll query: "${op.params.query}"`);
+          }
+        } catch (err: any) {
+          console.error("[ai-edit] Pexels search error:", err?.message || err);
+          op.status = "failed";
+        }
+      } else if (op.type === "luma_generate" && op.params.prompt) {
         try {
           const lumaResult = await generateLumaVideo(
             op.params.prompt,
