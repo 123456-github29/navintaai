@@ -212,6 +212,35 @@ interface RenderVideoOptions {
   lowerThirdSubtitle?: string;
 }
 
+// Find the system-installed Chromium (installed via nixpkgs).
+// Remotion's bundled chrome-headless-shell won't work in containerised
+// environments where its shared library dependencies aren't present.
+function findSystemChromium(): string | undefined {
+  const { execSync } = require("child_process");
+  const candidates = [
+    process.env.REMOTION_CHROME_EXECUTABLE,
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    process.env.CHROME_EXECUTABLE,
+  ];
+  for (const candidate of candidates) {
+    if (candidate) return candidate;
+  }
+  for (const name of ["chromium", "chromium-browser", "google-chrome-stable", "google-chrome"]) {
+    try {
+      const p = execSync(`which ${name}`, { stdio: ["pipe", "pipe", "pipe"] }).toString().trim();
+      if (p) return p;
+    } catch { /* not found */ }
+  }
+  return undefined;
+}
+
+const _systemChromium = findSystemChromium();
+if (_systemChromium) {
+  console.log(`[remotion] Using system chromium: ${_systemChromium}`);
+} else {
+  console.warn("[remotion] No system chromium found — Remotion will try its bundled binary (may fail in containers)");
+}
+
 async function renderVideo(opts: RenderVideoOptions): Promise<void> {
   const {
     renderMedia,
@@ -247,6 +276,12 @@ async function renderVideo(opts: RenderVideoOptions): Promise<void> {
     serveUrl: bundleLocation,
     id: "VideoEditor",
     inputProps,
+    browserExecutable: _systemChromium,
+    chromiumOptions: {
+      disableWebSecurity: true,
+      ignoreCertificateErrors: true,
+      gl: "swangle",
+    },
   });
 
   // Override duration to match actual video
@@ -263,9 +298,11 @@ async function renderVideo(opts: RenderVideoOptions): Promise<void> {
     codec: "h264",
     outputLocation: opts.outputPath,
     inputProps,
+    browserExecutable: _systemChromium,
     chromiumOptions: {
       disableWebSecurity: true,
       ignoreCertificateErrors: true,
+      gl: "swangle",
     },
     onProgress: ({ progress }) => {
       const pct = Math.round(progress * 100);
