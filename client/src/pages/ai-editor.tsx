@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { RemotionPreview } from "@/components/RemotionPreview";
+import { RemotionPreview, type VideoSource } from "@/components/RemotionPreview";
 import type { Post, Clip } from "@shared/schema";
 
 interface AiEditMessage {
@@ -138,21 +138,53 @@ export default function AiEditor() {
   });
 
   const postClips = Array.isArray(clips) ? clips : [];
-  const firstClip = postClips.find((c: any) => c.signedUrl || c.videoPath) as any;
+  const clipsWithVideo = postClips.filter((c: any) => c.signedUrl || c.videoPath);
+  const firstClip = clipsWithVideo[0] as any;
 
-  // Fallback: fetch a fresh signed URL if the clips response didn't include one
-  const { data: fetchedClipUrl } = useQuery<string | null>({
-    queryKey: ["/api/clips", firstClip?.id, "url"],
+  // Fetch signed URLs for ALL clips that don't already have one
+  const clipsNeedingUrls = clipsWithVideo.filter((c: any) => !c.signedUrl && c.id);
+  const { data: fetchedClipUrls } = useQuery<Record<string, string>>({
+    queryKey: ["/api/clips/urls", clipsNeedingUrls.map((c: any) => c.id).join(",")],
     queryFn: async () => {
-      const res = await apiRequest("GET", `/api/clips/${firstClip!.id}/url`);
-      const data = await res.json();
-      return data.url || null;
+      const urls: Record<string, string> = {};
+      for (const clip of clipsNeedingUrls) {
+        try {
+          const res = await apiRequest("GET", `/api/clips/${(clip as any).id}/url`);
+          const data = await res.json();
+          if (data.url) urls[(clip as any).id] = data.url;
+        } catch {
+          // Skip clips that fail URL fetch
+        }
+      }
+      return urls;
     },
-    enabled: !!firstClip?.id && !firstClip?.signedUrl,
+    enabled: clipsNeedingUrls.length > 0,
     retry: 1,
   });
 
-  const firstClipUrl = firstClip?.signedUrl || fetchedClipUrl || null;
+  // Build resolved URL for each clip
+  const getClipUrl = (clip: any): string | null => {
+    if (clip.signedUrl) return clip.signedUrl;
+    if (fetchedClipUrls && fetchedClipUrls[clip.id]) return fetchedClipUrls[clip.id];
+    return null;
+  };
+
+  const firstClipUrl = firstClip ? getClipUrl(firstClip) : null;
+
+  // Build video sources array for multi-shot preview
+  const [clipDurations, setClipDurations] = useState<Record<string, number>>({});
+
+  const allVideoSources: VideoSource[] = useMemo(() => {
+    return clipsWithVideo
+      .map((clip: any) => {
+        const url = getClipUrl(clip);
+        if (!url) return null;
+        const duration = clipDurations[clip.id] || clip.duration || 0;
+        if (duration <= 0) return null;
+        return { src: url, durationInSeconds: duration };
+      })
+      .filter(Boolean) as VideoSource[];
+  }, [clipsWithVideo, fetchedClipUrls, clipDurations]);
 
   const initSession = useMutation({
     mutationFn: async () => {
@@ -386,22 +418,52 @@ export default function AiEditor() {
     }
   }, [session?.currentEditState, startLumaPolling]);
 
-  // Detect video duration for Remotion preview
+  // Detect video duration for ALL clips (multi-shot support)
   useEffect(() => {
-    if (!firstClipUrl) return;
-    const video = document.createElement("video");
-    video.preload = "metadata";
-    video.src = firstClipUrl;
-    video.onloadedmetadata = () => {
-      if (video.duration && isFinite(video.duration)) {
-        setVideoDuration(video.duration);
+    if (clipsWithVideo.length === 0) return;
+
+    let cancelled = false;
+    const durations: Record<string, number> = {};
+
+    const loadDurations = async () => {
+      for (const clip of clipsWithVideo) {
+        if (cancelled) break;
+        const url = getClipUrl(clip as any);
+        if (!url) continue;
+
+        try {
+          const duration = await new Promise<number>((resolve) => {
+            const video = document.createElement("video");
+            video.preload = "metadata";
+            video.src = url;
+            video.onloadedmetadata = () => {
+              const dur = video.duration && isFinite(video.duration) ? video.duration : 0;
+              video.onloadedmetadata = null;
+              video.src = "";
+              resolve(dur);
+            };
+            video.onerror = () => {
+              resolve((clip as any).duration || 0);
+            };
+          });
+          durations[(clip as any).id] = duration;
+        } catch {
+          durations[(clip as any).id] = (clip as any).duration || 0;
+        }
+      }
+
+      if (!cancelled) {
+        setClipDurations(durations);
+        const totalDur = Object.values(durations).reduce((sum, d) => sum + d, 0);
+        if (totalDur > 0) {
+          setVideoDuration((prev) => Math.max(prev, totalDur));
+        }
       }
     };
-    return () => {
-      video.onloadedmetadata = null;
-      video.src = "";
-    };
-  }, [firstClipUrl]);
+
+    loadDurations();
+    return () => { cancelled = true; };
+  }, [clipsWithVideo.length, fetchedClipUrls]);
 
   const handleSend = () => {
     const msg = inputValue.trim();
@@ -660,11 +722,20 @@ export default function AiEditor() {
         <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
           <div className="relative w-full max-w-sm aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/[0.06]">
             {firstClipUrl && hasEdits && videoDuration > 0 ? (
-              /* Remotion Player - renders all edits in real-time */
+              /* Remotion Player - renders all edits in real-time with all shots */
               <RemotionPreview
                 videoUrl={firstClipUrl}
                 editState={editState}
                 videoDuration={videoDuration}
+                videoSources={allVideoSources.length > 1 ? allVideoSources : undefined}
+              />
+            ) : firstClipUrl && allVideoSources.length > 1 && videoDuration > 0 ? (
+              /* Multi-shot preview without edits — use Remotion to stitch clips seamlessly */
+              <RemotionPreview
+                videoUrl={firstClipUrl}
+                editState={{}}
+                videoDuration={videoDuration}
+                videoSources={allVideoSources}
               />
             ) : firstClipUrl ? (
               <>
@@ -711,8 +782,8 @@ export default function AiEditor() {
                   <div>
                     <p className="text-white/80 text-sm font-medium">Video Preview</p>
                     <p className="text-white/40 text-xs mt-1">
-                      {postClips.length > 0
-                        ? `${postClips.length} clip${postClips.length > 1 ? "s" : ""} recorded`
+                      {clipsWithVideo.length > 0
+                        ? `${clipsWithVideo.length} clip${clipsWithVideo.length > 1 ? "s" : ""} recorded`
                         : "No clips recorded yet"}
                     </p>
                   </div>

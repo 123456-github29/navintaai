@@ -2401,33 +2401,28 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       });
     }
 
-    // Try to find a video source: clips first, then exported videos
-    let videoPath: string | null = null;
-    let storageBucket: string = "clips";
-
-    // 1. Try clips for the post
+    // Collect ALL clips for the post (multi-shot support)
     const postClips = await storage.getClipsByPost(session.postId);
-    const clipWithVideo = postClips.find(c => c.videoPath);
-    if (clipWithVideo?.videoPath) {
-      videoPath = clipWithVideo.videoPath;
-      storageBucket = "clips";
-    }
+    const clipsWithVideo = postClips.filter(c => c.videoPath);
 
-    // 2. Fallback: try exported video from session or post
-    if (!videoPath) {
+    // Fallback: try exported video from session or post if no clips
+    let singleVideoPath: string | null = null;
+    let singleVideoBucket: string = "renders";
+
+    if (clipsWithVideo.length === 0) {
       let video = session.videoId ? await storage.getVideo(session.videoId, userId) : undefined;
       if (!video) {
         const postVideos = await storage.getVideos(userId, session.postId);
         video = postVideos.find(v => v.videoPath) || undefined;
       }
       if (video?.videoPath) {
-        videoPath = video.videoPath;
-        storageBucket = video.storageBucket || "renders";
+        singleVideoPath = video.videoPath;
+        singleVideoBucket = video.storageBucket || "renders";
       }
     }
 
-    // 3. No media found at all
-    if (!videoPath) {
+    // No media found at all
+    if (clipsWithVideo.length === 0 && !singleVideoPath) {
       throw createError(
         postClips.length === 0
           ? "No recorded clips found. Record your video clips first before finishing."
@@ -2440,17 +2435,46 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     // Import dynamically to avoid circular dependencies
     const { transcribeVideo } = await import("./lib/aiEditor");
     const { downloadVideoToTemp, downloadClipToTemp } = await import("./lib/supabaseStorage");
+    const { concatenateClips } = await import("./lib/clipConcatenator");
     const { join } = await import("path");
 
     const tempDir = join(process.cwd(), "uploads", "temp");
-    let tempPath: string | null = null;
+    const tempFilesToClean: string[] = [];
     try {
-      if (storageBucket === "clips") {
-        tempPath = await downloadClipToTemp(videoPath, tempDir);
+      let transcribePath: string;
+
+      if (clipsWithVideo.length > 0) {
+        // Download ALL clips and concatenate them into a single video
+        console.log(`[transcribe] Downloading ${clipsWithVideo.length} clips for concatenation`);
+        const clipPaths: string[] = [];
+        for (const clip of clipsWithVideo) {
+          const clipPath = await downloadClipToTemp(clip.videoPath!, tempDir);
+          clipPaths.push(clipPath);
+          tempFilesToClean.push(clipPath);
+        }
+
+        if (clipPaths.length === 1) {
+          transcribePath = clipPaths[0];
+        } else {
+          // Concatenate all clips into a single seamless video
+          console.log(`[transcribe] Concatenating ${clipPaths.length} clips...`);
+          const combinedPath = await concatenateClips(clipPaths, tempDir);
+          tempFilesToClean.push(combinedPath);
+          transcribePath = combinedPath;
+          console.log(`[transcribe] Concatenation complete`);
+        }
       } else {
-        tempPath = await downloadVideoToTemp(videoPath, tempDir);
+        // Single exported video fallback
+        if (singleVideoBucket === "clips") {
+          transcribePath = await downloadClipToTemp(singleVideoPath!, tempDir);
+        } else {
+          transcribePath = await downloadVideoToTemp(singleVideoPath!, tempDir);
+        }
+        tempFilesToClean.push(transcribePath);
       }
-      const result = await transcribeVideo(tempPath);
+
+      // Transcribe the combined video — timestamps are now relative to the full stitched video
+      const result = await transcribeVideo(transcribePath);
 
       // Merge segments + duration into currentEditState so export can burn captions
       const existingState = (session.currentEditState as any) || {};
@@ -2470,7 +2494,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       await storage.createAiEditMessage({
         sessionId: id,
         role: "system",
-        content: `Video transcribed successfully. Duration: ${result.duration}s, Language: ${result.language}. Transcript: "${result.fullText}"`,
+        content: `Video transcribed successfully (${clipsWithVideo.length || 1} shot${clipsWithVideo.length !== 1 ? 's' : ''} combined). Duration: ${result.duration}s, Language: ${result.language}. Transcript: "${result.fullText}"`,
       });
 
       res.json({
@@ -2480,8 +2504,8 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         language: result.language,
       });
     } finally {
-      if (tempPath) {
-        await fs.unlink(tempPath).catch(() => {});
+      for (const f of tempFilesToClean) {
+        await fs.unlink(f).catch(() => {});
       }
     }
   }));
@@ -2711,12 +2735,13 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       throw createError("No clips found for this post", 400, "NO_CLIPS");
     }
 
-    // Concatenate all clips into a single video
+    // Concatenate all clips into a single video before applying edits
     const { promises: fs } = await import("fs");
     const path = await import("path");
     const { randomUUID } = await import("crypto");
     const { downloadClipToTemp, uploadVideoToStorage } = await import("./lib/supabaseStorage");
     const { executeEdits } = await import("./lib/remotionRenderer");
+    const { concatenateClips, getClipDuration } = await import("./lib/clipConcatenator");
 
     const jobId = randomUUID();
     const tempDir = path.join(process.cwd(), "uploads", "temp");
@@ -2739,18 +2764,22 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         throw createError("No valid clips to export", 400, "NO_VALID_CLIPS");
       }
 
-      // Calculate total duration
-      const totalDuration = clips.reduce((sum, c) => sum + (c.duration || 0), 0);
-
-      // Remotion renders a single video source; for multi-clip sessions we use
-      // the first clip and apply whatever cuts are in the edit state against it.
-      // Full multi-source support requires a future redesign.
-      const primaryClipPath = clipPaths[0];
-      if (clipPaths.length > 1) {
-        console.warn(`[ai-edit export] Multi-clip session (${clipPaths.length} clips) — only first clip rendered. Future: concatenate all clips.`);
+      // Concatenate all clips into a single seamless video
+      let primaryClipPath: string;
+      if (clipPaths.length === 1) {
+        primaryClipPath = clipPaths[0];
+      } else {
+        console.log(`[ai-edit export] Concatenating ${clipPaths.length} clips...`);
+        primaryClipPath = await concatenateClips(clipPaths, tempDir);
+        tempFilesToClean.push(primaryClipPath);
+        console.log(`[ai-edit export] Concatenation complete`);
       }
 
-      // Execute edits with Remotion
+      // Get actual duration from the concatenated file (more accurate than summing clip durations)
+      const totalDuration = await getClipDuration(primaryClipPath)
+        || clips.reduce((sum, c) => sum + (c.duration || 0), 0);
+
+      // Execute edits with Remotion on the combined video
       const editedFilename = await executeEdits(
         primaryClipPath,
         (session.currentEditState || {}) as EditState,

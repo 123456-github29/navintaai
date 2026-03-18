@@ -28,10 +28,17 @@ interface EditState {
   }>;
 }
 
+export interface VideoSource {
+  src: string;
+  durationInSeconds: number;
+}
+
 interface RemotionPreviewProps {
   videoUrl: string;
   editState: EditState;
   videoDuration: number;
+  /** Multiple video sources for multi-shot preview. When provided, clips play sequentially. */
+  videoSources?: VideoSource[];
 }
 
 const FPS = 30;
@@ -79,7 +86,8 @@ type CaptionStyleEnum = "default" | "boxed" | "gradient" | "highlighted" | "outl
 function buildInputProps(
   videoUrl: string,
   editState: EditState,
-  videoDuration: number
+  videoDuration: number,
+  videoSources?: VideoSource[]
 ): VideoEditorProps {
   // Invert cuts: AI stores "sections to remove", Remotion needs "sections to keep"
   const rawCuts = (editState.cuts || [])
@@ -141,6 +149,7 @@ function buildInputProps(
 
   return {
     videoSrc: videoUrl,
+    videoSources: videoSources && videoSources.length > 1 ? videoSources : [],
     cuts,
     captions,
     filters,
@@ -154,13 +163,13 @@ function buildInputProps(
   };
 }
 
-export function RemotionPreview({ videoUrl, editState, videoDuration }: RemotionPreviewProps) {
+export function RemotionPreview({ videoUrl, editState, videoDuration, videoSources }: RemotionPreviewProps) {
   const playerRef = useRef<PlayerRef>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const inputProps = useMemo(
-    () => buildInputProps(videoUrl, editState, videoDuration),
-    [videoUrl, editState, videoDuration]
+    () => buildInputProps(videoUrl, editState, videoDuration, videoSources),
+    [videoUrl, editState, videoDuration, videoSources]
   );
 
   // Compute actual output duration (accounting for cuts removing sections)
