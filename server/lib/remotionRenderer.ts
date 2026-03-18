@@ -69,6 +69,7 @@ export interface CaptionSegmentInput {
   viralText?: string;
   useViral?: boolean;
   style?: {
+    preset?: string; // Direct style name (e.g. "viral", "fire", "glitch")
     font?: string;
     baseTextColor?: string;
     outlineColor?: string;
@@ -96,7 +97,7 @@ export interface EditState {
   cuts?: Array<{ start: number; end: number; label?: string }>;
   speedAdjustments?: Array<{ start: number; end: number; speed: number }>;
   captions?: boolean;
-  captionStyle?: "viral" | "boxed" | "cinematic" | "neon" | "gradient" | "highlighted" | "outline" | "default";
+  captionStyle?: "viral" | "boxed" | "cinematic" | "neon" | "gradient" | "highlighted" | "outline" | "default" | "bold" | "typewriter" | "retro" | "minimal" | "fire" | "glitch" | "karaoke" | "shadow" | "comic" | "elegant" | "broadcast" | "wave" | "stack";
   captionPosition?: "bottom" | "top" | "center";
   transcriptSegments?: Array<{ start: number; end: number; text: string }>;
   musicStyle?: string;
@@ -128,10 +129,23 @@ export interface EditState {
 //  Caption style mapper (from old style settings to Remotion enum)
 // ----------------------------------------------------------------
 
+const VALID_CAPTION_STYLES = new Set([
+  "default", "boxed", "gradient", "highlighted", "outline", "cinematic",
+  "viral", "neon", "bold", "typewriter", "retro", "minimal", "fire",
+  "glitch", "karaoke", "shadow", "comic", "elegant", "broadcast", "wave", "stack",
+]);
+
+type CaptionStyleName = "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon" | "bold" | "typewriter" | "retro" | "minimal" | "fire" | "glitch" | "karaoke" | "shadow" | "comic" | "elegant" | "broadcast" | "wave" | "stack";
+
 function mapCaptionStyle(
   style?: CaptionSegmentInput["style"]
-): "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon" {
+): CaptionStyleName {
   if (!style) return "default";
+  // Direct preset name takes priority
+  if (style.preset && VALID_CAPTION_STYLES.has(style.preset)) {
+    return style.preset as CaptionStyleName;
+  }
+  // Fallback: infer from CSS properties
   const bg = style.background?.toLowerCase() || "";
   if (bg.includes("gradient")) return "gradient";
   if (bg.includes("black") || bg.includes("rgba")) return "boxed";
@@ -190,7 +204,7 @@ interface RenderVideoOptions {
     start: number;
     end: number;
     text: string;
-    style?: "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon";
+    style?: "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon" | "bold" | "typewriter" | "retro" | "minimal" | "fire" | "glitch" | "karaoke" | "shadow" | "comic" | "elegant" | "broadcast" | "wave" | "stack";
     position?: "top" | "bottom" | "center";
     baseTextColor?: string;
     outlineColor?: string;

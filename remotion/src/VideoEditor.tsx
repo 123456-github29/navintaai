@@ -31,7 +31,7 @@ export const captionSchema = z.object({
   end: z.number(),
   text: z.string(),
   style: z
-    .enum(["default", "boxed", "gradient", "highlighted", "outline", "cinematic", "viral", "neon"])
+    .enum(["default", "boxed", "gradient", "highlighted", "outline", "cinematic", "viral", "neon", "bold", "typewriter", "retro", "minimal", "fire", "glitch", "karaoke", "shadow", "comic", "elegant", "broadcast", "wave", "stack"])
     .optional(),
   position: z.enum(["top", "bottom", "center"]).optional(),
   baseTextColor: z.string().optional(),

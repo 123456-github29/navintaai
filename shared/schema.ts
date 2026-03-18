@@ -127,6 +127,7 @@ export const videos = pgTable("videos", {
   duration: integer("duration"),
   aspectRatio: text("aspect_ratio").notNull().default("9:16"),
   hasCaption: boolean("has_caption").default(true),
+  captionStyle: text("caption_style").default("viral"),
   musicStyle: text("music_style"),
   status: text("status").notNull().default("ready"), // queued | rendering | ready | failed
   lastError: text("last_error"),

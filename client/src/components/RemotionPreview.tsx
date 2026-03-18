@@ -82,7 +82,7 @@ function invertCuts(
   return kept;
 }
 
-type CaptionStyleEnum = "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon";
+type CaptionStyleEnum = "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon" | "bold" | "typewriter" | "retro" | "minimal" | "fire" | "glitch" | "karaoke" | "shadow" | "comic" | "elegant" | "broadcast" | "wave" | "stack";
 
 function buildInputProps(
   videoUrl: string,
