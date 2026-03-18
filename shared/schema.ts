@@ -448,6 +448,8 @@ export const aiEditSessions = pgTable("ai_edit_sessions", {
   currentEditState: jsonb("current_edit_state").$type<{
     cuts?: Array<{ start: number; end: number; label?: string }>;
     captions?: boolean;
+    captionStyle?: string;
+    captionPosition?: string;
     transcriptSegments?: Array<{ start: number; end: number; text: string }>;
     musicStyle?: string;
     brollSegments?: Array<{ timestamp: number; duration: number; query: string; lumaGenerationId?: string; url?: string }>;

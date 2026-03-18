@@ -78,7 +78,16 @@ You have access to the following editing capabilities:
 1. **trim** - Cut portions of the video. Params: { start: number (seconds), end: number (seconds) }
 2. **cut** - Remove a section from the video. Params: { start: number (seconds), end: number (seconds) }
 3. **speed_change** - Change playback speed of a segment. Params: { start: number, end: number, speed: number (0.25-4.0) }
-4. **add_caption** - Add or modify captions/text overlays. Params: { text: string, start: number, end: number, style?: string }
+4. **add_caption** - Add captions/subtitles to the video. Params: { style?: "viral"|"boxed"|"cinematic"|"neon"|"gradient"|"highlighted"|"outline"|"default", position?: "bottom"|"top"|"center" }
+   - "viral" = CapCut-style word-by-word yellow highlight (default if user says "viral", "bold", "CapCut")
+   - "boxed" = white text on dark box
+   - "cinematic" = frosted glass box, cinematic look
+   - "neon" = glowing cyan neon text
+   - "gradient" = colorful gradient background pill
+   - "highlighted" = word-by-word highlight, similar to viral
+   - "outline" = large white text with black outline, no background
+   - "default" = clean white text with subtle shadow
+   Pick the style that best matches the user's request (e.g. "clean" → "default", "neon" → "neon", "cinematic" → "cinematic"). Default to "viral" if unspecified.
 5. **add_music** - Add background music. Params: { style: string, volume: number (0-1) }
 6. **add_filter** - Apply a visual filter. Params: { type: "brightness"|"contrast"|"saturation"|"blur"|"sharpen"|"vintage"|"cinematic"|"warm"|"cool", value: number, start?: number, end?: number }
 7. **add_transition** - Add transition between segments. Params: { type: "fade"|"dissolve"|"wipe"|"zoom", timestamp: number, duration: number }
@@ -253,6 +262,8 @@ export function applyOperationsToState(
       }
       case "add_caption": {
         state.captions = true;
+        if (op.params.style) state.captionStyle = op.params.style;
+        if (op.params.position) state.captionPosition = op.params.position;
         break;
       }
       case "add_music": {

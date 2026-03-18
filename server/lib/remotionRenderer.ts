@@ -96,6 +96,8 @@ export interface EditState {
   cuts?: Array<{ start: number; end: number; label?: string }>;
   speedAdjustments?: Array<{ start: number; end: number; speed: number }>;
   captions?: boolean;
+  captionStyle?: "viral" | "boxed" | "cinematic" | "neon" | "gradient" | "highlighted" | "outline" | "default";
+  captionPosition?: "bottom" | "top" | "center";
   transcriptSegments?: Array<{ start: number; end: number; text: string }>;
   musicStyle?: string;
   filters?: Array<{
@@ -459,6 +461,8 @@ export async function executeEdits(
   );
 
   // Map transcript segments → Remotion captions when captions flag is set
+  const captionStyle = editState.captionStyle ?? "viral";
+  const captionPosition = editState.captionPosition ?? "bottom";
   const captions =
     editState.captions && editState.transcriptSegments?.length
       ? editState.transcriptSegments
@@ -467,8 +471,8 @@ export async function executeEdits(
             start: s.start,
             end: s.end,
             text: s.text,
-            style: "viral" as const,
-            position: "bottom" as const,
+            style: captionStyle,
+            position: captionPosition,
           }))
       : [];
 
