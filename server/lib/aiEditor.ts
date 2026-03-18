@@ -268,6 +268,94 @@ export async function checkLumaStatus(generationId: string): Promise<LumaGenerat
   };
 }
 
+// ---- Direct JSON generation for Remotion ----
+
+const REMOTION_JSON_PROMPT = `You are an expert video editor AI. Users describe videos in natural language and you convert their requests directly into a JSON object that can be rendered by Remotion.
+
+IMPORTANT: You generate COMPLETE VideoEditorProps JSON, not operations. Return ONLY valid JSON with no markdown.
+
+Available caption styles (use for captions array):
+"viral", "boxed", "cinematic", "neon", "gradient", "highlighted", "outline", "default", "bold", "typewriter", "retro", "minimal", "fire", "glitch", "karaoke", "shadow", "comic", "elegant", "broadcast", "wave", "stack"
+
+Available transition types: "fade", "dissolve", "wipe", "zoom", "flash", "glitch"
+
+Available filter types: "brightness", "contrast", "saturation", "blur", "sharpen", "vintage", "cinematic", "warm", "cool"
+
+Available gradeLook values: "none", "cinematic", "vintage", "warm", "cool", "dramatic", "matte", "neon", "teal_orange"
+
+JSON STRUCTURE (VideoEditorProps):
+{
+  "videoSrc": "file path (don't modify)",
+  "cuts": [{ "start": number, "end": number, "label": string? }],
+  "captions": [{ "start": number, "end": number, "text": string, "style": string, "position": "top"|"bottom"|"center" }],
+  "filters": [{ "type": string, "value": 0-2, "startTime": number?, "endTime": number? }],
+  "transitions": [{ "type": string, "timestamp": number, "duration": 0.3-2.0 }],
+  "brollSegments": [{ "timestamp": number, "duration": number, "url": string? }],
+  "speedAdjustments": [{ "start": number, "end": number, "speed": 0.25-4.0 }],
+  "totalDurationInSeconds": number,
+  "gradeLook": string,
+  "showFilmGrain": boolean,
+  "showCinematicBars": boolean
+}
+
+Rules:
+- ALWAYS preserve videoSrc, totalDurationInSeconds (don't change)
+- Map user intent to available options
+- Use reasonable timing/duration values
+- If user requests "captions", use transcriptSegments to populate captions array
+- Be creative - combine multiple elements for natural requests
+- Return ONLY the JSON object, no explanation`;
+
+export async function generateRemotionJSON(
+  userMessage: string,
+  transcript: string,
+  transcriptSegments: Array<{ start: number; end: number; text: string }>,
+  currentVideoSrc: string,
+  totalDuration: number,
+): Promise<{ json: any; message: string }> {
+  const openai = new (await import("openai")).default({ apiKey: process.env.OPENAI_API_KEY });
+
+  const context = `Video transcript: "${transcript}"
+Transcript segments: ${JSON.stringify(transcriptSegments)}
+Current video: ${currentVideoSrc}
+Total duration: ${totalDuration}s
+
+User request: ${userMessage}`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: REMOTION_JSON_PROMPT },
+      { role: "user", content: context },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.7,
+  });
+
+  const content = response.choices[0]?.message?.content || "{}";
+  let parsedJSON: any = {};
+  try {
+    parsedJSON = JSON.parse(content);
+  } catch {
+    console.error("[remotion-json] Failed to parse response:", content);
+  }
+
+  // Generate a friendly message describing what was applied
+  const changes: string[] = [];
+  if (parsedJSON.captions?.length) changes.push(`${parsedJSON.captions.length} caption(s)`);
+  if (parsedJSON.filters?.length) changes.push(`${parsedJSON.filters.length} filter(s)`);
+  if (parsedJSON.transitions?.length) changes.push(`${parsedJSON.transitions.length} transition(s)`);
+  if (parsedJSON.cuts?.length) changes.push(`${parsedJSON.cuts.length} cut(s)`);
+  if (parsedJSON.speedAdjustments?.length) changes.push(`speed adjustment(s)`);
+  if (parsedJSON.brollSegments?.length) changes.push(`${parsedJSON.brollSegments.length} B-roll segment(s)`);
+
+  const message = changes.length > 0
+    ? `✨ Updated your video: ${changes.join(", ")}`
+    : `Got it! I'm processing your request.`;
+
+  return { json: parsedJSON, message };
+}
+
 // ---- Apply edit operations to the edit state ----
 
 export function applyOperationsToState(
