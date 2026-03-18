@@ -1955,8 +1955,8 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
   app.post("/api/videos/export", requireAuth, uploadLimiter, checkExportLimit as any, validateBody(videoExportSchema), async (req: any, res) => {
     try {
       const userId = req.user.sub;
-      const { postId, hasCaption, musicStyle } = req.body;
-      console.log(`[video-export] Starting for postId: ${postId}, userId: ${userId}`);
+      const { postId, hasCaption, captionStyle, musicStyle } = req.body;
+      console.log(`[video-export] Starting for postId: ${postId}, userId: ${userId}, captionStyle: ${captionStyle}`);
 
       // Get post for title
       const post = await storage.getPost(postId, userId);
@@ -1987,6 +1987,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         duration: totalDuration,
         aspectRatio: "9:16",
         hasCaption,
+        captionStyle: captionStyle || "viral",
         musicStyle,
       });
       console.log(`[video-export] Video record created: ${video.id}`);

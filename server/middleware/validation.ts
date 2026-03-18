@@ -130,6 +130,7 @@ export const shotUpdateSchema = z.object({
 export const videoExportSchema = z.object({
   postId: z.string().min(1, "Post ID is required"),
   hasCaption: z.boolean().optional().default(false),
+  captionStyle: z.string().max(50).optional().default("viral"),
   musicStyle: z.string().max(100).optional(),
 }).strict();
 

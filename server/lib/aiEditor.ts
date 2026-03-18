@@ -83,9 +83,9 @@ AVAILABLE OPERATIONS:
 2. **speed_change** — Change playback speed for a segment. Params: { start: number, end: number, speed: number (0.25-4.0) }
    Use for: "speed up the boring parts", "slow motion on the exciting part", "make it faster", "2x speed"
 
-3. **add_caption** — Add auto-generated captions from the transcript. Params: { style?: "viral"|"boxed"|"cinematic"|"neon"|"gradient"|"highlighted"|"outline"|"default", position?: "bottom"|"top"|"center" }
-   Styles:
-   - "viral" = CapCut-style word-by-word yellow highlight (DEFAULT — use when unspecified, or user says "bold", "CapCut", "TikTok style")
+3. **add_caption** — Add auto-generated captions from the transcript. Params: { style?: string, position?: "bottom"|"top"|"center" }
+   Available styles:
+   - "viral" = CapCut-style word-by-word yellow highlight (DEFAULT — use when unspecified, or user says "CapCut", "TikTok style")
    - "boxed" = white text on dark box
    - "cinematic" = frosted glass with border
    - "neon" = glowing cyan neon text
@@ -93,7 +93,20 @@ AVAILABLE OPERATIONS:
    - "highlighted" = word-by-word highlight similar to viral
    - "outline" = big white text with black stroke, no background
    - "default" = clean white text with shadow
-   Map user intent: "clean" → "default", "glow" → "neon", "movie look" → "cinematic", "colorful" → "gradient"
+   - "bold" = extra large pink highlight, word-by-word
+   - "typewriter" = green monospace text on dark background (hacker/code look)
+   - "retro" = orange retro text with 3D shadow (80s style)
+   - "minimal" = small, subtle, clean white text
+   - "fire" = orange/red flame text with glow, word-by-word
+   - "glitch" = RGB-split glitch effect (cyberpunk)
+   - "karaoke" = progressive fill animation like karaoke
+   - "shadow" = dramatic multi-layer drop shadow
+   - "comic" = yellow text on red box with comic book border
+   - "elegant" = serif font, subtle and refined
+   - "broadcast" = news/TV broadcast bar style
+   - "wave" = purple/cyan color-shifting word highlight
+   - "stack" = large green highlight, word-by-word
+   Map user intent: "clean"/"simple" → "minimal", "glow"/"neon" → "neon", "movie"/"film" → "cinematic", "colorful" → "gradient", "fire"/"flame" → "fire", "glitch"/"cyber" → "glitch", "karaoke"/"sing" → "karaoke", "news"/"tv" → "broadcast", "comic"/"cartoon" → "comic", "fancy"/"classy" → "elegant", "retro"/"80s"/"vintage" → "retro", "hacker"/"code"/"terminal" → "typewriter", "big"/"bold"/"impact" → "bold"
 
 4. **add_music** — Add background music. Params: { style: string, volume: number (0-1) }
    Use for: "add music", "add a chill beat", "background music"

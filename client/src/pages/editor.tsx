@@ -24,6 +24,30 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Post, Clip } from "@shared/schema";
 
+const CAPTION_STYLES = [
+  { id: "viral", name: "Viral", previewText: "VIRAL", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "#FFD700", previewShadow: "1px 1px 0 #000, -1px -1px 0 #000" },
+  { id: "bold", name: "Bold", previewText: "BOLD", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "#FF3366", previewShadow: "2px 2px 0 #000, -2px -2px 0 #000" },
+  { id: "cinematic", name: "Cinematic", previewText: "Cinematic", previewFont: "'Arial Black', sans-serif", previewColor: "white", previewShadow: "0 1px 8px rgba(0,0,0,0.6)" },
+  { id: "neon", name: "Neon", previewText: "NEON", previewFont: "'Arial Black', sans-serif", previewColor: "#00FFFF", previewShadow: "0 0 8px #00FFFF, 0 0 16px #0080FF" },
+  { id: "fire", name: "Fire", previewText: "FIRE", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "#FF4500", previewShadow: "0 0 10px rgba(255,69,0,0.8), 2px 2px 0 #8B0000" },
+  { id: "glitch", name: "Glitch", previewText: "GLITCH", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "white", previewShadow: "2px 0 #FF0000, -2px 0 #00FFFF" },
+  { id: "karaoke", name: "Karaoke", previewText: "KARAOKE", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "rgba(255,255,255,0.6)", previewShadow: "1px 1px 0 #000" },
+  { id: "outline", name: "Outline", previewText: "OUTLINE", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "white", previewShadow: "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000" },
+  { id: "boxed", name: "Boxed", previewText: "Boxed", previewFont: "'Arial Black', sans-serif", previewColor: "white", previewShadow: "none" },
+  { id: "gradient", name: "Gradient", previewText: "Gradient", previewFont: "'Arial Black', sans-serif", previewColor: "white", previewShadow: "none" },
+  { id: "typewriter", name: "Typewriter", previewText: "> type_", previewFont: "'Courier New', monospace", previewColor: "#00FF00", previewShadow: "0 0 6px rgba(0,255,0,0.5)" },
+  { id: "retro", name: "Retro", previewText: "RETRO", previewFont: "'Impact', 'Arial Black', sans-serif", previewColor: "#FF6B35", previewShadow: "2px 2px 0 #FF2D00, 4px 4px 0 rgba(0,0,0,0.3)" },
+  { id: "minimal", name: "Minimal", previewText: "Minimal", previewFont: "'Helvetica Neue', Arial, sans-serif", previewColor: "rgba(255,255,255,0.85)", previewShadow: "0 1px 4px rgba(0,0,0,0.5)" },
+  { id: "shadow", name: "Shadow", previewText: "SHADOW", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "white", previewShadow: "3px 3px 0 rgba(0,0,0,0.8), 6px 6px 0 rgba(0,0,0,0.4)" },
+  { id: "comic", name: "Comic", previewText: "COMIC!", previewFont: "'Impact', 'Arial Black', sans-serif", previewColor: "#FFFF00", previewShadow: "2px 2px 0 #000" },
+  { id: "elegant", name: "Elegant", previewText: "Elegant", previewFont: "'Georgia', 'Times New Roman', serif", previewColor: "rgba(255,255,255,0.9)", previewShadow: "0 1px 8px rgba(0,0,0,0.5)" },
+  { id: "broadcast", name: "Broadcast", previewText: "BREAKING", previewFont: "'Helvetica Neue', Arial, sans-serif", previewColor: "white", previewShadow: "none" },
+  { id: "wave", name: "Wave", previewText: "WAVE", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "#E040FB", previewShadow: "0 0 8px rgba(224,64,251,0.6), 1px 1px 0 #000" },
+  { id: "stack", name: "Stack", previewText: "STACK", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "#00FF88", previewShadow: "2px 2px 0 #000, -2px -2px 0 #000" },
+  { id: "highlighted", name: "Highlight", previewText: "Highlight", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "#FFD700", previewShadow: "1px 1px 0 #000" },
+  { id: "default", name: "Basic", previewText: "Basic", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "white", previewShadow: "1px 1px 4px rgba(0,0,0,0.8)" },
+];
+
 const MUSIC_STYLES = [
   "Upbeat & Energetic",
   "Calm & Relaxing",
@@ -39,6 +63,7 @@ export default function Editor() {
   const { toast } = useToast();
 
   const [hasCaption, setHasCaption] = useState(true);
+  const [captionStyle, setCaptionStyle] = useState("viral");
   const [selectedMusic, setSelectedMusic] = useState("Upbeat & Energetic");
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -52,7 +77,7 @@ export default function Editor() {
   });
 
   const exportMutation = useMutation({
-    mutationFn: (data: { hasCaption: boolean; musicStyle: string }) =>
+    mutationFn: (data: { hasCaption: boolean; captionStyle: string; musicStyle: string }) =>
       apiRequest("POST", "/api/videos/export", {
         postId,
         ...data,
@@ -90,6 +115,7 @@ export default function Editor() {
   const handleExport = () => {
     exportMutation.mutate({
       hasCaption,
+      captionStyle,
       musicStyle: selectedMusic,
     });
   };
@@ -326,26 +352,60 @@ export default function Editor() {
           <div className="space-y-4">
             {/* Captions */}
             <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Type className="h-5 w-5 text-white/40" />
-                <h3 className="text-sm font-semibold text-white">Captions</h3>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="captions" className="cursor-pointer text-sm text-white/60">
-                    Auto-generate captions
-                  </Label>
-                  <Switch
-                    id="captions"
-                    checked={hasCaption}
-                    onCheckedChange={setHasCaption}
-                    data-testid="switch-captions"
-                  />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Type className="h-5 w-5 text-white/40" />
+                  <h3 className="text-sm font-semibold text-white">Captions</h3>
                 </div>
-                <p className="text-xs text-white/25">
-                  Automatically add text captions to your video for better engagement
-                </p>
+                <Switch
+                  id="captions"
+                  checked={hasCaption}
+                  onCheckedChange={setHasCaption}
+                  data-testid="switch-captions"
+                />
               </div>
+              {hasCaption && (
+                <div className="space-y-3">
+                  <p className="text-xs text-white/30">Choose a caption style</p>
+                  <div className="grid grid-cols-2 gap-1.5 max-h-[320px] overflow-y-auto pr-1">
+                    {CAPTION_STYLES.map((cs) => (
+                      <button
+                        key={cs.id}
+                        onClick={() => setCaptionStyle(cs.id)}
+                        data-testid={`caption-style-${cs.id}`}
+                        className={`relative p-3 rounded-xl border text-left transition-all ${
+                          captionStyle === cs.id
+                            ? "border-white/20 bg-white/[0.08]"
+                            : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        <div
+                          className="text-sm font-bold leading-tight mb-1 truncate"
+                          style={{
+                            fontFamily: cs.previewFont,
+                            color: cs.previewColor,
+                            textShadow: cs.previewShadow,
+                            fontSize: "13px",
+                          }}
+                        >
+                          {cs.previewText}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-white/40">{cs.name}</span>
+                          {captionStyle === cs.id && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!hasCaption && (
+                <p className="text-xs text-white/25">
+                  Enable captions to choose a style
+                </p>
+              )}
             </div>
 
             {/* Background Music */}
