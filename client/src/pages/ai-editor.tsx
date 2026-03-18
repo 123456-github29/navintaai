@@ -115,6 +115,12 @@ export default function AiEditor() {
   const [messages, setMessages] = useState<AiEditMessage[]>([]);
   const [lumaPolling, setLumaPolling] = useState(false);
   const lumaPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sessionRef = useRef<AiEditSession | null>(null);
+
+  // Keep sessionRef in sync so polling can read latest state
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   const { data: post, isLoading: postLoading } = useQuery<Post>({
     queryKey: ["/api/posts", postId],
@@ -308,45 +314,56 @@ export default function AiEditor() {
     if (lumaPollingRef.current) return; // already polling
     setLumaPolling(true);
     lumaPollingRef.current = setInterval(async () => {
-      if (!session) return;
-      const state = session.currentEditState as any;
-      const pendingSegments = (state?.brollSegments || []).filter(
+      const currentSession = sessionRef.current;
+      if (!currentSession) return;
+      const state = currentSession.currentEditState as any;
+      const brollSegments: any[] = state?.brollSegments || [];
+      const pendingSegments = brollSegments.filter(
         (s: any) => s.lumaGenerationId && !s.url
       );
       if (pendingSegments.length === 0) {
-        // All done, stop polling
         if (lumaPollingRef.current) clearInterval(lumaPollingRef.current);
         lumaPollingRef.current = null;
         setLumaPolling(false);
         return;
       }
       // Check status for each pending segment
-      let anyUpdated = false;
+      const updates: Map<string, { url?: string; failed?: boolean }> = new Map();
       for (const seg of pendingSegments) {
         try {
-          const res = await apiRequest("POST", `/api/ai-edit/sessions/${session.id}/luma-status`, {
+          const res = await apiRequest("POST", `/api/ai-edit/sessions/${currentSession.id}/luma-status`, {
             generationId: seg.lumaGenerationId,
           });
           const result = await res.json();
           if (result.status === "completed" && result.videoUrl) {
-            seg.url = result.videoUrl;
-            anyUpdated = true;
+            updates.set(seg.lumaGenerationId, { url: result.videoUrl });
           } else if (result.status === "failed") {
-            // Mark as no longer pending to stop polling it
-            seg.lumaGenerationId = null;
-            anyUpdated = true;
+            updates.set(seg.lumaGenerationId, { failed: true });
           }
         } catch {
           // Ignore individual poll errors
         }
       }
-      if (anyUpdated) {
-        setSession((prev) =>
-          prev ? { ...prev, currentEditState: { ...state } } : prev
-        );
+      if (updates.size > 0) {
+        // Create new state immutably so React detects the change
+        setSession((prev) => {
+          if (!prev) return prev;
+          const prevState = prev.currentEditState as any;
+          const updatedSegments = (prevState?.brollSegments || []).map((s: any) => {
+            const update = s.lumaGenerationId ? updates.get(s.lumaGenerationId) : null;
+            if (!update) return s;
+            if (update.url) return { ...s, url: update.url };
+            if (update.failed) return { ...s, lumaGenerationId: null };
+            return s;
+          });
+          return {
+            ...prev,
+            currentEditState: { ...prevState, brollSegments: updatedSegments },
+          };
+        });
       }
     }, 5000); // poll every 5 seconds
-  }, [session]);
+  }, []);
 
   // Clean up polling on unmount
   useEffect(() => {
