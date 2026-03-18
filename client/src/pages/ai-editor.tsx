@@ -24,6 +24,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Video,
+  Flame,
+  Clapperboard,
+  Briefcase,
+  BookOpen,
+  Bolt,
+  Eraser,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -58,12 +64,63 @@ interface SessionResponse {
   messages: AiEditMessage[];
 }
 
+const EDIT_PRESETS = [
+  {
+    id: "viral-ready",
+    name: "Viral Ready",
+    description: "Trim silence, viral captions, upbeat music & zoom transitions",
+    icon: Flame,
+    gradient: "from-orange-500 to-pink-500",
+    border: "border-orange-500/20 hover:border-orange-500/40",
+  },
+  {
+    id: "cinematic",
+    name: "Cinematic",
+    description: "Film-grade color, cinematic captions, fades & atmospheric music",
+    icon: Clapperboard,
+    gradient: "from-blue-500 to-indigo-500",
+    border: "border-blue-500/20 hover:border-blue-500/40",
+  },
+  {
+    id: "clean-professional",
+    name: "Clean & Pro",
+    description: "Polished look with clean captions, corporate music & brightness",
+    icon: Briefcase,
+    gradient: "from-emerald-500 to-teal-500",
+    border: "border-emerald-500/20 hover:border-emerald-500/40",
+  },
+  {
+    id: "high-energy",
+    name: "High Energy",
+    description: "Speed ramps, neon captions, glitch transitions & boosted colors",
+    icon: Bolt,
+    gradient: "from-yellow-400 to-red-500",
+    border: "border-yellow-500/20 hover:border-yellow-500/40",
+  },
+  {
+    id: "storyteller",
+    name: "Storyteller",
+    description: "Warm tones, highlighted captions, gentle music & smooth fades",
+    icon: BookOpen,
+    gradient: "from-amber-500 to-orange-500",
+    border: "border-amber-500/20 hover:border-amber-500/40",
+  },
+  {
+    id: "quick-cleanup",
+    name: "Quick Cleanup",
+    description: "Just the basics — trim dead air and add auto-captions",
+    icon: Eraser,
+    gradient: "from-gray-400 to-gray-500",
+    border: "border-white/10 hover:border-white/20",
+  },
+];
+
 const QUICK_ACTIONS = [
-  { label: "Trim silence", icon: Scissors, prompt: "Remove all silent parts and pauses from the video" },
+  { label: "Trim silence", icon: Scissors, prompt: "Remove all silent parts and dead space from the video, and add smooth transitions between the remaining clips so it looks polished" },
   { label: "Add captions", icon: Type, prompt: "Add auto-generated captions to the video with a bold, viral style" },
   { label: "Speed up", icon: Zap, prompt: "Speed up the boring parts and slow down the exciting moments" },
   { label: "Add B-roll", icon: Film, prompt: "Suggest and add relevant B-roll footage at key moments in the video" },
-  { label: "Cinematic look", icon: Wand2, prompt: "Apply a cinematic color grade and add smooth transitions between clips" },
+  { label: "Polish it", icon: Wand2, prompt: "Make this video look professionally edited — cut dead space, add smooth transitions between clips, apply a cinematic color grade, and add viral-style captions" },
   { label: "AI clip", icon: Film, prompt: "Generate a short AI cinematic intro clip using Luma" },
 ];
 
@@ -81,6 +138,7 @@ function EditOperationBadge({ op }: { op: { type: string; status: string } }) {
     add_music: "Music",
     add_filter: "Filter",
     add_transition: "Transition",
+    set_segment_transitions: "Transitions",
     add_broll: "B-Roll",
     luma_generate: "AI Clip",
   };
@@ -190,7 +248,12 @@ export default function AiEditor() {
     onSuccess: (data) => {
       setMessages((prev) => [...prev, data.userMessage, data.assistantMessage]);
       if (data.editState) {
-        setSession((prev) => prev ? { ...prev, currentEditState: { ...(prev.currentEditState || {}), ...data.editState } } : prev);
+        setSession((prev) => prev ? { ...prev, currentEditState: data.editState } : prev);
+        // Sync videoDuration from edit state so the Remotion preview can render
+        const dur = data.editState.videoDuration;
+        if (dur && dur > 0) {
+          setVideoDuration((prev) => Math.max(prev, dur));
+        }
       }
     },
     onError: () => {
@@ -242,6 +305,42 @@ export default function AiEditor() {
       });
     },
   });
+
+  const applyPreset = useMutation({
+    mutationFn: async (presetId: string) => {
+      const res = await apiRequest("POST", `/api/ai-edit/sessions/${session!.id}/apply-preset`, {
+        presetId,
+      });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      setMessages((prev) => [...prev, data.userMessage, data.assistantMessage]);
+      if (data.editState) {
+        setSession((prev) => prev ? { ...prev, currentEditState: data.editState } : prev);
+        // Keep videoDuration state in sync for preview rendering
+        const dur = data.editState.videoDuration;
+        if (dur && dur > 0) {
+          setVideoDuration((prev) => Math.max(prev, dur));
+        }
+      }
+      toast({
+        title: "Preset applied!",
+        description: "You can adjust any edit by chatting below.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to apply preset",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleApplyPreset = (presetId: string) => {
+    if (applyPreset.isPending || sendMessage.isPending || !session) return;
+    applyPreset.mutate(presetId);
+  };
 
   const handleTranscribe = useCallback(async (sessionId: string) => {
     setIsTranscribing(true);
@@ -450,7 +549,7 @@ export default function AiEditor() {
   }
 
   const editState = session?.currentEditState || {};
-  const hasEdits = editState.cuts?.length || editState.filters?.length || editState.speedAdjustments?.length || editState.brollSegments?.length || editState.transitions?.length || editState.musicStyle || editState.captions;
+  const hasEdits = editState.cuts?.length || editState.filters?.length || editState.speedAdjustments?.length || editState.brollSegments?.length || editState.transitions?.length || editState.segmentTransitions?.length || editState.vfxAssets?.length || editState.musicStyle || editState.captions;
 
   return (
     <div className="flex h-[calc(100vh-65px)] overflow-hidden" style={{ background: "#050505" }}>
@@ -562,22 +661,59 @@ export default function AiEditor() {
           <div ref={chatEndRef} />
         </div>
 
-        {/* Quick Actions */}
+        {/* Edit Presets & Quick Actions */}
         {messages.length <= 2 && (
-          <div className="px-4 pb-2">
-            <p className="text-xs text-white/20 mb-2">Quick actions</p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {QUICK_ACTIONS.map((action) => (
-                <button
-                  key={action.label}
-                  onClick={() => handleQuickAction(action.prompt)}
-                  disabled={sendMessage.isPending || !session}
-                  className="flex items-center gap-2 px-3 py-2 text-xs text-white/40 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] rounded-xl transition-colors text-left disabled:opacity-50"
-                >
-                  <action.icon className="h-3.5 w-3.5 shrink-0" />
-                  {action.label}
-                </button>
-              ))}
+          <div className="px-4 pb-2 space-y-3">
+            {/* Presets */}
+            <div>
+              <p className="text-xs text-white/20 mb-2">
+                {isTranscribing ? "Transcribing video... presets will be ready soon" : "One-click presets"}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {EDIT_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => handleApplyPreset(preset.id)}
+                    disabled={applyPreset.isPending || sendMessage.isPending || isTranscribing || !session}
+                    className={`relative group flex flex-col gap-1.5 p-3 text-left bg-white/[0.02] hover:bg-white/[0.05] border ${preset.border} rounded-xl transition-all disabled:opacity-50`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${preset.gradient} flex items-center justify-center`}>
+                        <preset.icon className="h-3 w-3 text-white" />
+                      </div>
+                      <span className="text-xs font-medium text-white/80 group-hover:text-white transition-colors">
+                        {preset.name}
+                      </span>
+                    </div>
+                    <p className="text-[10px] leading-tight text-white/30 group-hover:text-white/40 transition-colors">
+                      {preset.description}
+                    </p>
+                    {applyPreset.isPending && applyPreset.variables === preset.id && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-xl">
+                        <Loader2 className="h-4 w-4 animate-spin text-white/60" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div>
+              <p className="text-xs text-white/20 mb-2">Or pick a quick action</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {QUICK_ACTIONS.map((action) => (
+                  <button
+                    key={action.label}
+                    onClick={() => handleQuickAction(action.prompt)}
+                    disabled={sendMessage.isPending || applyPreset.isPending || isTranscribing || !session}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] text-white/40 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] rounded-lg transition-colors text-left disabled:opacity-50"
+                  >
+                    <action.icon className="h-3 w-3 shrink-0" />
+                    {action.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -751,6 +887,11 @@ export default function AiEditor() {
                     )}
                   </div>
                 )}
+                {editState.vfxAssets?.length > 0 && (
+                  <div className="px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[10px] flex items-center gap-1">
+                    <Sparkles className="h-2.5 w-2.5" /> {editState.vfxAssets.length} VFX
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -793,6 +934,11 @@ export default function AiEditor() {
                   {t.type} transition
                 </Badge>
               ))}
+              {editState.segmentTransitions?.length > 0 && (
+                <Badge variant="outline" className="text-xs shrink-0 border-violet-500/10 text-violet-400/60 bg-transparent">
+                  {editState.segmentTransitions.length} smooth transition{editState.segmentTransitions.length > 1 ? "s" : ""}
+                </Badge>
+              )}
               {editState.captions && (
                 <Badge variant="outline" className="text-xs shrink-0 border-white/10 text-white/40 bg-transparent">Captions</Badge>
               )}

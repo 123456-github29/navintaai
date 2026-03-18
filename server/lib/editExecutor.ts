@@ -28,6 +28,15 @@ export interface EditState {
     lumaGenerationId?: string;
     url?: string;
   }>;
+  vfxAssets?: Array<{
+    type: string;
+    color?: string;
+    secondaryColor?: string;
+    intensity?: number;
+    timestamp?: number;
+    duration?: number;
+    speed?: number;
+  }>;
   transcriptSegments?: Array<{ start: number; end: number; text: string }>;
 }
 
@@ -135,6 +144,44 @@ function buildFilterGraph(
             `fade=t=in:st=${transStart}:d=${transition.duration}:color=black`
           );
           break;
+      }
+    }
+  }
+
+  // Apply VFX-based color adjustments (FFmpeg approximations for VFX overlay effects)
+  if (editState.vfxAssets && editState.vfxAssets.length > 0) {
+    for (const vfx of editState.vfxAssets) {
+      const startTime = vfx.timestamp ?? 0;
+      const endTime = (vfx.timestamp ?? 0) + (vfx.duration ?? videoDuration);
+      const intensity = vfx.intensity ?? 0.5;
+      let filterStr = "";
+
+      switch (vfx.type) {
+        case "color_wash":
+        case "duotone":
+          filterStr = `colorbalance=rs=${intensity * 0.3}:gs=${intensity * 0.1}:bs=${intensity * 0.2}`;
+          break;
+        case "light_leak":
+          filterStr = `curves=all='0/0 0.25/${0.25 + intensity * 0.1} 0.5/${0.5 + intensity * 0.05} 1/1'`;
+          break;
+        case "chromatic_aberration":
+          // Slight color shift approximation
+          filterStr = `colorbalance=rh=${intensity * 0.15}:bh=${-intensity * 0.15}`;
+          break;
+        case "smoke":
+          filterStr = `curves=all='0/${intensity * 0.15} 0.5/0.5 1/1'`;
+          break;
+        case "glow_pulse":
+          filterStr = `gblur=sigma=${intensity * 2}:enable='between(t,${startTime},${endTime})',colorlevels=rimax=${1 + intensity * 0.1}:gimax=${1 + intensity * 0.1}:bimax=${1 + intensity * 0.1}`;
+          videoFilters.push(filterStr);
+          continue; // skip the enable append below since it's already handled
+        default:
+          continue;
+      }
+
+      if (filterStr) {
+        filterStr += `:enable='between(t,${startTime},${endTime})'`;
+        videoFilters.push(filterStr);
       }
     }
   }

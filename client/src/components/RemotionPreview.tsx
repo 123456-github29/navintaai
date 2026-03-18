@@ -19,12 +19,29 @@ interface EditState {
     endTime?: number;
   }>;
   transitions?: Array<{ type: string; timestamp: number; duration: number }>;
+  segmentTransitions?: Array<{
+    afterSegmentIndex: number;
+    type: string;
+    durationInFrames?: number;
+    timing?: string;
+  }>;
+  autoTransitions?: boolean;
+  defaultTransitionType?: string;
   brollSegments?: Array<{
     timestamp: number;
     duration: number;
     query?: string;
     lumaGenerationId?: string;
     url?: string;
+  }>;
+  vfxAssets?: Array<{
+    type: string;
+    color?: string;
+    secondaryColor?: string;
+    intensity?: number;
+    timestamp?: number;
+    duration?: number;
+    speed?: number;
   }>;
 }
 
@@ -103,7 +120,11 @@ function buildInputProps(
     if (f.type === "dramatic") { gradeLook = "dramatic"; break; }
   }
 
-  const validTransitionTypes = ["fade", "dissolve", "wipe", "zoom", "flash", "glitch"] as const;
+  const validTransitionTypes = [
+    "fade", "dissolve", "wipe", "zoom", "flash", "glitch",
+    "slide-left", "slide-right", "slide-up", "slide-down",
+    "wipe-up", "wipe-diagonal", "flip", "clock-wipe", "none",
+  ] as const;
   type ValidTransition = (typeof validTransitionTypes)[number];
 
   const transitions = (editState.transitions || [])
@@ -113,6 +134,14 @@ function buildInputProps(
       timestamp: t.timestamp,
       duration: t.duration,
     }));
+
+  // Segment transitions for smooth cross-segment blending
+  const segmentTransitions = (editState.segmentTransitions || []).map((st) => ({
+    afterSegmentIndex: st.afterSegmentIndex,
+    type: st.type as any,
+    durationInFrames: st.durationInFrames || 12,
+    timing: (st.timing as "linear" | "spring") || "spring",
+  }));
 
   const brollSegments = (editState.brollSegments || [])
     .filter((s) => s.url)
@@ -139,18 +168,40 @@ function buildInputProps(
           }))
       : [];
 
+  const validVfxTypes = [
+    "light_leak", "bokeh", "color_wash", "particles", "lens_flare",
+    "chromatic_aberration", "smoke", "prism", "duotone", "glow_pulse",
+  ] as const;
+  type ValidVfxType = (typeof validVfxTypes)[number];
+
+  const vfxAssets = (editState.vfxAssets || [])
+    .filter((v) => validVfxTypes.includes(v.type as ValidVfxType))
+    .map((v) => ({
+      type: v.type as ValidVfxType,
+      color: v.color,
+      secondaryColor: v.secondaryColor,
+      intensity: v.intensity,
+      timestamp: v.timestamp,
+      duration: v.duration,
+      speed: v.speed,
+    }));
+
   return {
     videoSrc: videoUrl,
     cuts,
     captions,
     filters,
     transitions,
+    segmentTransitions,
     brollSegments,
+    vfxAssets,
     speedAdjustments: editState.speedAdjustments || [],
     totalDurationInSeconds: videoDuration,
     gradeLook,
     showFilmGrain: false,
     showCinematicBars: false,
+    autoTransitions: editState.autoTransitions !== false, // default true
+    defaultTransitionType: (editState.defaultTransitionType as any) || "fade",
   };
 }
 
@@ -163,15 +214,62 @@ export function RemotionPreview({ videoUrl, editState, videoDuration }: Remotion
     [videoUrl, editState, videoDuration]
   );
 
-  // Compute actual output duration (accounting for cuts removing sections)
-  const outputDuration = useMemo(() => {
-    if (inputProps.cuts && inputProps.cuts.length > 0) {
-      return inputProps.cuts.reduce((sum, c) => sum + (c.end - c.start), 0);
-    }
-    return videoDuration;
-  }, [inputProps.cuts, videoDuration]);
+  // Generate a stable key that changes when the edit state changes structurally,
+  // forcing the Remotion Player to fully re-mount with the new composition props.
+  const playerKey = useMemo(() => {
+    const parts = [
+      (editState.cuts?.length || 0),
+      (editState.filters?.length || 0),
+      (editState.captions ? 1 : 0),
+      (editState.captionStyle || ""),
+      (editState.musicStyle || ""),
+      (editState.speedAdjustments?.length || 0),
+      (editState.transitions?.length || 0),
+      (editState.segmentTransitions?.length || 0),
+      (editState.brollSegments?.length || 0),
+      (editState.vfxAssets?.length || 0),
+    ];
+    return parts.join("-");
+  }, [editState]);
 
-  const durationInFrames = Math.max(1, Math.round(outputDuration * FPS));
+  // Compute actual output duration (accounting for cuts AND transition overlaps).
+  // When TransitionSeries is used, each transition causes two segments to overlap
+  // by the transition's durationInFrames — so total frames shrink accordingly.
+  const durationInFrames = useMemo(() => {
+    let totalFrames: number;
+    if (inputProps.cuts && inputProps.cuts.length > 0) {
+      const rawDuration = inputProps.cuts.reduce((sum, c) => sum + (c.end - c.start), 0);
+      totalFrames = Math.round(rawDuration * FPS);
+    } else {
+      totalFrames = Math.round(videoDuration * FPS);
+    }
+
+    // Subtract transition overlap frames when TransitionSeries will be used.
+    // TransitionSeries overlaps the outgoing and incoming segments during transitions,
+    // which shortens the total timeline by the sum of all transition durations.
+    const numSegments = inputProps.cuts?.length || 0;
+    if (numSegments > 1) {
+      const segmentTransitions = inputProps.segmentTransitions || [];
+      const useAutoTransitions = inputProps.autoTransitions !== false;
+
+      let overlapFrames = 0;
+      for (let i = 0; i < numSegments - 1; i++) {
+        // Check for explicit segment transition
+        const explicit = segmentTransitions.find((st) => st.afterSegmentIndex === i);
+        if (explicit) {
+          if (explicit.type !== "none") {
+            overlapFrames += explicit.durationInFrames || 12;
+          }
+        } else if (useAutoTransitions && inputProps.defaultTransitionType !== "none") {
+          overlapFrames += 12; // auto-transition default
+        }
+      }
+
+      totalFrames = Math.max(1, totalFrames - overlapFrames);
+    }
+
+    return Math.max(1, totalFrames);
+  }, [inputProps.cuts, inputProps.segmentTransitions, inputProps.autoTransitions, inputProps.defaultTransitionType, videoDuration]);
 
   useEffect(() => {
     const player = playerRef.current;
@@ -202,6 +300,7 @@ export function RemotionPreview({ videoUrl, editState, videoDuration }: Remotion
   return (
     <div className="relative w-full h-full">
       <Player
+        key={playerKey}
         ref={playerRef}
         component={VideoEditorComposition}
         inputProps={inputProps}

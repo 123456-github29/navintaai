@@ -2623,6 +2623,107 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     res.json(result);
   }));
 
+  // POST /api/ai-edit/sessions/:id/apply-preset - Apply a predefined edit preset
+  app.post("/api/ai-edit/sessions/:id/apply-preset", requireAuth as any, asyncHandler(async (req: any, res) => {
+    const userId = req.user.sub;
+    const { id } = req.params;
+    const { presetId } = req.body;
+
+    if (!presetId || typeof presetId !== "string") {
+      throw createError("presetId is required", 400, "MISSING_PRESET_ID");
+    }
+
+    const session = await storage.getAiEditSession(id, userId);
+    if (!session) {
+      throw createError("Session not found", 404, "SESSION_NOT_FOUND");
+    }
+
+    const { getPresetById, applyOperationsToState } = await import("./lib/aiEditor");
+
+    const preset = getPresetById(presetId);
+    if (!preset) {
+      throw createError("Preset not found", 404, "PRESET_NOT_FOUND");
+    }
+
+    // Get video duration
+    const postClips = await storage.getClipsByPost(session.postId);
+    let videoDuration = postClips.reduce((sum, c) => sum + (c.duration || 0), 0);
+    if (videoDuration <= 0) {
+      const editState = (session.currentEditState as any) || {};
+      const segments = editState.transcriptSegments || [];
+      if (segments.length > 0) {
+        videoDuration = Math.ceil(segments[segments.length - 1].end);
+      }
+    }
+    if (videoDuration <= 0) {
+      videoDuration = 60;
+    }
+
+    // Get transcript segments for silence detection
+    const editState = (session.currentEditState as any) || {};
+    const transcriptSegments = editState.transcriptSegments || [];
+
+    // Generate operations from preset
+    const operations = preset.getOperations(videoDuration, transcriptSegments);
+
+    // Mark all operations as applied (no external API calls needed for presets)
+    for (const op of operations) {
+      op.status = "applied";
+    }
+
+    // Apply to current state (reset first so preset is clean)
+    const newState = applyOperationsToState(
+      { transcriptSegments: editState.transcriptSegments, videoDuration: editState.videoDuration },
+      operations,
+    );
+
+    // Update session
+    await storage.updateAiEditSession(id, userId, {
+      currentEditState: newState,
+    });
+
+    // Save messages to chat history
+    const userMsg = await storage.createAiEditMessage({
+      sessionId: id,
+      role: "user",
+      content: `Apply preset: ${preset.name}`,
+    });
+
+    const operationSummary = operations.map(op => {
+      const labels: Record<string, string> = {
+        cut: "Trim silence", speed_change: "Speed ramp", add_caption: "Captions",
+        add_music: "Music", add_filter: "Color filter", add_transition: "Transition",
+      };
+      return labels[op.type] || op.type;
+    });
+    const uniqueSummary = [...new Set(operationSummary)];
+
+    const assistantMsg = await storage.createAiEditMessage({
+      sessionId: id,
+      role: "assistant",
+      content: `Applied the "${preset.name}" preset! Here's what I did:\n\n${uniqueSummary.map(s => `• ${s}`).join("\n")}\n\nFeel free to ask me to adjust anything — change the caption style, tweak the music, modify transitions, or anything else.`,
+      editOperations: operations,
+    });
+
+    res.json({
+      userMessage: userMsg,
+      assistantMessage: assistantMsg,
+      editState: newState,
+    });
+  }));
+
+  // GET /api/ai-edit/presets - List available edit presets
+  app.get("/api/ai-edit/presets", requireAuth as any, asyncHandler(async (_req: any, res) => {
+    const { EDIT_PRESETS } = await import("./lib/aiEditor");
+    const presets = EDIT_PRESETS.map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      category: p.category,
+    }));
+    res.json({ presets });
+  }));
+
   // POST /api/ai-edit/sessions/:id/reset - Reset all edits
   app.post("/api/ai-edit/sessions/:id/reset", requireAuth as any, asyncHandler(async (req: any, res) => {
     const userId = req.user.sub;

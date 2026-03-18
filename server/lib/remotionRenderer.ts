@@ -108,12 +108,29 @@ export interface EditState {
     endTime?: number;
   }>;
   transitions?: Array<{ type: string; timestamp: number; duration: number }>;
+  segmentTransitions?: Array<{
+    afterSegmentIndex: number;
+    type: string;
+    durationInFrames?: number;
+    timing?: string;
+  }>;
+  autoTransitions?: boolean;
+  defaultTransitionType?: string;
   brollSegments?: Array<{
     timestamp: number;
     duration: number;
     query?: string;
     lumaGenerationId?: string;
     url?: string;
+  }>;
+  vfxAssets?: Array<{
+    type: string;
+    color?: string;
+    secondaryColor?: string;
+    intensity?: number;
+    timestamp?: number;
+    duration?: number;
+    speed?: number;
   }>;
 }
 
@@ -220,6 +237,15 @@ interface RenderVideoOptions {
     lumaGenerationId?: string;
   }>;
   speedAdjustments?: Array<{ start: number; end: number; speed: number }>;
+  vfxAssets?: Array<{
+    type: string;
+    color?: string;
+    secondaryColor?: string;
+    intensity?: number;
+    timestamp?: number;
+    duration?: number;
+    speed?: number;
+  }>;
   totalDurationInSeconds: number;
   fps?: number;
   outputPath: string;
@@ -228,6 +254,14 @@ interface RenderVideoOptions {
   showCinematicBars?: boolean;
   lowerThirdTitle?: string;
   lowerThirdSubtitle?: string;
+  segmentTransitions?: Array<{
+    afterSegmentIndex: number;
+    type: string;
+    durationInFrames?: number;
+    timing?: string;
+  }>;
+  autoTransitions?: boolean;
+  defaultTransitionType?: string;
 }
 
 // Find the system-installed Chromium (installed via nixpkgs).
@@ -280,6 +314,7 @@ async function renderVideo(opts: RenderVideoOptions): Promise<void> {
     filters: opts.filters ?? [],
     transitions: opts.transitions ?? [],
     brollSegments: opts.brollSegments ?? [],
+    vfxAssets: opts.vfxAssets ?? [],
     speedAdjustments: opts.speedAdjustments ?? [],
     totalDurationInSeconds: opts.totalDurationInSeconds,
     gradeLook: opts.gradeLook ?? "none",
@@ -287,6 +322,9 @@ async function renderVideo(opts: RenderVideoOptions): Promise<void> {
     showCinematicBars: opts.showCinematicBars ?? false,
     lowerThirdTitle: opts.lowerThirdTitle,
     lowerThirdSubtitle: opts.lowerThirdSubtitle,
+    segmentTransitions: opts.segmentTransitions ?? [],
+    autoTransitions: opts.autoTransitions ?? true,
+    defaultTransitionType: opts.defaultTransitionType ?? "fade",
   };
 
   const composition = await selectComposition({
@@ -301,8 +339,31 @@ async function renderVideo(opts: RenderVideoOptions): Promise<void> {
     },
   });
 
-  // Override duration to match actual video
-  composition.durationInFrames = Math.max(1, totalFrames);
+  // Compute actual duration accounting for cuts and transition overlaps
+  let actualFrames = totalFrames;
+  const cuts = opts.cuts ?? [];
+  if (cuts.length > 0) {
+    // If cuts are present, total duration is the sum of kept segments
+    actualFrames = Math.round(
+      cuts.reduce((sum, c) => sum + (c.end - c.start), 0) * fps
+    );
+  }
+  // Subtract transition overlap frames (TransitionSeries overlaps segments)
+  if (cuts.length > 1) {
+    const segTransitions = inputProps.segmentTransitions ?? [];
+    const useAuto = inputProps.autoTransitions !== false;
+    let overlapFrames = 0;
+    for (let i = 0; i < cuts.length - 1; i++) {
+      const explicit = segTransitions.find((st: any) => st.afterSegmentIndex === i);
+      if (explicit) {
+        if (explicit.type !== "none") overlapFrames += explicit.durationInFrames || 12;
+      } else if (useAuto && inputProps.defaultTransitionType !== "none") {
+        overlapFrames += 12;
+      }
+    }
+    actualFrames = Math.max(1, actualFrames - overlapFrames);
+  }
+  composition.durationInFrames = Math.max(1, actualFrames);
   composition.fps = fps;
   composition.width = 1080;
   composition.height = 1920;
@@ -527,9 +588,35 @@ export async function executeEdits(
           }))
       : [];
 
+  // Map VFX assets with validated types
+  const validVfxTypes = [
+    "light_leak", "bokeh", "color_wash", "particles", "lens_flare",
+    "chromatic_aberration", "smoke", "prism", "duotone", "glow_pulse",
+  ] as const;
+
+  const vfxAssets = (editState.vfxAssets || [])
+    .filter((v) => validVfxTypes.includes(v.type as typeof validVfxTypes[number]))
+    .map((v) => ({
+      type: v.type,
+      color: v.color,
+      secondaryColor: v.secondaryColor,
+      intensity: v.intensity,
+      timestamp: v.timestamp,
+      duration: v.duration,
+      speed: v.speed,
+    }));
+
   console.log(
-    `[remotion] executeEdits: ${cuts.length} cuts, ${filters.length} filters, ${transitions.length} transitions, ${brollSegments.length} b-roll, ${captions.length} captions`
+    `[remotion] executeEdits: ${cuts.length} cuts, ${filters.length} filters, ${transitions.length} transitions, ${brollSegments.length} b-roll, ${vfxAssets.length} vfx, ${captions.length} captions`
   );
+
+  // Map segment transitions for cross-segment blending
+  const segmentTransitions = (editState.segmentTransitions || []).map((st: any) => ({
+    afterSegmentIndex: st.afterSegmentIndex,
+    type: st.type || "fade",
+    durationInFrames: st.durationInFrames || 12,
+    timing: st.timing || "spring",
+  }));
 
   await renderVideo({
     videoSrc: inputFile,
@@ -538,6 +625,7 @@ export async function executeEdits(
     filters,
     transitions,
     brollSegments,
+    vfxAssets,
     speedAdjustments: editState.speedAdjustments || [],
     totalDurationInSeconds: videoDuration,
     fps: 30,
@@ -545,6 +633,9 @@ export async function executeEdits(
     gradeLook,
     showFilmGrain: true,
     showCinematicBars: false,
+    segmentTransitions,
+    autoTransitions: editState.autoTransitions ?? true,
+    defaultTransitionType: editState.defaultTransitionType || "fade",
   });
 
   console.log(`[remotion] executeEdits complete: ${outputFilename}`);

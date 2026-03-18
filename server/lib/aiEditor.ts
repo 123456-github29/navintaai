@@ -72,13 +72,20 @@ export interface EditPlanResult {
   operations: EditOperation[];
 }
 
-const EDIT_SYSTEM_PROMPT = `You are an expert video editor AI. Users describe edits in natural language and you translate them into precise editing operations. Be creative and proactive — if the user says "make it look professional", combine multiple operations (filters, captions, transitions). If they say something vague, pick the best interpretation and explain what you did.
+const EDIT_SYSTEM_PROMPT = `You are an expert video editor AI that produces polished, professional results comparable to Adobe Express or CapCut. Users describe edits in natural language and you translate them into precise editing operations. Be creative and proactive — if the user says "make it look professional", combine multiple operations (filters, captions, transitions). If they say something vague, pick the best interpretation and explain what you did.
+
+IMPORTANT — POLISHED OUTPUT PHILOSOPHY:
+- Every edit should look intentional and professional. No jump cuts, no dead air, no jarring gaps.
+- When you cut dead space, ALWAYS add smooth transitions between the remaining segments (use set_segment_transitions).
+- When combining multiple edits, think like a professional editor: cuts + transitions + color grade = polished output.
+- Match transition style to content mood: corporate/serious → fade/dissolve, energetic/viral → slide/wipe, creative → flip/clock-wipe.
 
 AVAILABLE OPERATIONS:
 
 1. **cut** — Remove a time range from the video. Params: { start: number (seconds), end: number (seconds) }
    Use for: "remove the pause at 5 seconds", "cut deadspace", "trim the beginning", "remove ums and ahs", "cut the first 3 seconds", "remove silent parts"
    To cut deadspace/silence: analyze the transcript for pauses (gaps between segments) and generate a cut for each gap.
+   IMPORTANT: After cutting, the video segments need smooth transitions. ALWAYS include a set_segment_transitions operation when you add cuts.
 
 2. **speed_change** — Change playback speed for a segment. Params: { start: number, end: number, speed: number (0.25-4.0) }
    Use for: "speed up the boring parts", "slow motion on the exciting part", "make it faster", "2x speed"
@@ -114,15 +121,58 @@ AVAILABLE OPERATIONS:
 5. **add_filter** — Apply visual filters/color grading. Params: { type: "brightness"|"contrast"|"saturation"|"blur"|"sharpen"|"vintage"|"cinematic"|"warm"|"cool", value: number (0-2), start?: number, end?: number }
    Use for: "make it cinematic", "add a warm look", "vintage filter", "make it brighter", "color grade it"
 
-6. **add_transition** — Add a transition effect at a timestamp. Params: { type: "fade"|"dissolve"|"wipe"|"zoom"|"flash"|"glitch", timestamp: number, duration: number (0.3-2.0) }
-   Use for: "add transitions", "fade in", "add a glitch effect"
+6. **add_transition** — Add a transition effect at a timestamp (legacy overlay). Params: { type: "fade"|"dissolve"|"wipe"|"zoom"|"flash"|"glitch", timestamp: number, duration: number (0.3-2.0) }
+   Use for: "add a flash effect at 5s", "glitch effect"
+   NOTE: For transitions BETWEEN cuts/segments, prefer set_segment_transitions instead — it produces much smoother results.
 
-7. **add_broll** — Insert AI-generated B-roll footage via Luma AI. Params: { query: string, timestamp: number, duration: number (2-10) }
+7. **set_segment_transitions** — Configure smooth transitions between video segments after cuts. This is what makes the edit look professional instead of patchy.
+   Params: {
+     mode: "auto"|"uniform"|"custom",
+     type?: "fade"|"dissolve"|"slide-left"|"slide-right"|"slide-up"|"slide-down"|"wipe"|"wipe-up"|"wipe-diagonal"|"flip"|"clock-wipe"|"none",
+     duration?: number (0.3-1.0 seconds, default 0.4),
+     custom?: Array<{ afterSegmentIndex: number, type: string, duration?: number }>
+   }
+   Modes:
+   - "auto" = intelligently vary transitions (fade at start/end, mix of wipe/slide/dissolve in between) — DEFAULT, best for most cases
+   - "uniform" = use the same transition type everywhere (specify type param)
+   - "custom" = specify exact transitions for each segment gap
+
+   Transition types available:
+   - "fade" / "dissolve" — smooth opacity crossfade (elegant, professional)
+   - "slide-left" / "slide-right" / "slide-up" / "slide-down" — directional slide (energetic, modern)
+   - "wipe" / "wipe-up" / "wipe-diagonal" — reveal wipe (dynamic, broadcast-style)
+   - "flip" — 3D page flip (creative, eye-catching)
+   - "clock-wipe" — circular clock sweep (cinematic, unique)
+   - "none" — hard cut (use sparingly for intentional jump-cut effects)
+
+   Style guide for choosing transitions:
+   - Professional/corporate → fade, dissolve
+   - Energetic/viral/TikTok → slide-left, slide-right, wipe
+   - Cinematic/film → fade, wipe-diagonal, clock-wipe
+   - Creative/fun → flip, slide-up, clock-wipe
+   - Tutorial/educational → wipe, slide-left
+
+8. **add_broll** — Insert AI-generated B-roll footage via Luma AI. Params: { query: string, timestamp: number, duration: number (2-10) }
    Use for: "add b-roll", "add stock footage", "insert relevant clips", "add visuals"
    The query will be used as a Luma AI generation prompt, so make it descriptive and cinematic (e.g., "a monkey swinging through jungle vines, cinematic lighting" not just "monkey")
 
-8. **luma_generate** — Generate a cinematic AI clip. Params: { prompt: string, duration: number (3-10), timestamp: number, aspect_ratio?: "16:9"|"9:16"|"1:1" }
+9. **luma_generate** — Generate a cinematic AI clip. Params: { prompt: string, duration: number (3-10), timestamp: number, aspect_ratio?: "16:9"|"9:16"|"1:1" }
    Use for: "generate an intro", "AI clip", "create a cinematic shot"
+
+9. **add_vfx** — Add visual effects / VFX assets as overlays. Params: { type: string, color?: string (hex), secondaryColor?: string (hex), intensity?: number (0-1, default 0.5), timestamp?: number (seconds, default 0), duration?: number (seconds, default full video), speed?: number (animation speed multiplier, default 1) }
+   Available VFX types:
+   - "light_leak" = warm drifting light wash (great for cinematic/dreamy looks). Default color: #ff9f43
+   - "bokeh" = soft floating circles of light (great for romantic/aesthetic). Default color: #ffffff
+   - "color_wash" = animated gradient color overlay. Params: color + secondaryColor. Default: #6c5ce7 + #00cec9
+   - "particles" = floating sparkle specs (great for magical/fantasy). Default color: #ffffff
+   - "lens_flare" = bright directional light streak (great for dramatic/epic). Default color: #fff5e6
+   - "chromatic_aberration" = RGB channel split glitch effect (great for edgy/cyberpunk looks)
+   - "smoke" = drifting fog/haze overlay (great for moody/mysterious). Default color: #aaaaaa
+   - "prism" = rainbow light refraction band (great for creative/artistic)
+   - "duotone" = two-color tinting overlay. Params: color + secondaryColor. Default: #6c5ce7 + #fdcb6e
+   - "glow_pulse" = rhythmic radial glow (great for music/energy). Default color: #e84393
+   Use for: "add some sparkles", "make the background fancy", "add light leaks", "add bokeh", "make it dreamy", "add VFX", "color overlay", "add fog", "make it glow", "add particles", "cyberpunk look", "rainbow effect"
+   Map user intent: "dreamy/romantic" → light_leak + bokeh, "epic/dramatic" → lens_flare, "magical" → particles, "edgy/cyberpunk" → chromatic_aberration + glow_pulse, "moody" → smoke, "colorful/fancy" → color_wash or prism, "aesthetic" → bokeh + light_leak
 
 RESPONSE FORMAT — always return valid JSON (no markdown):
 {
@@ -133,11 +183,13 @@ RESPONSE FORMAT — always return valid JSON (no markdown):
 RULES:
 - ALWAYS generate at least one operation when the user requests an edit. Never return an empty operations array for an edit request.
 - Use the transcript to make intelligent timing decisions. Place cuts/transitions at natural speech boundaries.
-- For "cut deadspace" or "remove silence": find gaps in the transcript segments (where end of one segment and start of next have a gap > 0.5s) and create a cut operation for each gap.
-- For "make it viral/professional/cinematic": combine multiple operations (add_caption + add_filter + add_transition).
+- For "cut deadspace" or "remove silence": find gaps in the transcript segments (where end of one segment and start of next have a gap > 0.5s) and create a cut operation for each gap. ALWAYS follow up cuts with a set_segment_transitions operation (mode: "auto") to ensure smooth playback.
+- For "make it viral/professional/cinematic": combine multiple operations (cut deadspace + set_segment_transitions + add_caption + add_filter). This creates a polished, broadcast-quality result.
+- For "add transitions" or "smooth transitions": use set_segment_transitions with mode "auto" or pick a specific type.
 - You can apply multiple operations in a single response.
 - If the user asks something unrelated to video editing, still respond with a helpful message but with an empty operations array.
-- Timestamps must be within 0 and the video duration. Round to 1 decimal place.`;
+- Timestamps must be within 0 and the video duration. Round to 1 decimal place.
+- THINK LIKE A PRO EDITOR: every cut needs a transition, every video needs color grading, captions should be styled to match the mood.`;
 
 export async function planEdits(
   userMessage: string,
@@ -268,121 +320,201 @@ export async function checkLumaStatus(generationId: string): Promise<LumaGenerat
   };
 }
 
-// ---- Direct JSON generation for Remotion ----
+// ---- Edit Presets ----
+// Pre-configured edit packages that apply multiple operations at once.
+// Inspired by AE-ScriptFlow's automated edit preparation workflow.
 
-const REMOTION_JSON_PROMPT = `You are an expert video editor AI. Users describe videos in natural language and you convert their requests directly into a JSON object that can be rendered by Remotion.
-
-IMPORTANT: You generate COMPLETE VideoEditorProps JSON, not operations. Return ONLY valid JSON with no markdown.
-
-CAPTION STYLES (map user intent to these):
-- "viral" = CapCut-style word-by-word yellow highlight (DEFAULT, use for "CapCut", "TikTok", "viral")
-- "bold" = extra large pink highlight, word-by-word (use for "big", "bold", "impact")
-- "cinematic" = frosted glass with border (use for "movie", "film", "cinema")
-- "neon" = glowing cyan neon text (use for "glow", "glowing", "neon")
-- "fire" = orange/red flame text with glow, word-by-word (use for "fire", "flame", "fiery")
-- "glitch" = RGB-split glitch effect (use for "glitch", "cyber", "cyberpunk")
-- "karaoke" = progressive fill animation (use for "karaoke", "sing")
-- "outline" = big white text with black stroke
-- "boxed" = white text on dark box
-- "gradient" = colorful gradient pill (use for "colorful", "gradient", "rainbow")
-- "typewriter" = green monospace (use for "hacker", "code", "terminal")
-- "retro" = orange retro text with 3D shadow (use for "retro", "80s", "vintage")
-- "minimal" = small, subtle, clean white (use for "clean", "simple", "minimal")
-- "shadow" = dramatic multi-layer drop shadow
-- "comic" = yellow text on red box (use for "comic", "cartoon")
-- "elegant" = serif font, subtle (use for "fancy", "classy", "elegant")
-- "broadcast" = news/TV bar style (use for "news", "tv", "broadcast")
-- "wave" = purple/cyan color-shifting
-- "stack" = large green highlight, word-by-word
-- "highlighted" = word-by-word highlight
-- "default" = clean white text with shadow
-
-Available transition types: "fade", "dissolve", "wipe", "zoom", "flash", "glitch"
-
-Available filter types: "brightness", "contrast", "saturation", "blur", "sharpen", "vintage", "cinematic", "warm", "cool"
-
-Available gradeLook values: "none", "cinematic", "vintage", "warm", "cool", "dramatic", "matte", "neon", "teal_orange"
-
-JSON STRUCTURE (VideoEditorProps):
-{
-  "videoSrc": "file path (don't modify)",
-  "cuts": [{ "start": number, "end": number, "label": string? }],
-  "captions": [{ "start": number, "end": number, "text": string, "style": string, "position": "top"|"bottom"|"center" }],
-  "filters": [{ "type": string, "value": 0-2, "startTime": number?, "endTime": number? }],
-  "transitions": [{ "type": string, "timestamp": number, "duration": 0.3-2.0 }],
-  "brollSegments": [{ "timestamp": number, "duration": number, "url": string? }],
-  "speedAdjustments": [{ "start": number, "end": number, "speed": 0.25-4.0 }],
-  "totalDurationInSeconds": number,
-  "gradeLook": string,
-  "showFilmGrain": boolean,
-  "showCinematicBars": boolean
+export interface EditPreset {
+  id: string;
+  name: string;
+  description: string;
+  category: "social" | "cinematic" | "professional" | "minimal";
+  /** Operations that use transcript timing (cuts) are generated dynamically */
+  getOperations: (videoDuration: number, transcriptSegments?: TranscriptSegment[]) => EditOperation[];
 }
 
-Rules:
-- ALWAYS preserve videoSrc, totalDurationInSeconds (don't change)
-- Map user intent to available caption styles using the mappings above
-- Use reasonable timing/duration values
-- If user requests "captions" or mentions caption style:
-  - Create captions array from transcriptSegments (each segment becomes a caption)
-  - Use the mentioned style or default to "viral" if not specified
-  - Default position to "bottom" unless user specifies
-  - Each caption: { "start": segment.start, "end": segment.end, "text": segment.text, "style": chosen_style, "position": "bottom"|"top"|"center" }
-- For cuts, find natural speech boundaries from transcript
-- Be creative - combine multiple elements for natural requests (e.g., "make it viral" = add captions in viral style + maybe add transitions + bright filters)
-- All timestamps must be within 0 and totalDurationInSeconds
-- Return ONLY the JSON object, no explanation`;
-
-export async function generateRemotionJSON(
-  userMessage: string,
-  transcript: string,
-  transcriptSegments: Array<{ start: number; end: number; text: string }>,
-  currentVideoSrc: string,
-  totalDuration: number,
-): Promise<{ json: any; message: string }> {
-  const openai = new (await import("openai")).default({ apiKey: process.env.OPENAI_API_KEY });
-
-  const context = `Video transcript: "${transcript}"
-Transcript segments: ${JSON.stringify(transcriptSegments)}
-Current video: ${currentVideoSrc}
-Total duration: ${totalDuration}s
-
-User request: ${userMessage}`;
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: REMOTION_JSON_PROMPT },
-      { role: "user", content: context },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0.7,
-  });
-
-  const content = response.choices[0]?.message?.content || "{}";
-  let parsedJSON: any = {};
-  try {
-    parsedJSON = JSON.parse(content);
-  } catch {
-    console.error("[remotion-json] Failed to parse response:", content);
+/** Find silence gaps in transcript segments to generate cut operations */
+function findSilenceGaps(segments: TranscriptSegment[], videoDuration: number, minGap = 0.5): Array<{ start: number; end: number }> {
+  const gaps: Array<{ start: number; end: number }> = [];
+  if (!segments || segments.length === 0) return gaps;
+  for (let i = 0; i < segments.length - 1; i++) {
+    const gapStart = segments[i].end;
+    const gapEnd = segments[i + 1].start;
+    if (gapEnd - gapStart >= minGap) {
+      gaps.push({ start: Math.round(gapStart * 10) / 10, end: Math.round(gapEnd * 10) / 10 });
+    }
   }
+  return gaps;
+}
 
-  // Generate a friendly message describing what was applied
-  const changes: string[] = [];
-  if (parsedJSON.captions?.length) changes.push(`${parsedJSON.captions.length} caption(s)`);
-  if (parsedJSON.filters?.length) changes.push(`${parsedJSON.filters.length} filter(s)`);
-  if (parsedJSON.transitions?.length) changes.push(`${parsedJSON.transitions.length} transition(s)`);
-  if (parsedJSON.cuts?.length) changes.push(`${parsedJSON.cuts.length} cut(s)`);
-  if (parsedJSON.speedAdjustments?.length) changes.push(`speed adjustment(s)`);
-  if (parsedJSON.brollSegments?.length) changes.push(`${parsedJSON.brollSegments.length} B-roll segment(s)`);
+export const EDIT_PRESETS: EditPreset[] = [
+  {
+    id: "viral-ready",
+    name: "Viral Ready",
+    description: "Trim silence, viral captions, upbeat music, zoom transitions — optimized for TikTok & Reels",
+    category: "social",
+    getOperations: (videoDuration, segments) => {
+      const ops: EditOperation[] = [];
+      // Trim silence
+      const gaps = findSilenceGaps(segments || [], videoDuration);
+      for (const gap of gaps) {
+        ops.push({ type: "cut", params: { start: gap.start, end: gap.end }, status: "pending" });
+      }
+      // Viral captions
+      ops.push({ type: "add_caption", params: { style: "viral", position: "bottom" }, status: "pending" });
+      // Upbeat music
+      ops.push({ type: "add_music", params: { style: "Upbeat & Energetic", volume: 0.3 }, status: "pending" });
+      // Contrast boost
+      ops.push({ type: "add_filter", params: { type: "contrast", value: 1.2 }, status: "pending" });
+      ops.push({ type: "add_filter", params: { type: "saturation", value: 1.15 }, status: "pending" });
+      // Zoom transitions at ~1/3 and ~2/3 of video
+      const t1 = Math.round(videoDuration * 0.33 * 10) / 10;
+      const t2 = Math.round(videoDuration * 0.66 * 10) / 10;
+      ops.push({ type: "add_transition", params: { type: "zoom", timestamp: t1, duration: 0.5 }, status: "pending" });
+      ops.push({ type: "add_transition", params: { type: "zoom", timestamp: t2, duration: 0.5 }, status: "pending" });
+      return ops;
+    },
+  },
+  {
+    id: "cinematic",
+    name: "Cinematic",
+    description: "Film-grade color grading, cinematic captions, smooth fades, atmospheric music",
+    category: "cinematic",
+    getOperations: (videoDuration) => [
+      { type: "add_caption", params: { style: "cinematic", position: "bottom" }, status: "pending" },
+      { type: "add_music", params: { style: "Inspirational", volume: 0.25 }, status: "pending" },
+      { type: "add_filter", params: { type: "cinematic", value: 1.0 }, status: "pending" },
+      { type: "add_filter", params: { type: "contrast", value: 1.15 }, status: "pending" },
+      { type: "add_filter", params: { type: "warm", value: 0.3 }, status: "pending" },
+      { type: "add_transition", params: { type: "fade", timestamp: 0, duration: 1.0 }, status: "pending" },
+      { type: "add_transition", params: { type: "fade", timestamp: Math.round((videoDuration - 1) * 10) / 10, duration: 1.0 }, status: "pending" },
+    ],
+  },
+  {
+    id: "clean-professional",
+    name: "Clean & Professional",
+    description: "Polished look with clean captions, corporate music, and subtle brightness adjustment",
+    category: "professional",
+    getOperations: (videoDuration, segments) => {
+      const ops: EditOperation[] = [];
+      // Trim silence for tighter pacing
+      const gaps = findSilenceGaps(segments || [], videoDuration, 0.8);
+      for (const gap of gaps) {
+        ops.push({ type: "cut", params: { start: gap.start, end: gap.end }, status: "pending" });
+      }
+      ops.push({ type: "add_caption", params: { style: "boxed", position: "bottom" }, status: "pending" });
+      ops.push({ type: "add_music", params: { style: "Corporate & Professional", volume: 0.2 }, status: "pending" });
+      ops.push({ type: "add_filter", params: { type: "brightness", value: 1.1 }, status: "pending" });
+      ops.push({ type: "add_filter", params: { type: "sharpen", value: 0.3 }, status: "pending" });
+      ops.push({ type: "add_transition", params: { type: "dissolve", timestamp: 0, duration: 0.8 }, status: "pending" });
+      return ops;
+    },
+  },
+  {
+    id: "high-energy",
+    name: "High Energy",
+    description: "Fast-paced with speed ramps, neon captions, glitch transitions, and boosted colors",
+    category: "social",
+    getOperations: (videoDuration, segments) => {
+      const ops: EditOperation[] = [];
+      // Trim silence aggressively
+      const gaps = findSilenceGaps(segments || [], videoDuration, 0.3);
+      for (const gap of gaps) {
+        ops.push({ type: "cut", params: { start: gap.start, end: gap.end }, status: "pending" });
+      }
+      // Speed ramp in middle section
+      const midStart = Math.round(videoDuration * 0.4 * 10) / 10;
+      const midEnd = Math.round(videoDuration * 0.6 * 10) / 10;
+      ops.push({ type: "speed_change", params: { start: midStart, end: midEnd, speed: 1.5 }, status: "pending" });
+      // Neon captions
+      ops.push({ type: "add_caption", params: { style: "neon", position: "bottom" }, status: "pending" });
+      // Energetic music
+      ops.push({ type: "add_music", params: { style: "Upbeat & Energetic", volume: 0.35 }, status: "pending" });
+      // Color boost
+      ops.push({ type: "add_filter", params: { type: "saturation", value: 1.3 }, status: "pending" });
+      ops.push({ type: "add_filter", params: { type: "contrast", value: 1.25 }, status: "pending" });
+      // Glitch transitions
+      const t1 = Math.round(videoDuration * 0.25 * 10) / 10;
+      const t2 = Math.round(videoDuration * 0.5 * 10) / 10;
+      const t3 = Math.round(videoDuration * 0.75 * 10) / 10;
+      ops.push({ type: "add_transition", params: { type: "glitch", timestamp: t1, duration: 0.4 }, status: "pending" });
+      ops.push({ type: "add_transition", params: { type: "flash", timestamp: t2, duration: 0.3 }, status: "pending" });
+      ops.push({ type: "add_transition", params: { type: "glitch", timestamp: t3, duration: 0.4 }, status: "pending" });
+      return ops;
+    },
+  },
+  {
+    id: "storyteller",
+    name: "Storyteller",
+    description: "Warm tones, highlighted captions, gentle music, and smooth fades for narrative content",
+    category: "cinematic",
+    getOperations: (videoDuration) => [
+      { type: "add_caption", params: { style: "highlighted", position: "bottom" }, status: "pending" },
+      { type: "add_music", params: { style: "Calm & Relaxing", volume: 0.2 }, status: "pending" },
+      { type: "add_filter", params: { type: "warm", value: 0.4 }, status: "pending" },
+      { type: "add_filter", params: { type: "brightness", value: 1.05 }, status: "pending" },
+      { type: "add_transition", params: { type: "fade", timestamp: 0, duration: 1.2 }, status: "pending" },
+      { type: "add_transition", params: { type: "dissolve", timestamp: Math.round(videoDuration * 0.5 * 10) / 10, duration: 0.8 }, status: "pending" },
+      { type: "add_transition", params: { type: "fade", timestamp: Math.round((videoDuration - 1.2) * 10) / 10, duration: 1.2 }, status: "pending" },
+    ],
+  },
+  {
+    id: "quick-cleanup",
+    name: "Quick Cleanup",
+    description: "Just the basics — trim dead air and add clean auto-captions",
+    category: "minimal",
+    getOperations: (videoDuration, segments) => {
+      const ops: EditOperation[] = [];
+      const gaps = findSilenceGaps(segments || [], videoDuration);
+      for (const gap of gaps) {
+        ops.push({ type: "cut", params: { start: gap.start, end: gap.end }, status: "pending" });
+      }
+      ops.push({ type: "add_caption", params: { style: "default", position: "bottom" }, status: "pending" });
+      return ops;
+    },
+  },
+];
 
-  const message = changes.length > 0
-    ? `✨ Updated your video: ${changes.join(", ")}`
-    : `Got it! I'm processing your request.`;
-
-  return { json: parsedJSON, message };
+export function getPresetById(presetId: string): EditPreset | undefined {
+  return EDIT_PRESETS.find(p => p.id === presetId);
 }
 
 // ---- Apply edit operations to the edit state ----
+
+// Available Remotion transition types for segment transitions
+const SEGMENT_TRANSITION_TYPES = [
+  "fade", "dissolve", "slide-left", "slide-right", "slide-up", "slide-down",
+  "wipe", "wipe-up", "wipe-diagonal", "flip", "clock-wipe", "none",
+] as const;
+
+function isValidSegmentTransition(type: string): boolean {
+  return (SEGMENT_TRANSITION_TYPES as readonly string[]).includes(type);
+}
+
+// Auto-generate varied transitions for a polished feel
+function generateAutoTransitions(numSegments: number, fps: number = 30): any[] {
+  const transitions: any[] = [];
+  const pool = ["fade", "wipe", "slide-left", "dissolve", "wipe-up", "slide-right"];
+
+  for (let i = 0; i < numSegments - 1; i++) {
+    // First and last transitions are always fade (gentle bookend)
+    let type: string;
+    if (i === 0 || i === numSegments - 2) {
+      type = "fade";
+    } else {
+      type = pool[i % pool.length];
+    }
+
+    transitions.push({
+      afterSegmentIndex: i,
+      type,
+      durationInFrames: Math.round(0.4 * fps), // 0.4s — snappy and professional
+      timing: "spring",
+    });
+  }
+
+  return transitions;
+}
 
 export function applyOperationsToState(
   currentState: any,
@@ -440,6 +572,48 @@ export function applyOperationsToState(
         });
         break;
       }
+      case "set_segment_transitions": {
+        const mode = op.params.mode || "auto";
+        const durationSec = op.params.duration || 0.4;
+        const fps = 30;
+        const durationInFrames = Math.round(durationSec * fps);
+
+        if (mode === "auto") {
+          // Calculate how many kept segments exist based on current cuts
+          // We'll estimate from the number of cuts — each cut creates a gap, producing N+1 segments from N cuts
+          const numCuts = (state.cuts || []).length;
+          const numSegments = numCuts > 0 ? numCuts + 1 : 2; // minimum 2 segments for a transition
+          state.segmentTransitions = generateAutoTransitions(numSegments, fps);
+          state.autoTransitions = true;
+        } else if (mode === "uniform") {
+          const transType = isValidSegmentTransition(op.params.type || "fade")
+            ? op.params.type
+            : "fade";
+          // Generate uniform transitions for all segment gaps
+          const numCuts = (state.cuts || []).length;
+          const numSegments = numCuts > 0 ? numCuts + 1 : 2;
+          const transitions: any[] = [];
+          for (let i = 0; i < numSegments - 1; i++) {
+            transitions.push({
+              afterSegmentIndex: i,
+              type: transType,
+              durationInFrames,
+              timing: "spring",
+            });
+          }
+          state.segmentTransitions = transitions;
+          state.autoTransitions = false;
+        } else if (mode === "custom" && Array.isArray(op.params.custom)) {
+          state.segmentTransitions = op.params.custom.map((c: any) => ({
+            afterSegmentIndex: c.afterSegmentIndex,
+            type: isValidSegmentTransition(c.type) ? c.type : "fade",
+            durationInFrames: c.duration ? Math.round(c.duration * fps) : durationInFrames,
+            timing: "spring",
+          }));
+          state.autoTransitions = false;
+        }
+        break;
+      }
       case "add_broll":
       case "luma_generate": {
         if (!state.brollSegments) state.brollSegments = [];
@@ -449,6 +623,19 @@ export function applyOperationsToState(
           query: op.params.prompt || op.params.query,
           lumaGenerationId: op.params.generationId,
           url: op.params.videoUrl,
+        });
+        break;
+      }
+      case "add_vfx": {
+        if (!state.vfxAssets) state.vfxAssets = [];
+        state.vfxAssets.push({
+          type: op.params.type,
+          color: op.params.color,
+          secondaryColor: op.params.secondaryColor,
+          intensity: op.params.intensity,
+          timestamp: op.params.timestamp,
+          duration: op.params.duration,
+          speed: op.params.speed,
         });
         break;
       }
