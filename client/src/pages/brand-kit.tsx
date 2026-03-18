@@ -21,6 +21,7 @@ export default function BrandKitPage() {
   const form = useForm<InsertBrandKit>({
     resolver: zodResolver(insertBrandKitSchema),
     values: brandKit || {
+      projectId: "",
       userId: "user-1",
       brandName: "",
       primaryColor: "#3B82F6",
@@ -42,7 +43,7 @@ export default function BrandKitPage() {
     },
   });
 
-  const onSubmit = (data: InsertBrandKit) => updateMutation.mutate(data);
+  const onSubmit = (data: InsertBrandKit) => updateMutation.mutate(data as InsertBrandKit);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -109,7 +110,7 @@ export default function BrandKitPage() {
                   </div>
                   {(logoPreview || form.watch("logoUrl")) && (
                     <div className="w-24 h-24 rounded-xl border border-white/[0.06] bg-white/[0.03] flex items-center justify-center overflow-hidden">
-                      <img src={logoPreview || form.watch("logoUrl")} alt="Logo preview" className="max-w-full max-h-full object-contain" />
+                      <img src={logoPreview || (form.watch("logoUrl") ?? undefined)} alt="Logo preview" className="max-w-full max-h-full object-contain" />
                     </div>
                   )}
                 </div>

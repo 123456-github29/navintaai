@@ -7,7 +7,7 @@ import { storage } from "./storage";
 import { generateViralScript, scriptToShotDialogue, scriptToTeleprompterCards, HOOK_STYLES } from "./lib/script";
 import { chatJSON } from "./lib/openaiClient";
 import type { HookStyle } from "./lib/script";
-import { exportWithEdits } from "./lib/remotionRenderer";
+import { exportWithEdits, type EditState } from "./lib/remotionRenderer";
 
 import {
   uploadClipToStorage, 
@@ -1891,7 +1891,6 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       shotId: session.shotId,
       videoPath: storagePath,
       duration: duration || 0,
-      recordedAt: new Date(),
     });
     console.log(`[recording-sessions/complete] ✓ Clip created: ${clip.id}`);
 
@@ -2725,7 +2724,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       // Execute edits with Remotion
       const editedFilename = await executeEdits(
         primaryClipPath,
-        session.currentEditState || {},
+        (session.currentEditState || {}) as EditState,
         totalDuration
       );
 
@@ -2746,9 +2745,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       const signedUrl = uploadResult.url;
 
       // Create video record
-      const videoId = randomUUID();
-      await storage.createVideo({
-        id: videoId,
+      const createdVideo = await storage.createVideo({
         postId: session.postId,
         userId,
         videoPath: storagePath,
@@ -2757,7 +2754,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
 
       res.json({
         success: true,
-        videoId,
+        videoId: createdVideo.id,
         videoPath: storagePath,
         signedUrl,
         message: "Video exported successfully!",

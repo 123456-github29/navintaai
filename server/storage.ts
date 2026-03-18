@@ -162,6 +162,9 @@ export class MemStorage implements IStorage {
       firstName: user.firstName || null,
       lastName: user.lastName || null,
       profileImageUrl: user.profileImageUrl || null,
+      businessName: user.businessName || null,
+      plan: user.plan || "free",
+      monthlyPayment: user.monthlyPayment || 0,
       createdAt: existing?.createdAt || now,
       updatedAt: now,
     };
@@ -1317,7 +1320,7 @@ export class DbStorage implements IStorage {
           ORDER BY created_at DESC 
           LIMIT ${limit}`
     );
-    return result.rows;
+    return Array.from(result as any);
   }
 
   // Render Job methods

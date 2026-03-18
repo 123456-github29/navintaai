@@ -81,10 +81,10 @@ export function validate(schemas: ValidationSchemas) {
         req.body = schemas.body.parse(req.body);
       }
       if (schemas.query) {
-        req.query = schemas.query.parse(req.query);
+        req.query = schemas.query.parse(req.query) as typeof req.query;
       }
       if (schemas.params) {
-        req.params = schemas.params.parse(req.params);
+        req.params = schemas.params.parse(req.params) as typeof req.params;
       }
       next();
     } catch (error) {
@@ -92,8 +92,7 @@ export function validate(schemas: ValidationSchemas) {
         const validationError = createError(
           "Validation failed",
           422,
-          "VALIDATION_ERROR",
-          true
+          "VALIDATION_ERROR"
         );
         (validationError as any).details = error.format();
         return next(validationError);
@@ -140,6 +139,6 @@ export const brandKitSchema = z.object({
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format"),
   accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format").optional(),
   logoUrl: z.string().url().optional().or(z.literal("")),
-  fonts: z.record(z.string()).optional().default({}),
+  fonts: z.record(z.string(), z.string()).optional().default({}),
 }).strict();
 
