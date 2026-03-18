@@ -323,7 +323,7 @@ export const VideoEditorComposition: React.FC<VideoEditorProps> = ({
         {useTransitionSeries ? (
           // Use TransitionSeries for seamless cross-segment transitions
           <TransitionSeries>
-            {segments.map((seg, i) => {
+            {segments.flatMap((seg, i) => {
               const elements: React.ReactNode[] = [];
 
               // Add the segment

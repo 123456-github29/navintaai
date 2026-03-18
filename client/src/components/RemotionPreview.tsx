@@ -186,15 +186,44 @@ export function RemotionPreview({ videoUrl, editState, videoDuration }: Remotion
     [videoUrl, editState, videoDuration]
   );
 
-  // Compute actual output duration (accounting for cuts removing sections)
-  const outputDuration = useMemo(() => {
+  // Compute actual output duration (accounting for cuts AND transition overlaps).
+  // When TransitionSeries is used, each transition causes two segments to overlap
+  // by the transition's durationInFrames — so total frames shrink accordingly.
+  const durationInFrames = useMemo(() => {
+    let totalFrames: number;
     if (inputProps.cuts && inputProps.cuts.length > 0) {
-      return inputProps.cuts.reduce((sum, c) => sum + (c.end - c.start), 0);
+      const rawDuration = inputProps.cuts.reduce((sum, c) => sum + (c.end - c.start), 0);
+      totalFrames = Math.round(rawDuration * FPS);
+    } else {
+      totalFrames = Math.round(videoDuration * FPS);
     }
-    return videoDuration;
-  }, [inputProps.cuts, videoDuration]);
 
-  const durationInFrames = Math.max(1, Math.round(outputDuration * FPS));
+    // Subtract transition overlap frames when TransitionSeries will be used.
+    // TransitionSeries overlaps the outgoing and incoming segments during transitions,
+    // which shortens the total timeline by the sum of all transition durations.
+    const numSegments = inputProps.cuts?.length || 0;
+    if (numSegments > 1) {
+      const segmentTransitions = inputProps.segmentTransitions || [];
+      const useAutoTransitions = inputProps.autoTransitions !== false;
+
+      let overlapFrames = 0;
+      for (let i = 0; i < numSegments - 1; i++) {
+        // Check for explicit segment transition
+        const explicit = segmentTransitions.find((st) => st.afterSegmentIndex === i);
+        if (explicit) {
+          if (explicit.type !== "none") {
+            overlapFrames += explicit.durationInFrames || 12;
+          }
+        } else if (useAutoTransitions && inputProps.defaultTransitionType !== "none") {
+          overlapFrames += 12; // auto-transition default
+        }
+      }
+
+      totalFrames = Math.max(1, totalFrames - overlapFrames);
+    }
+
+    return Math.max(1, totalFrames);
+  }, [inputProps.cuts, inputProps.segmentTransitions, inputProps.autoTransitions, inputProps.defaultTransitionType, videoDuration]);
 
   useEffect(() => {
     const player = playerRef.current;
