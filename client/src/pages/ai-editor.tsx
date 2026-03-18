@@ -104,6 +104,7 @@ export default function AiEditor() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [noMediaAvailable, setNoMediaAvailable] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -233,7 +234,16 @@ export default function AiEditor() {
       const res = await apiRequest("POST", `/api/ai-edit/sessions/${sessionId}/transcribe`);
       const data = await res.json();
       setSession((prev) =>
-        prev ? { ...prev, transcript: data.transcript } : prev,
+        prev
+          ? {
+              ...prev,
+              transcript: data.transcript,
+              currentEditState: {
+                ...(prev.currentEditState || {}),
+                transcriptSegments: data.segments,
+              },
+            }
+          : prev,
       );
       toast({
         title: "Video transcribed",
@@ -271,6 +281,14 @@ export default function AiEditor() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const onTimeUpdate = () => setCurrentTime(video.currentTime);
+    video.addEventListener("timeupdate", onTimeUpdate);
+    return () => video.removeEventListener("timeupdate", onTimeUpdate);
+  }, [videoRef.current]);
 
   const handleSend = () => {
     const msg = inputValue.trim();
@@ -320,6 +338,25 @@ export default function AiEditor() {
 
   const editState = session?.currentEditState || {};
   const hasEdits = editState.cuts?.length || editState.filters?.length || editState.speedAdjustments?.length || editState.brollSegments?.length || editState.transitions?.length || editState.musicStyle || editState.captions;
+
+  const currentCaption =
+    editState.captions && editState.transcriptSegments
+      ? (editState.transcriptSegments as Array<{ start: number; end: number; text: string }>).find(
+          (s) => currentTime >= s.start && currentTime <= s.end,
+        )?.text ?? null
+      : null;
+
+  const captionPreviewStyle = (() => {
+    const s = editState.captionStyle || "viral";
+    if (s === "neon") return { color: "#00FFFF", textShadow: "0 0 8px #00FFFF, 0 0 16px #00FFFF", background: "transparent", border: "none" };
+    if (s === "boxed") return { color: "white", background: "rgba(0,0,0,0.8)", borderRadius: "6px" };
+    if (s === "cinematic") return { color: "white", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px" };
+    if (s === "gradient") return { color: "white", background: "linear-gradient(135deg, rgba(255,107,107,0.85), rgba(78,84,200,0.85))", borderRadius: "50px" };
+    if (s === "outline") return { color: "white", textShadow: "1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000", background: "transparent" };
+    if (s === "default") return { color: "white", textShadow: "1px 1px 4px rgba(0,0,0,0.9)", background: "transparent" };
+    // viral / highlighted — yellow active word not feasible in plain HTML preview, use gold glow
+    return { color: "#FFD700", textShadow: "0 0 8px rgba(255,215,0,0.6), 1px 1px 0 #000, -1px -1px 0 #000", background: "transparent" };
+  })();
 
   return (
     <div className="flex h-[calc(100vh-65px)] overflow-hidden" style={{ background: "#050505" }}>
@@ -582,11 +619,27 @@ export default function AiEditor() {
               </div>
             )}
 
+            {/* Live caption overlay */}
+            {currentCaption && (
+              <div
+                className={`absolute left-0 right-0 flex justify-center px-3 pointer-events-none ${
+                  editState.captionPosition === "top" ? "top-10" : editState.captionPosition === "center" ? "top-1/2 -translate-y-1/2" : "bottom-10"
+                }`}
+              >
+                <div
+                  className="text-xs font-black px-3 py-1.5 text-center max-w-[90%] leading-snug uppercase tracking-wide"
+                  style={captionPreviewStyle}
+                >
+                  {currentCaption}
+                </div>
+              </div>
+            )}
+
             {hasEdits && (
               <div className="absolute top-3 right-3 flex flex-col gap-1.5">
                 {editState.captions && (
                   <div className="px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[10px] flex items-center gap-1">
-                    <Type className="h-2.5 w-2.5" /> Captions
+                    <Type className="h-2.5 w-2.5" /> Captions{editState.captionStyle && editState.captionStyle !== "viral" ? ` · ${editState.captionStyle}` : ""}
                   </div>
                 )}
                 {editState.musicStyle && (

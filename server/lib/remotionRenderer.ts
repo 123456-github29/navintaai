@@ -96,6 +96,9 @@ export interface EditState {
   cuts?: Array<{ start: number; end: number; label?: string }>;
   speedAdjustments?: Array<{ start: number; end: number; speed: number }>;
   captions?: boolean;
+  captionStyle?: "viral" | "boxed" | "cinematic" | "neon" | "gradient" | "highlighted" | "outline" | "default";
+  captionPosition?: "bottom" | "top" | "center";
+  transcriptSegments?: Array<{ start: number; end: number; text: string }>;
   musicStyle?: string;
   filters?: Array<{
     type: string;
@@ -457,14 +460,30 @@ export async function executeEdits(
     ["blur", "sharpen"].includes(f.type)
   );
 
+  // Map transcript segments → Remotion captions when captions flag is set
+  const captionStyle = editState.captionStyle ?? "viral";
+  const captionPosition = editState.captionPosition ?? "bottom";
+  const captions =
+    editState.captions && editState.transcriptSegments?.length
+      ? editState.transcriptSegments
+          .filter((s) => s.end > s.start)
+          .map((s) => ({
+            start: s.start,
+            end: s.end,
+            text: s.text,
+            style: captionStyle,
+            position: captionPosition,
+          }))
+      : [];
+
   console.log(
-    `[remotion] executeEdits: ${cuts.length} cuts, ${filters.length} filters, ${transitions.length} transitions, ${brollSegments.length} b-roll`
+    `[remotion] executeEdits: ${cuts.length} cuts, ${filters.length} filters, ${transitions.length} transitions, ${brollSegments.length} b-roll, ${captions.length} captions`
   );
 
   await renderVideo({
     videoSrc: inputFile,
     cuts,
-    captions: [],
+    captions,
     filters,
     transitions,
     brollSegments,
