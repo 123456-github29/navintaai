@@ -311,6 +311,11 @@ export default function AiEditor() {
       setMessages((prev) => [...prev, data.userMessage, data.assistantMessage]);
       if (data.editState) {
         setSession((prev) => prev ? { ...prev, currentEditState: data.editState } : prev);
+        // Keep videoDuration state in sync for preview rendering
+        const dur = data.editState.videoDuration;
+        if (dur && dur > 0) {
+          setVideoDuration((prev) => Math.max(prev, dur));
+        }
       }
       toast({
         title: "Preset applied!",
@@ -655,13 +660,15 @@ export default function AiEditor() {
           <div className="px-4 pb-2 space-y-3">
             {/* Presets */}
             <div>
-              <p className="text-xs text-white/20 mb-2">One-click presets</p>
+              <p className="text-xs text-white/20 mb-2">
+                {isTranscribing ? "Transcribing video... presets will be ready soon" : "One-click presets"}
+              </p>
               <div className="grid grid-cols-2 gap-2">
                 {EDIT_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
                     onClick={() => handleApplyPreset(preset.id)}
-                    disabled={applyPreset.isPending || sendMessage.isPending || !session}
+                    disabled={applyPreset.isPending || sendMessage.isPending || isTranscribing || !session}
                     className={`relative group flex flex-col gap-1.5 p-3 text-left bg-white/[0.02] hover:bg-white/[0.05] border ${preset.border} rounded-xl transition-all disabled:opacity-50`}
                   >
                     <div className="flex items-center gap-2">
@@ -693,7 +700,7 @@ export default function AiEditor() {
                   <button
                     key={action.label}
                     onClick={() => handleQuickAction(action.prompt)}
-                    disabled={sendMessage.isPending || applyPreset.isPending || !session}
+                    disabled={sendMessage.isPending || applyPreset.isPending || isTranscribing || !session}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] text-white/40 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] rounded-lg transition-colors text-left disabled:opacity-50"
                   >
                     <action.icon className="h-3 w-3 shrink-0" />
