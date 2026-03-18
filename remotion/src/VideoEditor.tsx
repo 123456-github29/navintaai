@@ -18,6 +18,7 @@ import { FilmGrain } from "./components/FilmGrain";
 import { BRollLayer, type BRollSegment } from "./components/BRollOverlay";
 import { TransitionLayer, type TransitionSpec } from "./components/TransitionOverlay";
 import { LowerThird } from "./components/LowerThird";
+import { VFXLayer, type VFXAsset } from "./components/VFXOverlay";
 
 // ------ Zod schema for type-safe Remotion props ------
 
@@ -44,6 +45,19 @@ export const transitionSchema = z.object({
   type: z.enum(["fade", "dissolve", "wipe", "zoom", "flash", "glitch"]),
   timestamp: z.number(),
   duration: z.number(),
+});
+
+export const vfxAssetSchema = z.object({
+  type: z.enum([
+    "light_leak", "bokeh", "color_wash", "particles", "lens_flare",
+    "chromatic_aberration", "smoke", "prism", "duotone", "glow_pulse",
+  ]),
+  color: z.string().optional(),
+  secondaryColor: z.string().optional(),
+  intensity: z.number().optional(),
+  timestamp: z.number().optional(),
+  duration: z.number().optional(),
+  speed: z.number().optional(),
 });
 
 export const brollSchema = z.object({
@@ -73,6 +87,7 @@ export const schema = z.object({
   filters: z.array(filterSchema).optional().default([]),
   transitions: z.array(transitionSchema).optional().default([]),
   brollSegments: z.array(brollSchema).optional().default([]),
+  vfxAssets: z.array(vfxAssetSchema).optional().default([]),
   speedAdjustments: z.array(speedAdjustmentSchema).optional().default([]),
   totalDurationInSeconds: z.number(),
   gradeLook: z
@@ -142,6 +157,7 @@ export const VideoEditorComposition: React.FC<VideoEditorProps> = ({
   filters = [],
   transitions = [],
   brollSegments = [],
+  vfxAssets = [],
   speedAdjustments = [],
   totalDurationInSeconds,
   gradeLook = "none",
@@ -223,6 +239,9 @@ export const VideoEditorComposition: React.FC<VideoEditorProps> = ({
 
       {/* === B-Roll Layer === */}
       <BRollLayer segments={brollSegments as BRollSegment[]} timelineOffset={0} />
+
+      {/* === VFX Assets Layer === */}
+      <VFXLayer assets={vfxAssets as VFXAsset[]} totalDurationInSeconds={totalDurationInSeconds} />
 
       {/* === Vignette (gradient overlay — works fine as empty div) === */}
       {showVignette && <VignetteOverlay />}
