@@ -7,6 +7,11 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const LUMA_API_KEY = process.env.LUMA_API_KEY || "";
 
+function getLumaApiKey(): string {
+  // Read at call time, not module load time, in case env var is set after import
+  return process.env.LUMA_API_KEY || LUMA_API_KEY;
+}
+
 // ---- Whisper Transcription ----
 
 export interface TranscriptSegment {
@@ -195,17 +200,21 @@ export async function generateLumaVideo(
   duration: number = 5,
   aspectRatio: string = "9:16",
 ): Promise<LumaGenerationResult> {
-  if (!LUMA_API_KEY) {
+  const apiKey = getLumaApiKey();
+  if (!apiKey) {
+    console.error("[luma] LUMA_API_KEY is not set in environment variables");
     return {
       id: "luma_disabled",
       status: "failed",
     };
   }
 
+  console.log(`[luma] Generating video: prompt="${prompt}", aspect=${aspectRatio}`);
+
   const response = await fetch("https://api.lumalabs.ai/dream-machine/v1/generations", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${LUMA_API_KEY}`,
+      "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -217,11 +226,12 @@ export async function generateLumaVideo(
 
   if (!response.ok) {
     const error = await response.text();
-    console.error("[luma] Generation failed:", error);
+    console.error(`[luma] Generation failed (${response.status}):`, error);
     return { id: "error", status: "failed" };
   }
 
   const data = await response.json();
+  console.log(`[luma] Generation started: id=${data.id}, state=${data.state}`);
   return {
     id: data.id,
     status: data.state || "queued",
@@ -230,7 +240,8 @@ export async function generateLumaVideo(
 }
 
 export async function checkLumaStatus(generationId: string): Promise<LumaGenerationResult> {
-  if (!LUMA_API_KEY) {
+  const apiKey = getLumaApiKey();
+  if (!apiKey) {
     return { id: generationId, status: "failed" };
   }
 
@@ -238,12 +249,13 @@ export async function checkLumaStatus(generationId: string): Promise<LumaGenerat
     `https://api.lumalabs.ai/dream-machine/v1/generations/${generationId}`,
     {
       headers: {
-        "Authorization": `Bearer ${LUMA_API_KEY}`,
+        "Authorization": `Bearer ${apiKey}`,
       },
     },
   );
 
   if (!response.ok) {
+    console.error(`[luma] Status check failed (${response.status}) for ${generationId}`);
     return { id: generationId, status: "failed" };
   }
 

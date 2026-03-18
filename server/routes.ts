@@ -2540,11 +2540,13 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       videoDuration,
     );
 
-    // Process b-roll and Luma generations — both use Luma AI for video generation
+    // Process b-roll and Luma generations
+    const { searchVideos } = await import("./lib/pexels");
     const lumaFailures: string[] = [];
     for (const op of editPlan.operations) {
       if (op.type === "add_broll" && op.params.query) {
-        // Generate b-roll via Luma AI (supports camera control & cinematic footage)
+        // Try Luma AI first (supports camera control & cinematic footage), fall back to Pexels
+        let brollApplied = false;
         try {
           const brollPrompt = `Cinematic b-roll footage of ${op.params.query}, smooth camera movement, high quality, professional`;
           const lumaResult = await generateLumaVideo(
@@ -2552,17 +2554,35 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
             op.params.duration || 5,
             "9:16",
           );
-          if (lumaResult.status === "failed" || lumaResult.id === "luma_disabled" || lumaResult.id === "error") {
-            op.status = "failed";
-            lumaFailures.push(op.params.query);
-          } else {
+          if (lumaResult.status !== "failed" && lumaResult.id !== "luma_disabled" && lumaResult.id !== "error") {
             op.params.generationId = lumaResult.id;
             op.params.videoUrl = lumaResult.videoUrl;
             op.status = "applied";
+            brollApplied = true;
             console.log(`[ai-edit] Luma b-roll generation started for "${op.params.query}": id=${lumaResult.id}`);
+          } else {
+            console.warn(`[ai-edit] Luma failed for b-roll "${op.params.query}", falling back to Pexels`);
           }
         } catch (err: any) {
-          console.error("[ai-edit] Luma b-roll generation error:", err?.message || err);
+          console.warn(`[ai-edit] Luma b-roll error: ${err?.message || err}, falling back to Pexels`);
+        }
+
+        // Pexels fallback — gives immediate video URL (no polling needed)
+        if (!brollApplied) {
+          try {
+            const videos = await searchVideos(op.params.query, 3);
+            if (videos.length > 0) {
+              op.params.videoUrl = videos[0].url;
+              op.status = "applied";
+              brollApplied = true;
+              console.log(`[ai-edit] Pexels b-roll found for "${op.params.query}": ${videos[0].url}`);
+            }
+          } catch (err: any) {
+            console.error("[ai-edit] Pexels fallback also failed:", err?.message || err);
+          }
+        }
+
+        if (!brollApplied) {
           op.status = "failed";
           lumaFailures.push(op.params.query);
         }
