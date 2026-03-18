@@ -255,6 +255,165 @@ export async function checkLumaStatus(generationId: string): Promise<LumaGenerat
   };
 }
 
+// ---- Edit Presets ----
+// Pre-configured edit packages that apply multiple operations at once.
+// Inspired by AE-ScriptFlow's automated edit preparation workflow.
+
+export interface EditPreset {
+  id: string;
+  name: string;
+  description: string;
+  category: "social" | "cinematic" | "professional" | "minimal";
+  /** Operations that use transcript timing (cuts) are generated dynamically */
+  getOperations: (videoDuration: number, transcriptSegments?: TranscriptSegment[]) => EditOperation[];
+}
+
+/** Find silence gaps in transcript segments to generate cut operations */
+function findSilenceGaps(segments: TranscriptSegment[], videoDuration: number, minGap = 0.5): Array<{ start: number; end: number }> {
+  const gaps: Array<{ start: number; end: number }> = [];
+  if (!segments || segments.length === 0) return gaps;
+  for (let i = 0; i < segments.length - 1; i++) {
+    const gapStart = segments[i].end;
+    const gapEnd = segments[i + 1].start;
+    if (gapEnd - gapStart >= minGap) {
+      gaps.push({ start: Math.round(gapStart * 10) / 10, end: Math.round(gapEnd * 10) / 10 });
+    }
+  }
+  return gaps;
+}
+
+export const EDIT_PRESETS: EditPreset[] = [
+  {
+    id: "viral-ready",
+    name: "Viral Ready",
+    description: "Trim silence, viral captions, upbeat music, zoom transitions — optimized for TikTok & Reels",
+    category: "social",
+    getOperations: (videoDuration, segments) => {
+      const ops: EditOperation[] = [];
+      // Trim silence
+      const gaps = findSilenceGaps(segments || [], videoDuration);
+      for (const gap of gaps) {
+        ops.push({ type: "cut", params: { start: gap.start, end: gap.end }, status: "pending" });
+      }
+      // Viral captions
+      ops.push({ type: "add_caption", params: { style: "viral", position: "bottom" }, status: "pending" });
+      // Upbeat music
+      ops.push({ type: "add_music", params: { style: "Upbeat & Energetic", volume: 0.3 }, status: "pending" });
+      // Contrast boost
+      ops.push({ type: "add_filter", params: { type: "contrast", value: 1.2 }, status: "pending" });
+      ops.push({ type: "add_filter", params: { type: "saturation", value: 1.15 }, status: "pending" });
+      // Zoom transitions at ~1/3 and ~2/3 of video
+      const t1 = Math.round(videoDuration * 0.33 * 10) / 10;
+      const t2 = Math.round(videoDuration * 0.66 * 10) / 10;
+      ops.push({ type: "add_transition", params: { type: "zoom", timestamp: t1, duration: 0.5 }, status: "pending" });
+      ops.push({ type: "add_transition", params: { type: "zoom", timestamp: t2, duration: 0.5 }, status: "pending" });
+      return ops;
+    },
+  },
+  {
+    id: "cinematic",
+    name: "Cinematic",
+    description: "Film-grade color grading, cinematic captions, smooth fades, atmospheric music",
+    category: "cinematic",
+    getOperations: (videoDuration) => [
+      { type: "add_caption", params: { style: "cinematic", position: "bottom" }, status: "pending" },
+      { type: "add_music", params: { style: "Inspirational", volume: 0.25 }, status: "pending" },
+      { type: "add_filter", params: { type: "cinematic", value: 1.0 }, status: "pending" },
+      { type: "add_filter", params: { type: "contrast", value: 1.15 }, status: "pending" },
+      { type: "add_filter", params: { type: "warm", value: 0.3 }, status: "pending" },
+      { type: "add_transition", params: { type: "fade", timestamp: 0, duration: 1.0 }, status: "pending" },
+      { type: "add_transition", params: { type: "fade", timestamp: Math.round((videoDuration - 1) * 10) / 10, duration: 1.0 }, status: "pending" },
+    ],
+  },
+  {
+    id: "clean-professional",
+    name: "Clean & Professional",
+    description: "Polished look with clean captions, corporate music, and subtle brightness adjustment",
+    category: "professional",
+    getOperations: (videoDuration, segments) => {
+      const ops: EditOperation[] = [];
+      // Trim silence for tighter pacing
+      const gaps = findSilenceGaps(segments || [], videoDuration, 0.8);
+      for (const gap of gaps) {
+        ops.push({ type: "cut", params: { start: gap.start, end: gap.end }, status: "pending" });
+      }
+      ops.push({ type: "add_caption", params: { style: "boxed", position: "bottom" }, status: "pending" });
+      ops.push({ type: "add_music", params: { style: "Corporate & Professional", volume: 0.2 }, status: "pending" });
+      ops.push({ type: "add_filter", params: { type: "brightness", value: 1.1 }, status: "pending" });
+      ops.push({ type: "add_filter", params: { type: "sharpen", value: 0.3 }, status: "pending" });
+      ops.push({ type: "add_transition", params: { type: "dissolve", timestamp: 0, duration: 0.8 }, status: "pending" });
+      return ops;
+    },
+  },
+  {
+    id: "high-energy",
+    name: "High Energy",
+    description: "Fast-paced with speed ramps, neon captions, glitch transitions, and boosted colors",
+    category: "social",
+    getOperations: (videoDuration, segments) => {
+      const ops: EditOperation[] = [];
+      // Trim silence aggressively
+      const gaps = findSilenceGaps(segments || [], videoDuration, 0.3);
+      for (const gap of gaps) {
+        ops.push({ type: "cut", params: { start: gap.start, end: gap.end }, status: "pending" });
+      }
+      // Speed ramp in middle section
+      const midStart = Math.round(videoDuration * 0.4 * 10) / 10;
+      const midEnd = Math.round(videoDuration * 0.6 * 10) / 10;
+      ops.push({ type: "speed_change", params: { start: midStart, end: midEnd, speed: 1.5 }, status: "pending" });
+      // Neon captions
+      ops.push({ type: "add_caption", params: { style: "neon", position: "bottom" }, status: "pending" });
+      // Energetic music
+      ops.push({ type: "add_music", params: { style: "Upbeat & Energetic", volume: 0.35 }, status: "pending" });
+      // Color boost
+      ops.push({ type: "add_filter", params: { type: "saturation", value: 1.3 }, status: "pending" });
+      ops.push({ type: "add_filter", params: { type: "contrast", value: 1.25 }, status: "pending" });
+      // Glitch transitions
+      const t1 = Math.round(videoDuration * 0.25 * 10) / 10;
+      const t2 = Math.round(videoDuration * 0.5 * 10) / 10;
+      const t3 = Math.round(videoDuration * 0.75 * 10) / 10;
+      ops.push({ type: "add_transition", params: { type: "glitch", timestamp: t1, duration: 0.4 }, status: "pending" });
+      ops.push({ type: "add_transition", params: { type: "flash", timestamp: t2, duration: 0.3 }, status: "pending" });
+      ops.push({ type: "add_transition", params: { type: "glitch", timestamp: t3, duration: 0.4 }, status: "pending" });
+      return ops;
+    },
+  },
+  {
+    id: "storyteller",
+    name: "Storyteller",
+    description: "Warm tones, highlighted captions, gentle music, and smooth fades for narrative content",
+    category: "cinematic",
+    getOperations: (videoDuration) => [
+      { type: "add_caption", params: { style: "highlighted", position: "bottom" }, status: "pending" },
+      { type: "add_music", params: { style: "Calm & Relaxing", volume: 0.2 }, status: "pending" },
+      { type: "add_filter", params: { type: "warm", value: 0.4 }, status: "pending" },
+      { type: "add_filter", params: { type: "brightness", value: 1.05 }, status: "pending" },
+      { type: "add_transition", params: { type: "fade", timestamp: 0, duration: 1.2 }, status: "pending" },
+      { type: "add_transition", params: { type: "dissolve", timestamp: Math.round(videoDuration * 0.5 * 10) / 10, duration: 0.8 }, status: "pending" },
+      { type: "add_transition", params: { type: "fade", timestamp: Math.round((videoDuration - 1.2) * 10) / 10, duration: 1.2 }, status: "pending" },
+    ],
+  },
+  {
+    id: "quick-cleanup",
+    name: "Quick Cleanup",
+    description: "Just the basics — trim dead air and add clean auto-captions",
+    category: "minimal",
+    getOperations: (videoDuration, segments) => {
+      const ops: EditOperation[] = [];
+      const gaps = findSilenceGaps(segments || [], videoDuration);
+      for (const gap of gaps) {
+        ops.push({ type: "cut", params: { start: gap.start, end: gap.end }, status: "pending" });
+      }
+      ops.push({ type: "add_caption", params: { style: "default", position: "bottom" }, status: "pending" });
+      return ops;
+    },
+  },
+];
+
+export function getPresetById(presetId: string): EditPreset | undefined {
+  return EDIT_PRESETS.find(p => p.id === presetId);
+}
+
 // ---- Apply edit operations to the edit state ----
 
 export function applyOperationsToState(
