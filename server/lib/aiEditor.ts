@@ -322,9 +322,14 @@ Rules:
 - ALWAYS preserve videoSrc, totalDurationInSeconds (don't change)
 - Map user intent to available caption styles using the mappings above
 - Use reasonable timing/duration values
-- If user requests "captions" or mentions caption style, use transcriptSegments to populate captions array with full text
+- If user requests "captions" or mentions caption style:
+  - Create captions array from transcriptSegments (each segment becomes a caption)
+  - Use the mentioned style or default to "viral" if not specified
+  - Default position to "bottom" unless user specifies
+  - Each caption: { "start": segment.start, "end": segment.end, "text": segment.text, "style": chosen_style, "position": "bottom"|"top"|"center" }
 - For cuts, find natural speech boundaries from transcript
-- Be creative - combine multiple elements for natural requests (e.g., "make it viral" = add captions in viral style + maybe add transitions)
+- Be creative - combine multiple elements for natural requests (e.g., "make it viral" = add captions in viral style + maybe add transitions + bright filters)
+- All timestamps must be within 0 and totalDurationInSeconds
 - Return ONLY the JSON object, no explanation`;
 
 export async function generateRemotionJSON(
