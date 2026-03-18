@@ -549,7 +549,15 @@ export default function AiEditor() {
                   }}
                 />
                 {!isPlaying && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <div
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer"
+                    onClick={() => {
+                      if (videoRef.current) {
+                        videoRef.current.play();
+                        setIsPlaying(true);
+                      }
+                    }}
+                  >
                     <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
                       <Play className="h-7 w-7 text-black ml-1" />
                     </div>

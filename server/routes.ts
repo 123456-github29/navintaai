@@ -2699,32 +2699,6 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         throw createError("No valid clips to export", 400, "NO_VALID_CLIPS");
       }
 
-      // Concatenate clips
-      const concatFile = path.join(tempDir, `concat-${jobId}.txt`);
-      const concatContent = clipPaths.map((p) => `file '${p}'`).join("\n");
-      await fs.writeFile(concatFile, concatContent);
-      tempFilesToClean.push(concatFile);
-
-      const mergedPath = path.join(tempDir, `merged-${jobId}.mp4`);
-      tempFilesToClean.push(mergedPath);
-
-      await new Promise<void>((resolve, reject) => {
-        ffmpeg()
-          .input(concatFile)
-          .inputOptions(["-f concat", "-safe 0"])
-          .outputOptions([
-            "-c:v libx264",
-            "-c:a aac",
-            "-preset ultrafast",
-            "-crf 23",
-            "-movflags +faststart",
-          ])
-          .output(mergedPath)
-          .on("end", () => resolve())
-          .on("error", reject)
-          .run();
-      });
-
       // Calculate total duration
       const totalDuration = clips.reduce((sum, c) => sum + (c.duration || 0), 0);
 
