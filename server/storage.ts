@@ -87,7 +87,7 @@ export interface IStorage {
 
   // Clips
   getClip(id: string, userId: string): Promise<Clip | undefined>;
-  getClips(userId: string): Promise<Clip[]>;
+  getClips(userId: string, postId?: string): Promise<Clip[]>;
   getClipsByPost(postId: string): Promise<Clip[]>;
   createClip(clip: InsertClip): Promise<Clip>;
   deleteClip(id: string, userId: string): Promise<void>;
@@ -403,8 +403,10 @@ export class MemStorage implements IStorage {
     return undefined;
   }
 
-  async getClips(userId: string): Promise<Clip[]> {
-    return Array.from(this.clips.values()).filter((clip) => clip.userId === userId);
+  async getClips(userId: string, postId?: string): Promise<Clip[]> {
+    let result = Array.from(this.clips.values()).filter((clip) => clip.userId === userId);
+    if (postId) result = result.filter((clip) => clip.postId === postId);
+    return result.sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime());
   }
 
   async getClipsByPost(postId: string): Promise<Clip[]> {
@@ -873,15 +875,17 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async getClips(userId: string): Promise<Clip[]> {
-    console.log(`[storage.getClips] Querying clips for userId: ${userId}`);
-    const result = await this.db.select().from(clips).where(eq(clips.userId, userId));
+  async getClips(userId: string, postId?: string): Promise<Clip[]> {
+    console.log(`[storage.getClips] Querying clips for userId: ${userId}${postId ? `, postId: ${postId}` : ""}`);
+    const conditions = postId
+      ? and(eq(clips.userId, userId), eq(clips.postId, postId))
+      : eq(clips.userId, userId);
+    const result = await this.db
+      .select()
+      .from(clips)
+      .where(conditions)
+      .orderBy(desc(clips.recordedAt));
     console.log(`[storage.getClips] Found ${result.length} clips`);
-    if (result.length === 0) {
-      // Debug: Check if there are any clips at all
-      const allClips = await this.db.select({ id: clips.id, userId: clips.userId }).from(clips).limit(5);
-      console.log(`[storage.getClips] All clips in DB (first 5):`, JSON.stringify(allClips));
-    }
     return result;
   }
 

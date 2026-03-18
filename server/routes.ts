@@ -1315,11 +1315,12 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         return res.status(503).json({ error: "Storage service unavailable", clips: [] });
       }
       
-      // 2. Query clips with detailed logging
-      console.log(`[clips] Executing query: getClips(${userId})`);
+      // 2. Query clips with detailed logging (support optional postId filter)
+      const postIdFilter = req.query.postId as string | undefined;
+      console.log(`[clips] Executing query: getClips(${userId}${postIdFilter ? `, ${postIdFilter}` : ""})`);
       let clips: any[] = [];
       try {
-        clips = await storage.getClips(userId);
+        clips = await storage.getClips(userId, postIdFilter);
       } catch (dbError: any) {
         console.error(`[clips] DATABASE ERROR:`, dbError.message);
         console.error(`[clips] Database error stack:`, dbError.stack);
@@ -1348,8 +1349,10 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         }));
       }
       
-      // 5. Pagination
-      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+      // 5. Pagination (no limit when filtering by postId to ensure all post clips are returned)
+      const defaultLimit = postIdFilter ? 100 : 20;
+      const maxLimit = postIdFilter ? 100 : 50;
+      const limit = Math.min(parseInt(req.query.limit as string) || defaultLimit, maxLimit);
       const offset = parseInt(req.query.offset as string) || 0;
       const totalCount = clips.length;
       const paginatedClips = clips.slice(offset, offset + limit);
@@ -1804,8 +1807,9 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         return res.status(503).json({ error: "Storage not available" });
       }
 
-      console.log(`[recording-sessions/upload-url] Creating signed upload URL for userId: ${session.userId}`);
-      const { uploadUrl, storagePath } = await createSignedUploadUrl(session.userId);
+      const mimeType = (req.query.mimeType as string) || "video/webm";
+      console.log(`[recording-sessions/upload-url] Creating signed upload URL for userId: ${session.userId}, mimeType: ${mimeType}`);
+      const { uploadUrl, storagePath } = await createSignedUploadUrl(session.userId, mimeType);
       console.log(`[recording-sessions/upload-url] Generated storagePath: ${storagePath}`);
 
       console.log(`[recording-sessions/upload-url] Updating session status to "paired"`);
@@ -2443,9 +2447,17 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       }
       const result = await transcribeVideo(tempPath);
 
-      // Store the transcript on the session
+      // Merge segments into currentEditState so export can burn captions
+      const existingState = (session.currentEditState as any) || {};
+      const updatedEditState = {
+        ...existingState,
+        transcriptSegments: result.segments,
+      };
+
+      // Store the transcript and segments on the session
       await storage.updateAiEditSession(id, userId, {
         transcript: result.fullText,
+        currentEditState: updatedEditState,
       });
 
       // Add system message about transcription
@@ -2670,6 +2682,8 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     const tempDir = path.join(process.cwd(), "uploads", "temp");
     await fs.mkdir(tempDir, { recursive: true });
 
+    const tempFilesToClean: string[] = [];
+
     try {
       // Download all clips
       const clipPaths: string[] = [];
@@ -2677,6 +2691,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         if (clip.videoPath) {
           const clipPath = await downloadClipToTemp(clip.videoPath, tempDir);
           clipPaths.push(clipPath);
+          tempFilesToClean.push(clipPath);
         }
       }
 
@@ -2684,6 +2699,33 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         throw createError("No valid clips to export", 400, "NO_VALID_CLIPS");
       }
 
+      // Concatenate clips
+      const concatFile = path.join(tempDir, `concat-${jobId}.txt`);
+      const concatContent = clipPaths.map((p) => `file '${p}'`).join("\n");
+      await fs.writeFile(concatFile, concatContent);
+      tempFilesToClean.push(concatFile);
+
+      const mergedPath = path.join(tempDir, `merged-${jobId}.mp4`);
+      tempFilesToClean.push(mergedPath);
+
+      await new Promise<void>((resolve, reject) => {
+        ffmpeg()
+          .input(concatFile)
+          .inputOptions(["-f concat", "-safe 0"])
+          .outputOptions([
+            "-c:v libx264",
+            "-c:a aac",
+            "-preset ultrafast",
+            "-crf 23",
+            "-movflags +faststart",
+          ])
+          .output(mergedPath)
+          .on("end", () => resolve())
+          .on("error", reject)
+          .run();
+      });
+
+      // Calculate total duration
       const totalDuration = clips.reduce((sum, c) => sum + (c.duration || 0), 0);
 
       // Remotion renders a single video source; for multi-clip sessions we use
@@ -2708,6 +2750,8 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
         "videos",
         editedFilename
       );
+      tempFilesToClean.push(editedVideoPath);
+
       const uploadResult = await uploadVideoToStorage(
         editedVideoPath,
         userId
@@ -2735,6 +2779,11 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     } catch (error) {
       console.error("[export] Error:", error);
       throw error;
+    } finally {
+      // Clean up all temp files
+      for (const f of tempFilesToClean) {
+        await fs.unlink(f).catch(() => {});
+      }
     }
   }));
 

@@ -232,7 +232,8 @@ export default function PhoneRecorder() {
     try {
       // STEP 1: Get upload URL
       console.log(`[upload] Requesting upload URL for session: ${sid}`);
-      const urlRes = await fetch(`/api/recording-sessions/${sid}/upload-url?token=${encodeURIComponent(sessionToken || "")}`);
+      const mimeType = encodeURIComponent(recordedBlob.type || "video/webm");
+      const urlRes = await fetch(`/api/recording-sessions/${sid}/upload-url?token=${encodeURIComponent(sessionToken || "")}&mimeType=${mimeType}`);
       if (!urlRes.ok) {
         const data = await urlRes.json().catch(() => ({}));
         const errorMsg = data.message || data.error || `Server error: ${urlRes.status}`;
