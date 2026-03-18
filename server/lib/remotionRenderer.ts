@@ -69,6 +69,7 @@ export interface CaptionSegmentInput {
   viralText?: string;
   useViral?: boolean;
   style?: {
+    preset?: string; // Direct style name (e.g. "viral", "fire", "glitch")
     font?: string;
     baseTextColor?: string;
     outlineColor?: string;
@@ -96,7 +97,7 @@ export interface EditState {
   cuts?: Array<{ start: number; end: number; label?: string }>;
   speedAdjustments?: Array<{ start: number; end: number; speed: number }>;
   captions?: boolean;
-  captionStyle?: "viral" | "boxed" | "cinematic" | "neon" | "gradient" | "highlighted" | "outline" | "default";
+  captionStyle?: "viral" | "boxed" | "cinematic" | "neon" | "gradient" | "highlighted" | "outline" | "default" | "bold" | "typewriter" | "retro" | "minimal" | "fire" | "glitch" | "karaoke" | "shadow" | "comic" | "elegant" | "broadcast" | "wave" | "stack";
   captionPosition?: "bottom" | "top" | "center";
   transcriptSegments?: Array<{ start: number; end: number; text: string }>;
   musicStyle?: string;
@@ -107,6 +108,14 @@ export interface EditState {
     endTime?: number;
   }>;
   transitions?: Array<{ type: string; timestamp: number; duration: number }>;
+  segmentTransitions?: Array<{
+    afterSegmentIndex: number;
+    type: string;
+    durationInFrames?: number;
+    timing?: string;
+  }>;
+  autoTransitions?: boolean;
+  defaultTransitionType?: string;
   brollSegments?: Array<{
     timestamp: number;
     duration: number;
@@ -129,10 +138,23 @@ export interface EditState {
 //  Caption style mapper (from old style settings to Remotion enum)
 // ----------------------------------------------------------------
 
+const VALID_CAPTION_STYLES = new Set([
+  "default", "boxed", "gradient", "highlighted", "outline", "cinematic",
+  "viral", "neon", "bold", "typewriter", "retro", "minimal", "fire",
+  "glitch", "karaoke", "shadow", "comic", "elegant", "broadcast", "wave", "stack",
+]);
+
+type CaptionStyleName = "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon" | "bold" | "typewriter" | "retro" | "minimal" | "fire" | "glitch" | "karaoke" | "shadow" | "comic" | "elegant" | "broadcast" | "wave" | "stack";
+
 function mapCaptionStyle(
   style?: CaptionSegmentInput["style"]
-): "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon" {
+): CaptionStyleName {
   if (!style) return "default";
+  // Direct preset name takes priority
+  if (style.preset && VALID_CAPTION_STYLES.has(style.preset)) {
+    return style.preset as CaptionStyleName;
+  }
+  // Fallback: infer from CSS properties
   const bg = style.background?.toLowerCase() || "";
   if (bg.includes("gradient")) return "gradient";
   if (bg.includes("black") || bg.includes("rgba")) return "boxed";
@@ -191,7 +213,7 @@ interface RenderVideoOptions {
     start: number;
     end: number;
     text: string;
-    style?: "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon";
+    style?: "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon" | "bold" | "typewriter" | "retro" | "minimal" | "fire" | "glitch" | "karaoke" | "shadow" | "comic" | "elegant" | "broadcast" | "wave" | "stack";
     position?: "top" | "bottom" | "center";
     baseTextColor?: string;
     outlineColor?: string;
@@ -232,6 +254,14 @@ interface RenderVideoOptions {
   showCinematicBars?: boolean;
   lowerThirdTitle?: string;
   lowerThirdSubtitle?: string;
+  segmentTransitions?: Array<{
+    afterSegmentIndex: number;
+    type: string;
+    durationInFrames?: number;
+    timing?: string;
+  }>;
+  autoTransitions?: boolean;
+  defaultTransitionType?: string;
 }
 
 // Find the system-installed Chromium (installed via nixpkgs).
@@ -292,6 +322,9 @@ async function renderVideo(opts: RenderVideoOptions): Promise<void> {
     showCinematicBars: opts.showCinematicBars ?? false,
     lowerThirdTitle: opts.lowerThirdTitle,
     lowerThirdSubtitle: opts.lowerThirdSubtitle,
+    segmentTransitions: opts.segmentTransitions ?? [],
+    autoTransitions: opts.autoTransitions ?? true,
+    defaultTransitionType: opts.defaultTransitionType ?? "fade",
   };
 
   const composition = await selectComposition({
@@ -306,8 +339,31 @@ async function renderVideo(opts: RenderVideoOptions): Promise<void> {
     },
   });
 
-  // Override duration to match actual video
-  composition.durationInFrames = Math.max(1, totalFrames);
+  // Compute actual duration accounting for cuts and transition overlaps
+  let actualFrames = totalFrames;
+  const cuts = opts.cuts ?? [];
+  if (cuts.length > 0) {
+    // If cuts are present, total duration is the sum of kept segments
+    actualFrames = Math.round(
+      cuts.reduce((sum, c) => sum + (c.end - c.start), 0) * fps
+    );
+  }
+  // Subtract transition overlap frames (TransitionSeries overlaps segments)
+  if (cuts.length > 1) {
+    const segTransitions = inputProps.segmentTransitions ?? [];
+    const useAuto = inputProps.autoTransitions !== false;
+    let overlapFrames = 0;
+    for (let i = 0; i < cuts.length - 1; i++) {
+      const explicit = segTransitions.find((st: any) => st.afterSegmentIndex === i);
+      if (explicit) {
+        if (explicit.type !== "none") overlapFrames += explicit.durationInFrames || 12;
+      } else if (useAuto && inputProps.defaultTransitionType !== "none") {
+        overlapFrames += 12;
+      }
+    }
+    actualFrames = Math.max(1, actualFrames - overlapFrames);
+  }
+  composition.durationInFrames = Math.max(1, actualFrames);
   composition.fps = fps;
   composition.width = 1080;
   composition.height = 1920;
@@ -554,6 +610,14 @@ export async function executeEdits(
     `[remotion] executeEdits: ${cuts.length} cuts, ${filters.length} filters, ${transitions.length} transitions, ${brollSegments.length} b-roll, ${vfxAssets.length} vfx, ${captions.length} captions`
   );
 
+  // Map segment transitions for cross-segment blending
+  const segmentTransitions = (editState.segmentTransitions || []).map((st: any) => ({
+    afterSegmentIndex: st.afterSegmentIndex,
+    type: st.type || "fade",
+    durationInFrames: st.durationInFrames || 12,
+    timing: st.timing || "spring",
+  }));
+
   await renderVideo({
     videoSrc: inputFile,
     cuts,
@@ -569,6 +633,9 @@ export async function executeEdits(
     gradeLook,
     showFilmGrain: true,
     showCinematicBars: false,
+    segmentTransitions,
+    autoTransitions: editState.autoTransitions ?? true,
+    defaultTransitionType: editState.defaultTransitionType || "fade",
   });
 
   console.log(`[remotion] executeEdits complete: ${outputFilename}`);
