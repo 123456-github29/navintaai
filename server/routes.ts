@@ -2447,11 +2447,12 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       }
       const result = await transcribeVideo(tempPath);
 
-      // Merge segments into currentEditState so export can burn captions
+      // Merge segments + duration into currentEditState so export can burn captions
       const existingState = (session.currentEditState as any) || {};
       const updatedEditState = {
         ...existingState,
         transcriptSegments: result.segments,
+        videoDuration: result.duration || 0,
       };
 
       // Store the transcript and segments on the session
@@ -2508,9 +2509,20 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       .filter(m => m.role !== "system")
       .map(m => ({ role: m.role, content: m.content }));
 
-    // Get video duration from clips
+    // Get video duration - try clips first, fall back to transcript segments or edit state
     const postClips = await storage.getClipsByPost(session.postId);
-    const videoDuration = postClips.reduce((sum, c) => sum + c.duration, 0);
+    let videoDuration = postClips.reduce((sum, c) => sum + (c.duration || 0), 0);
+    if (videoDuration <= 0) {
+      // Fall back to last transcript segment end time
+      const editState = (session.currentEditState as any) || {};
+      const segments = editState.transcriptSegments || [];
+      if (segments.length > 0) {
+        videoDuration = Math.ceil(segments[segments.length - 1].end);
+      }
+    }
+    if (videoDuration <= 0) {
+      videoDuration = 60; // safe fallback
+    }
 
     // Plan the edits using OpenAI
     const { planEdits, applyOperationsToState, generateLumaVideo } = await import("./lib/aiEditor");

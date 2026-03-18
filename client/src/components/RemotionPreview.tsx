@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback, useRef, useEffect } from "react"
 import { Player, type PlayerRef } from "@remotion/player";
 import { VideoEditorComposition } from "../../../remotion/src/VideoEditor";
 import type { VideoEditorProps } from "../../../remotion/src/VideoEditor";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Play } from "lucide-react";
 
 interface EditState {
   cuts?: Array<{ start: number; end: number; label?: string }>;
@@ -36,14 +36,56 @@ interface RemotionPreviewProps {
 
 const FPS = 30;
 
+/**
+ * Converts "sections to remove" into "sections to keep".
+ * The AI generates cuts as intervals to REMOVE from the video.
+ * The Remotion composition expects cuts as intervals to KEEP (play).
+ * This function inverts the semantics.
+ */
+function invertCuts(
+  cutsToRemove: Array<{ start: number; end: number }>,
+  totalDuration: number
+): Array<{ start: number; end: number }> {
+  if (cutsToRemove.length === 0) return [];
+
+  const sorted = [...cutsToRemove]
+    .filter((c) => c.end > c.start)
+    .sort((a, b) => a.start - b.start);
+
+  const kept: Array<{ start: number; end: number }> = [];
+  let cursor = 0;
+
+  for (const cut of sorted) {
+    // Clamp to valid range
+    const start = Math.max(0, cut.start);
+    const end = Math.min(totalDuration, cut.end);
+    if (start >= end) continue;
+
+    if (start > cursor) {
+      kept.push({ start: cursor, end: start });
+    }
+    cursor = Math.max(cursor, end);
+  }
+
+  if (cursor < totalDuration) {
+    kept.push({ start: cursor, end: totalDuration });
+  }
+
+  return kept;
+}
+
+type CaptionStyleEnum = "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon";
+
 function buildInputProps(
   videoUrl: string,
   editState: EditState,
   videoDuration: number
 ): VideoEditorProps {
-  const cuts = (editState.cuts || [])
+  // Invert cuts: AI stores "sections to remove", Remotion needs "sections to keep"
+  const rawCuts = (editState.cuts || [])
     .filter((c) => c.end > c.start)
     .sort((a, b) => a.start - b.start);
+  const cuts = rawCuts.length > 0 ? invertCuts(rawCuts, videoDuration) : [];
 
   const filters = (editState.filters || []).map((f) => ({
     type: f.type,
@@ -82,8 +124,8 @@ function buildInputProps(
       lumaGenerationId: s.lumaGenerationId,
     }));
 
-  const captionStyle = (editState.captionStyle as VideoEditorProps["captionStyle"]) ?? "viral";
-  const captionPosition = (editState.captionPosition as "top" | "bottom" | "center") ?? "bottom";
+  const captionStyle: CaptionStyleEnum = (editState.captionStyle as CaptionStyleEnum) || "viral";
+  const captionPosition = (editState.captionPosition as "top" | "bottom" | "center") || "bottom";
   const captions =
     editState.captions && editState.transcriptSegments?.length
       ? editState.transcriptSegments
@@ -116,12 +158,20 @@ export function RemotionPreview({ videoUrl, editState, videoDuration }: Remotion
   const playerRef = useRef<PlayerRef>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const durationInFrames = Math.max(1, Math.round(videoDuration * FPS));
-
   const inputProps = useMemo(
     () => buildInputProps(videoUrl, editState, videoDuration),
     [videoUrl, editState, videoDuration]
   );
+
+  // Compute actual output duration (accounting for cuts removing sections)
+  const outputDuration = useMemo(() => {
+    if (inputProps.cuts && inputProps.cuts.length > 0) {
+      return inputProps.cuts.reduce((sum, c) => sum + (c.end - c.start), 0);
+    }
+    return videoDuration;
+  }, [inputProps.cuts, videoDuration]);
+
+  const durationInFrames = Math.max(1, Math.round(outputDuration * FPS));
 
   useEffect(() => {
     const player = playerRef.current;
@@ -170,7 +220,6 @@ export function RemotionPreview({ videoUrl, editState, videoDuration }: Remotion
         controls={false}
         clickToPlay={false}
       />
-      {/* Play/pause overlay */}
       {!isPlaying && (
         <div
           className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer"

@@ -235,6 +235,9 @@ export default function AiEditor() {
     try {
       const res = await apiRequest("POST", `/api/ai-edit/sessions/${sessionId}/transcribe`);
       const data = await res.json();
+      if (data.duration && data.duration > 0) {
+        setVideoDuration((prev) => prev > 0 ? prev : data.duration);
+      }
       setSession((prev) =>
         prev
           ? {
@@ -243,6 +246,7 @@ export default function AiEditor() {
               currentEditState: {
                 ...(prev.currentEditState || {}),
                 transcriptSegments: data.segments,
+                videoDuration: data.duration || 0,
               },
             }
           : prev,
