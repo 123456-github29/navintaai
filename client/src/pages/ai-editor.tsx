@@ -190,7 +190,7 @@ export default function AiEditor() {
     onSuccess: (data) => {
       setMessages((prev) => [...prev, data.userMessage, data.assistantMessage]);
       if (data.editState) {
-        setSession((prev) => prev ? { ...prev, currentEditState: data.editState } : prev);
+        setSession((prev) => prev ? { ...prev, currentEditState: { ...(prev.currentEditState || {}), ...data.editState } } : prev);
       }
     },
     onError: () => {
