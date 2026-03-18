@@ -626,6 +626,19 @@ export function applyOperationsToState(
         });
         break;
       }
+      case "add_vfx": {
+        if (!state.vfxAssets) state.vfxAssets = [];
+        state.vfxAssets.push({
+          type: op.params.type,
+          color: op.params.color,
+          secondaryColor: op.params.secondaryColor,
+          intensity: op.params.intensity,
+          timestamp: op.params.timestamp,
+          duration: op.params.duration,
+          speed: op.params.speed,
+        });
+        break;
+      }
     }
   }
 

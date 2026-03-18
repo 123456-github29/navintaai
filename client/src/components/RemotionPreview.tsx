@@ -214,6 +214,24 @@ export function RemotionPreview({ videoUrl, editState, videoDuration }: Remotion
     [videoUrl, editState, videoDuration]
   );
 
+  // Generate a stable key that changes when the edit state changes structurally,
+  // forcing the Remotion Player to fully re-mount with the new composition props.
+  const playerKey = useMemo(() => {
+    const parts = [
+      (editState.cuts?.length || 0),
+      (editState.filters?.length || 0),
+      (editState.captions ? 1 : 0),
+      (editState.captionStyle || ""),
+      (editState.musicStyle || ""),
+      (editState.speedAdjustments?.length || 0),
+      (editState.transitions?.length || 0),
+      (editState.segmentTransitions?.length || 0),
+      (editState.brollSegments?.length || 0),
+      (editState.vfxAssets?.length || 0),
+    ];
+    return parts.join("-");
+  }, [editState]);
+
   // Compute actual output duration (accounting for cuts AND transition overlaps).
   // When TransitionSeries is used, each transition causes two segments to overlap
   // by the transition's durationInFrames — so total frames shrink accordingly.
@@ -282,6 +300,7 @@ export function RemotionPreview({ videoUrl, editState, videoDuration }: Remotion
   return (
     <div className="relative w-full h-full">
       <Player
+        key={playerKey}
         ref={playerRef}
         component={VideoEditorComposition}
         inputProps={inputProps}

@@ -417,6 +417,11 @@ export const VideoEditorComposition: React.FC<VideoEditorProps> = ({
       {/* === Cinematic Bars === */}
       {showCinematicBars && <CinematicBars barHeight={55} />}
 
+      {/* === VFX Layer === */}
+      {vfxAssets.length > 0 && (
+        <VFXLayer assets={vfxAssets as VFXAsset[]} totalDurationInSeconds={totalDurationInSeconds} />
+      )}
+
       {/* === Captions === */}
       <CaptionLayer segments={captions as CaptionSegment[]} />
 
