@@ -274,8 +274,28 @@ const REMOTION_JSON_PROMPT = `You are an expert video editor AI. Users describe 
 
 IMPORTANT: You generate COMPLETE VideoEditorProps JSON, not operations. Return ONLY valid JSON with no markdown.
 
-Available caption styles (use for captions array):
-"viral", "boxed", "cinematic", "neon", "gradient", "highlighted", "outline", "default", "bold", "typewriter", "retro", "minimal", "fire", "glitch", "karaoke", "shadow", "comic", "elegant", "broadcast", "wave", "stack"
+CAPTION STYLES (map user intent to these):
+- "viral" = CapCut-style word-by-word yellow highlight (DEFAULT, use for "CapCut", "TikTok", "viral")
+- "bold" = extra large pink highlight, word-by-word (use for "big", "bold", "impact")
+- "cinematic" = frosted glass with border (use for "movie", "film", "cinema")
+- "neon" = glowing cyan neon text (use for "glow", "glowing", "neon")
+- "fire" = orange/red flame text with glow, word-by-word (use for "fire", "flame", "fiery")
+- "glitch" = RGB-split glitch effect (use for "glitch", "cyber", "cyberpunk")
+- "karaoke" = progressive fill animation (use for "karaoke", "sing")
+- "outline" = big white text with black stroke
+- "boxed" = white text on dark box
+- "gradient" = colorful gradient pill (use for "colorful", "gradient", "rainbow")
+- "typewriter" = green monospace (use for "hacker", "code", "terminal")
+- "retro" = orange retro text with 3D shadow (use for "retro", "80s", "vintage")
+- "minimal" = small, subtle, clean white (use for "clean", "simple", "minimal")
+- "shadow" = dramatic multi-layer drop shadow
+- "comic" = yellow text on red box (use for "comic", "cartoon")
+- "elegant" = serif font, subtle (use for "fancy", "classy", "elegant")
+- "broadcast" = news/TV bar style (use for "news", "tv", "broadcast")
+- "wave" = purple/cyan color-shifting
+- "stack" = large green highlight, word-by-word
+- "highlighted" = word-by-word highlight
+- "default" = clean white text with shadow
 
 Available transition types: "fade", "dissolve", "wipe", "zoom", "flash", "glitch"
 
@@ -300,10 +320,11 @@ JSON STRUCTURE (VideoEditorProps):
 
 Rules:
 - ALWAYS preserve videoSrc, totalDurationInSeconds (don't change)
-- Map user intent to available options
+- Map user intent to available caption styles using the mappings above
 - Use reasonable timing/duration values
-- If user requests "captions", use transcriptSegments to populate captions array
-- Be creative - combine multiple elements for natural requests
+- If user requests "captions" or mentions caption style, use transcriptSegments to populate captions array with full text
+- For cuts, find natural speech boundaries from transcript
+- Be creative - combine multiple elements for natural requests (e.g., "make it viral" = add captions in viral style + maybe add transitions)
 - Return ONLY the JSON object, no explanation`;
 
 export async function generateRemotionJSON(
