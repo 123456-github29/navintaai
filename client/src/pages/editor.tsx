@@ -24,6 +24,27 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Post, Clip } from "@shared/schema";
 
+// Background/container styles for the caption preview overlay
+const CAPTION_STYLE_BACKGROUNDS: Record<string, {
+  background?: string;
+  padding?: string;
+  borderRadius?: number;
+  border?: string;
+  backdropFilter?: string;
+  boxShadow?: string;
+  letterSpacing?: string;
+}> = {
+  boxed: { background: "rgba(0,0,0,0.75)", padding: "8px 16px", borderRadius: 10, boxShadow: "0 4px 20px rgba(0,0,0,0.4)" },
+  cinematic: { background: "rgba(0,0,0,0.6)", padding: "10px 18px", borderRadius: 10, backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.2)" },
+  gradient: { background: "linear-gradient(135deg, rgba(255,107,107,0.85), rgba(78,84,200,0.85))", padding: "8px 18px", borderRadius: 40 },
+  typewriter: { background: "rgba(0,0,0,0.85)", padding: "8px 14px", borderRadius: 4, border: "1px solid rgba(0,255,0,0.3)", letterSpacing: "2px" },
+  comic: { background: "rgba(255,0,0,0.85)", padding: "6px 14px", borderRadius: 6, border: "3px solid #000", boxShadow: "3px 3px 0 #000" },
+  broadcast: { background: "linear-gradient(90deg, rgba(200,0,0,0.9) 0%, rgba(200,0,0,0.9) 85%, transparent 100%)", padding: "6px 18px 6px 12px", borderRadius: 0, letterSpacing: "1px" },
+  neon: { letterSpacing: "2px" },
+  retro: { letterSpacing: "3px" },
+  glitch: { letterSpacing: "3px" },
+};
+
 const CAPTION_STYLES = [
   { id: "viral", name: "Viral", previewText: "VIRAL", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "#FFD700", previewShadow: "1px 1px 0 #000, -1px -1px 0 #000" },
   { id: "bold", name: "Bold", previewText: "BOLD", previewFont: "'Arial Black', Impact, sans-serif", previewColor: "#FF3366", previewShadow: "2px 2px 0 #000, -2px -2px 0 #000" },
@@ -249,6 +270,39 @@ export default function Editor() {
                     </div>
                   </div>
                 </div>
+                {/* Caption style live preview overlay */}
+                {hasCaption && (() => {
+                  const activeStyle = CAPTION_STYLES.find(cs => cs.id === captionStyle);
+                  const bg = CAPTION_STYLE_BACKGROUNDS[captionStyle] || {};
+                  return activeStyle ? (
+                    <div className="absolute bottom-[18%] left-[5%] right-[5%] flex justify-center pointer-events-none">
+                      <div
+                        style={{
+                          background: bg.background || "transparent",
+                          padding: bg.padding || "0",
+                          borderRadius: bg.borderRadius || 0,
+                          border: bg.border || "none",
+                          backdropFilter: bg.backdropFilter,
+                          boxShadow: bg.boxShadow,
+                          textAlign: "center" as const,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: activeStyle.previewFont,
+                            color: activeStyle.previewColor,
+                            textShadow: activeStyle.previewShadow,
+                            fontSize: "20px",
+                            fontWeight: 900,
+                            letterSpacing: bg.letterSpacing || "normal",
+                          }}
+                        >
+                          Your captions here
+                        </span>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
               </div>
 
               <div className="p-4 border-t border-white/[0.06] space-y-4">

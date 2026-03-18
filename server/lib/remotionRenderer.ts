@@ -69,6 +69,7 @@ export interface CaptionSegmentInput {
   viralText?: string;
   useViral?: boolean;
   style?: {
+    preset?: string; // Direct style name (e.g. "viral", "fire", "glitch")
     font?: string;
     baseTextColor?: string;
     outlineColor?: string;
@@ -120,12 +121,23 @@ export interface EditState {
 //  Caption style mapper (from old style settings to Remotion enum)
 // ----------------------------------------------------------------
 
+const VALID_CAPTION_STYLES = new Set([
+  "default", "boxed", "gradient", "highlighted", "outline", "cinematic",
+  "viral", "neon", "bold", "typewriter", "retro", "minimal", "fire",
+  "glitch", "karaoke", "shadow", "comic", "elegant", "broadcast", "wave", "stack",
+]);
+
 type CaptionStyleName = "default" | "boxed" | "gradient" | "highlighted" | "outline" | "cinematic" | "viral" | "neon" | "bold" | "typewriter" | "retro" | "minimal" | "fire" | "glitch" | "karaoke" | "shadow" | "comic" | "elegant" | "broadcast" | "wave" | "stack";
 
 function mapCaptionStyle(
   style?: CaptionSegmentInput["style"]
 ): CaptionStyleName {
   if (!style) return "default";
+  // Direct preset name takes priority
+  if (style.preset && VALID_CAPTION_STYLES.has(style.preset)) {
+    return style.preset as CaptionStyleName;
+  }
+  // Fallback: infer from CSS properties
   const bg = style.background?.toLowerCase() || "";
   if (bg.includes("gradient")) return "gradient";
   if (bg.includes("black") || bg.includes("rgba")) return "boxed";
