@@ -24,12 +24,15 @@ export const RemotionRoot: React.FC = () => {
           captions: [],
           filters: [],
           transitions: [],
+          segmentTransitions: [],
           brollSegments: [],
           speedAdjustments: [],
           totalDurationInSeconds: DEFAULT_DURATION,
           gradeLook: "none",
           showFilmGrain: false,
           showCinematicBars: false,
+          autoTransitions: true,
+          defaultTransitionType: "fade",
         }}
       />
     </>

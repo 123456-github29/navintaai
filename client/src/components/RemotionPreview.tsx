@@ -19,6 +19,14 @@ interface EditState {
     endTime?: number;
   }>;
   transitions?: Array<{ type: string; timestamp: number; duration: number }>;
+  segmentTransitions?: Array<{
+    afterSegmentIndex: number;
+    type: string;
+    durationInFrames?: number;
+    timing?: string;
+  }>;
+  autoTransitions?: boolean;
+  defaultTransitionType?: string;
   brollSegments?: Array<{
     timestamp: number;
     duration: number;
@@ -103,7 +111,11 @@ function buildInputProps(
     if (f.type === "dramatic") { gradeLook = "dramatic"; break; }
   }
 
-  const validTransitionTypes = ["fade", "dissolve", "wipe", "zoom", "flash", "glitch"] as const;
+  const validTransitionTypes = [
+    "fade", "dissolve", "wipe", "zoom", "flash", "glitch",
+    "slide-left", "slide-right", "slide-up", "slide-down",
+    "wipe-up", "wipe-diagonal", "flip", "clock-wipe", "none",
+  ] as const;
   type ValidTransition = (typeof validTransitionTypes)[number];
 
   const transitions = (editState.transitions || [])
@@ -113,6 +125,14 @@ function buildInputProps(
       timestamp: t.timestamp,
       duration: t.duration,
     }));
+
+  // Segment transitions for smooth cross-segment blending
+  const segmentTransitions = (editState.segmentTransitions || []).map((st) => ({
+    afterSegmentIndex: st.afterSegmentIndex,
+    type: st.type as any,
+    durationInFrames: st.durationInFrames || 12,
+    timing: (st.timing as "linear" | "spring") || "spring",
+  }));
 
   const brollSegments = (editState.brollSegments || [])
     .filter((s) => s.url)
@@ -145,12 +165,15 @@ function buildInputProps(
     captions,
     filters,
     transitions,
+    segmentTransitions,
     brollSegments,
     speedAdjustments: editState.speedAdjustments || [],
     totalDurationInSeconds: videoDuration,
     gradeLook,
     showFilmGrain: false,
     showCinematicBars: false,
+    autoTransitions: editState.autoTransitions !== false, // default true
+    defaultTransitionType: (editState.defaultTransitionType as any) || "fade",
   };
 }
 
