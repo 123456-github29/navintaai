@@ -109,14 +109,14 @@ function Navbar({ onJoinWaitlist, onGetStarted, waitlistApproved }: { onJoinWait
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>
-            <a href="#showcase" className="hover:text-white transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <a href="/how-it-works" className="hover:text-white transition-colors">How It Works</a>
-            <button onClick={() => setShowContactModal(true)} className="hover:text-white transition-colors">
+            <a href="#showcase" className="nv-nav-link hover:text-white">Features</a>
+            <a href="#pricing" className="nv-nav-link hover:text-white">Pricing</a>
+            <a href="/how-it-works" className="nv-nav-link hover:text-white">How It Works</a>
+            <button onClick={() => setShowContactModal(true)} className="nv-nav-link hover:text-white">
               Contact
             </button>
             {!waitlistApproved && (
-              <button onClick={onJoinWaitlist} className="hover:text-white transition-colors">
+              <button onClick={onJoinWaitlist} className="nv-nav-link hover:text-white">
                 Join Waitlist
               </button>
             )}
@@ -128,7 +128,7 @@ function Navbar({ onJoinWaitlist, onGetStarted, waitlistApproved }: { onJoinWait
                 {waitlistApproved && (
                   <button
                     onClick={() => setLocation("/dashboard")}
-                    className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 hover:opacity-90"
+                    className="nv-btn-glow px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 hover:opacity-90"
                     style={{ background: "#fff", color: "#0d0d0d" }}
                   >
                     Dashboard
@@ -136,7 +136,7 @@ function Navbar({ onJoinWaitlist, onGetStarted, waitlistApproved }: { onJoinWait
                 )}
                 <button
                   onClick={signOut}
-                  className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+                  className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 hover:border-white/20"
                   style={{ color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.08)" }}
                 >
                   Sign out
@@ -145,7 +145,7 @@ function Navbar({ onJoinWaitlist, onGetStarted, waitlistApproved }: { onJoinWait
             ) : (
               <button
                 onClick={onGetStarted}
-                className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 hover:opacity-90"
+                className="nv-btn-glow px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 hover:opacity-90"
                 style={{ background: "#fff", color: "#0d0d0d" }}
                 data-testid="button-login"
               >
@@ -488,8 +488,8 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
       <div className="nv-container">
         <div className="text-center mb-16">
           <p
-            className="text-sm font-semibold tracking-wide uppercase mb-3"
-            style={{ color: "rgba(255,255,255,0.55)" }}
+            className="text-xs font-semibold tracking-[0.15em] uppercase mb-4"
+            style={{ color: "rgba(124,92,252,0.6)" }}
           >
             Pricing
           </p>
@@ -540,20 +540,20 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
           {landingPlans.map((plan) => (
             <div
               key={plan.id}
-              className="relative flex flex-col rounded-xl p-6 transition-all duration-200"
+              className={`relative flex flex-col rounded-xl p-6 nv-pricing-card ${plan.popular ? "nv-pricing-popular" : ""}`}
               style={{
                 background: "rgba(255,255,255,0.03)",
                 border: plan.popular
-                  ? "1px solid rgba(255,255,255,0.3)"
+                  ? "1px solid rgba(124,92,252,0.4)"
                   : "1px solid rgba(255,255,255,0.08)",
-                boxShadow: plan.popular ? "0 0 0 1px rgba(255,255,255,0.15)" : "none",
+                boxShadow: plan.popular ? "0 0 0 1px rgba(124,92,252,0.2), 0 20px 60px rgba(124,92,252,0.08)" : "none",
               }}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ background: "#fff", color: "#0d0d0d" }}
+                    style={{ background: "linear-gradient(135deg, #7c5cfc, #00d4ff)", color: "#fff" }}
                   >
                     Most Popular
                   </span>
@@ -583,9 +583,9 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
                 type="button"
                 onClick={() => handleChoosePlan(plan.id)}
                 disabled={loadingPlan === plan.id}
-                className="w-full h-11 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                className={`w-full h-11 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 ${plan.popular ? "nv-btn-glow" : ""}`}
                 style={plan.popular
-                  ? { background: "#fff", color: "#0d0d0d" }
+                  ? { background: "linear-gradient(135deg, #7c5cfc, #00d4ff)", color: "#fff" }
                   : { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,0.08)" }
                 }
               >
@@ -624,18 +624,20 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
 
 function Footer() {
   return (
-    <footer className="py-12 px-6" style={{ background: "#111111", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+    <footer className="relative py-12 px-6" style={{ background: "#111111" }}>
+      {/* Top gradient line */}
+      <div className="absolute top-0 left-0 right-0 nv-section-glow-divider" />
       <div className="nv-container">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2.5">
-            <img src="/navinta-logo.png" alt="Navinta AI" className="h-6 w-6 opacity-70" />
-            <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.55)" }}>Navinta AI</span>
+          <div className="flex items-center gap-2.5 group">
+            <img src="/navinta-logo.png" alt="Navinta AI" className="h-6 w-6 opacity-70 transition-opacity duration-300 group-hover:opacity-100" />
+            <span className="text-sm font-semibold transition-colors duration-300" style={{ color: "rgba(255,255,255,0.55)" }}>Navinta AI</span>
           </div>
           <div className="flex gap-8 text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
-            <a href="/how-it-works" className="hover:text-white transition-colors">How It Works</a>
-            <a href="/contact" className="hover:text-white transition-colors">Contact</a>
-            <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
-            <a href="/terms" className="hover:text-white transition-colors">Terms</a>
+            <a href="/how-it-works" className="nv-nav-link hover:text-white">How It Works</a>
+            <a href="/contact" className="nv-nav-link hover:text-white">Contact</a>
+            <a href="/privacy" className="nv-nav-link hover:text-white">Privacy</a>
+            <a href="/terms" className="nv-nav-link hover:text-white">Terms</a>
           </div>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>&copy; 2026 Navinta AI</p>
         </div>
