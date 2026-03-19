@@ -62,7 +62,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen text-gray-900 antialiased" style={{ fontFamily: "'Inter', sans-serif", background: "#FFFFFF" }}>
+    <div className="min-h-screen antialiased" style={{ fontFamily: "'Inter', sans-serif", background: "#0d0d0d", color: "#fff", letterSpacing: "-0.01em" }}>
       <ScrollProgressBar />
       <Navbar onJoinWaitlist={() => setShowWaitlistModal(true)} onGetStarted={handleGetStarted} waitlistApproved={waitlistApproved} />
       <HeroSection onGetStarted={handleGetStarted} waitlistApproved={waitlistApproved} />
@@ -86,7 +86,7 @@ export default function Landing() {
 function Navbar({ onJoinWaitlist, onGetStarted, waitlistApproved }: { onJoinWaitlist: () => void; onGetStarted: () => void; waitlistApproved: boolean }) {
   const [showContactModal, setShowContactModal] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { isAuthenticated, user, signOut, signInWithGoogle } = useAuth();
+  const { isAuthenticated, signOut } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -98,26 +98,25 @@ function Navbar({ onJoinWaitlist, onGetStarted, waitlistApproved }: { onJoinWait
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled
-            ? "py-3 navbar-light"
-            : "py-5 navbar-light-transparent"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled ? "nv-nav-glass py-3" : "nv-nav-transparent py-5"
         }`}
       >
-        <div className="max-w-7xl mx-auto flex justify-between items-center px-6 md:px-12">
-          <div className="flex items-center gap-2.5 text-lg font-semibold tracking-tight text-gray-900">
+        <div className="nv-container flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
             <img src="/navinta-logo.png" alt="Navinta AI" className="h-7 w-7" />
-            <span className="logo-text">Navinta AI</span>
+            <span className="logo-text text-lg" style={{ color: "#fff" }}>Navinta AI</span>
           </div>
 
-          <div className="hidden md:flex items-center gap-8 text-[0.85rem] font-medium">
-            <a href="#showcase" className="text-gray-500 hover:text-gray-900 transition-colors duration-200">Features</a>
-            <a href="#pricing" className="text-gray-500 hover:text-gray-900 transition-colors duration-200">Pricing</a>
-            <button onClick={() => setShowContactModal(true)} className="text-gray-500 hover:text-gray-900 transition-colors duration-200">
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>
+            <a href="#showcase" className="hover:text-white transition-colors">Features</a>
+            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+            <a href="/how-it-works" className="hover:text-white transition-colors">How It Works</a>
+            <button onClick={() => setShowContactModal(true)} className="hover:text-white transition-colors">
               Contact
             </button>
             {!waitlistApproved && (
-              <button onClick={onJoinWaitlist} className="text-gray-500 hover:text-gray-900 transition-colors duration-200">
+              <button onClick={onJoinWaitlist} className="hover:text-white transition-colors">
                 Join Waitlist
               </button>
             )}
@@ -129,19 +128,25 @@ function Navbar({ onJoinWaitlist, onGetStarted, waitlistApproved }: { onJoinWait
                 {waitlistApproved && (
                   <button
                     onClick={() => setLocation("/dashboard")}
-                    className="px-5 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-all duration-200"
+                    className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 hover:opacity-90"
+                    style={{ background: "#fff", color: "#0d0d0d" }}
                   >
                     Dashboard
                   </button>
                 )}
-                <button onClick={signOut} className="px-5 py-2 rounded-full border border-gray-200 text-sm font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 transition-all duration-200">
+                <button
+                  onClick={signOut}
+                  className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+                  style={{ color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
                   Sign out
                 </button>
               </div>
             ) : (
               <button
                 onClick={onGetStarted}
-                className="px-6 py-2.5 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 hover:shadow-[0_4px_16px_rgba(79,70,229,0.3)] transition-all duration-200"
+                className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 hover:opacity-90"
+                style={{ background: "#fff", color: "#0d0d0d" }}
                 data-testid="button-login"
               >
                 {waitlistApproved ? "Sign in" : "Get Early Access"}
@@ -219,26 +224,35 @@ function WaitlistModal({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const inputStyle = {
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    color: "#fff",
+  };
+
+  const inputClassName = "w-full pl-11 pr-4 py-3.5 rounded-lg text-sm placeholder:text-[rgba(255,255,255,0.25)] focus:outline-none focus:ring-1 focus:ring-white/20 transition-all";
+
   if (joined) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={onClose} />
-        <div ref={modalRef} className="relative max-w-md w-full rounded-3xl border border-white/10 p-10 text-center" style={{ background: "linear-gradient(180deg, #111111 0%, #0a0a0a 100%)", boxShadow: "0 40px 80px rgba(0,0,0,0.8), 0 0 60px rgba(99,102,241,0.08)" }}>
-          <button onClick={onClose} className="absolute top-5 right-5 p-2 rounded-full hover:bg-white/5 transition-colors">
-            <X className="w-5 h-5 text-white/30" />
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+        <div ref={modalRef} className="relative max-w-md w-full rounded-xl p-10 text-center" style={{ background: "#161616", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+          <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-lg transition-colors" style={{ color: "rgba(255,255,255,0.35)" }}>
+            <X className="w-5 h-5" />
           </button>
-          <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-8 h-8 text-emerald-400" />
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-6" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <CheckCircle className="w-7 h-7" style={{ color: "#fff" }} />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-3">You're on the list</h2>
-          <p className="text-white/40 text-sm leading-relaxed mb-2">
-            Thanks, <span className="text-white/80 font-medium">{name}</span>. We'll send your access code to{" "}
-            <span className="text-white/80 font-medium">{email}</span>.
+          <h2 className="text-2xl font-bold mb-3" style={{ color: "#fff" }}>You're on the list</h2>
+          <p className="text-sm leading-relaxed mb-2" style={{ color: "rgba(255,255,255,0.55)" }}>
+            Thanks, <span className="font-semibold" style={{ color: "#fff" }}>{name}</span>. We'll send your access code to{" "}
+            <span className="font-semibold" style={{ color: "#fff" }}>{email}</span>.
           </p>
-          <p className="text-xs text-white/20 mb-8">Keep an eye on your inbox.</p>
+          <p className="text-xs mb-8" style={{ color: "rgba(255,255,255,0.35)" }}>Keep an eye on your inbox.</p>
           <button
             onClick={() => { setJoined(false); setMode("code"); }}
-            className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+            className="text-sm font-medium transition-colors"
+            style={{ color: "rgba(255,255,255,0.55)" }}
           >
             Already have a code? Enter it here
           </button>
@@ -249,23 +263,31 @@ function WaitlistModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={onClose} />
-      <div ref={modalRef} className="relative max-w-md w-full rounded-3xl border border-white/10 p-8 md:p-10" style={{ background: "linear-gradient(180deg, #111111 0%, #0a0a0a 100%)", boxShadow: "0 40px 80px rgba(0,0,0,0.8), 0 0 60px rgba(99,102,241,0.08)" }}>
-        <button onClick={onClose} className="absolute top-5 right-5 p-2 rounded-full hover:bg-white/5 transition-colors">
-          <X className="w-5 h-5 text-white/30" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div ref={modalRef} className="relative max-w-md w-full rounded-xl p-8 md:p-10" style={{ background: "#161616", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-lg transition-colors" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <X className="w-5 h-5" />
         </button>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-8 p-1 rounded-xl bg-white/5 border border-white/8">
+        <div className="flex gap-1 mb-8 p-1 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
           <button
             onClick={() => { setMode("code"); setError(null); }}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${mode === "code" ? "bg-white text-black" : "text-white/40 hover:text-white/60"}`}
+            className={`flex-1 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${mode === "code" ? "shadow-sm" : ""}`}
+            style={{
+              color: mode === "code" ? "#fff" : "rgba(255,255,255,0.35)",
+              background: mode === "code" ? "rgba(255,255,255,0.08)" : "transparent",
+            }}
           >
             Enter Code
           </button>
           <button
             onClick={() => { setMode("join"); setError(null); }}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${mode === "join" ? "bg-white text-black" : "text-white/40 hover:text-white/60"}`}
+            className={`flex-1 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${mode === "join" ? "shadow-sm" : ""}`}
+            style={{
+              color: mode === "join" ? "#fff" : "rgba(255,255,255,0.35)",
+              background: mode === "join" ? "rgba(255,255,255,0.08)" : "transparent",
+            }}
           >
             Join Waitlist
           </button>
@@ -274,26 +296,28 @@ function WaitlistModal({ onClose }: { onClose: () => void }) {
         {mode === "code" ? (
           <>
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-white mb-2">Enter Access Code</h2>
-              <p className="text-sm text-white/30">Enter the code you received to unlock Navinta AI.</p>
+              <h2 className="text-2xl font-bold mb-2" style={{ color: "#fff" }}>Enter Access Code</h2>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>Enter the code you received to unlock Navinta AI.</p>
             </div>
             <form onSubmit={handleRedeem} className="space-y-4">
               <div className="relative">
-                <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(255,255,255,0.35)" }} />
                 <input
                   type="text"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                   placeholder="ENTER CODE"
                   required
-                  className="w-full pl-11 pr-4 py-3.5 border border-white/10 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all bg-white/[0.03] tracking-[0.3em] font-mono text-center"
+                  className={inputClassName + " tracking-[0.3em] font-mono text-center"}
+                  style={inputStyle}
                 />
               </div>
               {error && <p className="text-sm text-red-400 text-center">{error}</p>}
               <button
                 type="submit"
                 disabled={loading || !code.trim()}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-white text-black rounded-full text-sm font-semibold hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] hover:opacity-90"
+                style={{ background: "#fff", color: "#0d0d0d" }}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Unlock Access <ArrowRight className="w-4 h-4" /></>}
               </button>
@@ -302,37 +326,40 @@ function WaitlistModal({ onClose }: { onClose: () => void }) {
         ) : (
           <>
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-white mb-2">Join the Waitlist</h2>
-              <p className="text-sm text-white/30">Be among the first to create with Navinta AI.</p>
+              <h2 className="text-2xl font-bold mb-2" style={{ color: "#fff" }}>Join the Waitlist</h2>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>Be among the first to create with Navinta AI.</p>
             </div>
             <form onSubmit={handleJoin} className="space-y-3">
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(255,255,255,0.35)" }} />
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
                   required
-                  className="w-full pl-11 pr-4 py-3.5 border border-white/10 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all bg-white/[0.03]"
+                  className={inputClassName}
+                  style={inputStyle}
                 />
               </div>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(255,255,255,0.35)" }} />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Your email"
                   required
-                  className="w-full pl-11 pr-4 py-3.5 border border-white/10 rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all bg-white/[0.03]"
+                  className={inputClassName}
+                  style={inputStyle}
                 />
               </div>
               {error && <p className="text-sm text-red-400 text-center">{error}</p>}
               <button
                 type="submit"
                 disabled={loading || !name.trim() || !email.trim()}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-white text-black rounded-full text-sm font-semibold hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] hover:opacity-90"
+                style={{ background: "#fff", color: "#0d0d0d" }}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Join Waitlist <ArrowRight className="w-4 h-4" /></>}
               </button>
@@ -340,16 +367,15 @@ function WaitlistModal({ onClose }: { onClose: () => void }) {
           </>
         )}
 
-        {/* Trust signals */}
-        <div className="mt-6 flex items-center justify-center gap-6 text-xs text-white/20">
+        <div className="mt-6 flex items-center justify-center gap-6 text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
           <div className="flex items-center gap-1.5">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500/50">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
             <span>Secure</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500/50">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
               <polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
@@ -458,45 +484,51 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
   };
 
   return (
-    <section id="pricing" className="relative py-28 px-6" style={{ background: "#F7F8FC" }}>
-      {/* Subtle top border */}
-      <div className="hr-fade absolute top-0 left-0 right-0" />
-      <div className="max-w-7xl mx-auto">
+    <section id="pricing" className="nv-section" style={{ background: "#0d0d0d" }}>
+      <div className="nv-container">
         <div className="text-center mb-16">
-          <p className="section-label mb-4">Pricing</p>
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-4">
+          <p
+            className="text-sm font-semibold tracking-wide uppercase mb-3"
+            style={{ color: "rgba(255,255,255,0.55)" }}
+          >
+            Pricing
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4" style={{ color: "#fff" }}>
             Simple, transparent pricing
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: "rgba(255,255,255,0.55)" }}>
             Choose the plan that fits your creative workflow. Upgrade or downgrade anytime.
           </p>
 
           <div className="flex justify-center mt-8">
-            <div className="inline-flex items-center p-1.5 rounded-full bg-white border border-gray-200 shadow-sm">
+            <div className="inline-flex items-center p-1 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <button
                 onClick={() => setInterval("monthly")}
-                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                  interval === "monthly"
-                    ? "bg-gray-900 text-white shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`px-5 py-2 rounded-md text-sm font-medium transition-all duration-200`}
+                style={{
+                  background: interval === "monthly" ? "#fff" : "transparent",
+                  color: interval === "monthly" ? "#0d0d0d" : "rgba(255,255,255,0.55)",
+                }}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setInterval("yearly")}
-                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                  interval === "yearly"
-                    ? "bg-gray-900 text-white shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className="px-5 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2"
+                style={{
+                  background: interval === "yearly" ? "#fff" : "transparent",
+                  color: interval === "yearly" ? "#0d0d0d" : "rgba(255,255,255,0.55)",
+                }}
               >
                 Yearly
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  interval === "yearly"
-                    ? "bg-white/20 text-white"
-                    : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                }`}>
+                <span
+                  className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                  style={{
+                    background: interval === "yearly" ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.06)",
+                    color: interval === "yearly" ? "#0d0d0d" : "rgba(255,255,255,0.55)",
+                    border: interval === "yearly" ? "none" : "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
                   Save 10%
                 </span>
               </button>
@@ -508,32 +540,40 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
           {landingPlans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative flex flex-col rounded-2xl transition-all duration-300 pricing-card-light ${
-                plan.popular ? "featured" : ""
-              }`}
+              className="relative flex flex-col rounded-xl p-6 transition-all duration-200"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: plan.popular
+                  ? "1px solid rgba(255,255,255,0.3)"
+                  : "1px solid rgba(255,255,255,0.08)",
+                boxShadow: plan.popular ? "0 0 0 1px rgba(255,255,255,0.15)" : "none",
+              }}
             >
               {plan.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                  <span className="px-4 py-1.5 rounded-full text-xs font-semibold bg-indigo-600 text-white shadow-md">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span
+                    className="px-3 py-1 rounded-full text-xs font-semibold"
+                    style={{ background: "#fff", color: "#0d0d0d" }}
+                  >
                     Most Popular
                   </span>
                 </div>
               )}
 
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
-                  <p className="text-sm text-gray-400 mt-0.5">{plan.tagline}</p>
+                  <h3 className="text-lg font-bold" style={{ color: "#fff" }}>{plan.name}</h3>
+                  <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{plan.tagline}</p>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-gray-900 tracking-tight">
+                  <span className="text-3xl font-bold tracking-tight" style={{ color: "#fff" }}>
                     {plan.monthlyPrice === 0
                       ? "Free"
                       : `$${interval === "monthly" ? plan.monthlyPrice : (plan.yearlyPrice / 12).toFixed(2)}`}
                   </span>
                   {plan.monthlyPrice > 0 && (
-                    <span className="text-gray-400 text-sm">
-                      /{interval === "yearly" ? "mo, billed yearly" : "month"}
+                    <span className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+                      /{interval === "yearly" ? "mo" : "month"}
                     </span>
                   )}
                 </div>
@@ -543,11 +583,11 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
                 type="button"
                 onClick={() => handleChoosePlan(plan.id)}
                 disabled={loadingPlan === plan.id}
-                className={`w-full h-12 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center ${
-                  plan.popular
-                    ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-[0_6px_20px_rgba(79,70,229,0.3)]"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className="w-full h-11 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                style={plan.popular
+                  ? { background: "#fff", color: "#0d0d0d" }
+                  : { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,0.08)" }
+                }
               >
                 {loadingPlan === plan.id ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -558,18 +598,18 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
                 )}
               </button>
 
-              <div className="mt-6 pt-6 border-t border-gray-100 flex-1">
+              <div className="mt-6 pt-6 flex-1" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
                 <ul className="space-y-3">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-3">
-                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">{feature}</span>
+                      <Check className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }} />
+                      <span className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>{feature}</span>
                     </li>
                   ))}
                   {plan.excluded.map((feature, index) => (
                     <li key={`excluded-${index}`} className="flex items-start gap-3">
-                      <X className="h-4 w-4 text-gray-300 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-400">{feature}</span>
+                      <X className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: "rgba(255,255,255,0.15)" }} />
+                      <span className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -584,19 +624,20 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
 
 function Footer() {
   return (
-    <footer className="py-14 px-6" style={{ background: "#F7F8FC", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-      <div className="max-w-6xl mx-auto">
+    <footer className="py-12 px-6" style={{ background: "#111111", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="nv-container">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2.5">
             <img src="/navinta-logo.png" alt="Navinta AI" className="h-6 w-6 opacity-70" />
-            <span className="text-sm text-gray-500 font-semibold">Navinta AI</span>
+            <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.55)" }}>Navinta AI</span>
           </div>
-          <div className="flex gap-8 text-sm text-gray-400">
-            <a href="/contact" className="hover:text-gray-700 transition-colors duration-200">Contact</a>
-            <a href="/privacy" className="hover:text-gray-700 transition-colors duration-200">Privacy</a>
-            <a href="/terms" className="hover:text-gray-700 transition-colors duration-200">Terms</a>
+          <div className="flex gap-8 text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+            <a href="/how-it-works" className="hover:text-white transition-colors">How It Works</a>
+            <a href="/contact" className="hover:text-white transition-colors">Contact</a>
+            <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
+            <a href="/terms" className="hover:text-white transition-colors">Terms</a>
           </div>
-          <p className="text-sm text-gray-400">&copy; 2026 Navinta AI</p>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>&copy; 2026 Navinta AI</p>
         </div>
       </div>
     </footer>

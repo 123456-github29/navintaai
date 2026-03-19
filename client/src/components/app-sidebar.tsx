@@ -24,41 +24,16 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const menuItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Squares2X2Icon,
-  },
-  {
-    title: "Library",
-    url: "/library",
-    icon: FolderIcon,
-  },
-  {
-    title: "Schedule",
-    url: "/schedule",
-    icon: CalendarIcon,
-  },
-  {
-    title: "Analytics",
-    url: "/analytics",
-    icon: ChartBarIcon,
-  },
-  {
-    title: "Brand Kit",
-    url: "/brand-kit",
-    icon: SwatchIcon,
-  },
+  { title: "Dashboard", url: "/dashboard", icon: Squares2X2Icon },
+  { title: "Library", url: "/library", icon: FolderIcon },
+  { title: "Schedule", url: "/schedule", icon: CalendarIcon },
+  { title: "Analytics", url: "/analytics", icon: ChartBarIcon },
+  { title: "Brand Kit", url: "/brand-kit", icon: SwatchIcon },
 ];
 
 const bottomItems = [
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Cog6ToothIcon,
-  },
+  { title: "Settings", url: "/settings", icon: Cog6ToothIcon },
 ];
-
 
 export function AppSidebar() {
   const [location] = useLocation();
@@ -72,22 +47,16 @@ export function AppSidebar() {
   return (
     <Sidebar
       className="border-r"
-      style={{
-        background: "#FFFFFF",
-        borderColor: "rgba(0,0,0,0.07)",
-      }}
+      style={{ background: "#0d0d0d", borderColor: "rgba(255,255,255,0.06)" }}
     >
-      <SidebarHeader
-        className="p-5 border-b"
-        style={{ borderColor: "rgba(0,0,0,0.06)" }}
-      >
+      <SidebarHeader className="p-5 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <img src="/navinta-logo.png" alt="Navinta AI" className="h-7 w-7" />
-          <span className="text-gray-900 text-lg font-bold tracking-tight">Navinta AI</span>
+          <span className="logo-text text-lg text-white">Navinta AI</span>
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-5">
+      <SidebarContent className="px-3 py-4">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
@@ -98,14 +67,24 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      className={`h-10 px-3.5 rounded-xl transition-all duration-200 ${
+                      className={`h-10 px-3.5 rounded-lg transition-all duration-200 ${
                         isActive
-                          ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100'
-                          : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 border border-transparent'
+                          ? 'font-semibold'
+                          : 'border border-transparent'
                       }`}
+                      style={isActive ? {
+                        background: "rgba(255,255,255,0.08)",
+                        color: "#ffffff",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                      } : {
+                        color: "rgba(255,255,255,0.4)",
+                      }}
                     >
                       <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
-                        <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
+                        <item.icon
+                          className="h-[18px] w-[18px] shrink-0"
+                          style={{ color: isActive ? "#ffffff" : "rgba(255,255,255,0.3)" }}
+                        />
                         <span className="text-sm">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -116,7 +95,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Bottom items */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
@@ -127,14 +105,22 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      className={`h-10 px-3.5 rounded-xl transition-all duration-200 ${
-                        isActive
-                          ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100'
-                          : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 border border-transparent'
+                      className={`h-10 px-3.5 rounded-lg transition-all duration-200 ${
+                        isActive ? 'font-semibold' : 'border border-transparent'
                       }`}
+                      style={isActive ? {
+                        background: "rgba(255,255,255,0.08)",
+                        color: "#ffffff",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                      } : {
+                        color: "rgba(255,255,255,0.4)",
+                      }}
                     >
                       <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
-                        <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
+                        <item.icon
+                          className="h-[18px] w-[18px] shrink-0"
+                          style={{ color: isActive ? "#ffffff" : "rgba(255,255,255,0.3)" }}
+                        />
                         <span className="text-sm">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -146,30 +132,24 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter
-        className="p-4 mt-auto border-t"
-        style={{ borderColor: "rgba(0,0,0,0.06)" }}
-      >
-        <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors duration-200 cursor-pointer mb-2">
-          <Avatar className="h-9 w-9 rounded-xl">
-            <AvatarImage src={userAvatar} className="rounded-xl" />
-            <AvatarFallback className="rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold">
+      <SidebarFooter className="p-4 mt-auto border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center gap-3 p-2.5 rounded-lg transition-colors duration-200 cursor-pointer mb-2" style={{ background: "transparent" }}>
+          <Avatar className="h-9 w-9 rounded-lg">
+            <AvatarImage src={userAvatar} className="rounded-lg" />
+            <AvatarFallback className="rounded-lg text-xs font-bold" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>
               {userInitials}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate text-gray-800">
-              {userName}
-            </p>
-            <p className="text-xs text-gray-400 truncate">
-              {user?.email}
-            </p>
+            <p className="text-sm font-semibold truncate text-white">{userName}</p>
+            <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.3)" }}>{user?.email}</p>
           </div>
         </div>
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start gap-3 h-10 px-3.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-200"
+          className="w-full justify-start gap-3 h-10 px-3.5 rounded-lg transition-all duration-200 hover:bg-white/5"
+          style={{ color: "rgba(255,255,255,0.3)" }}
           onClick={signOut}
           data-testid="button-logout"
         >

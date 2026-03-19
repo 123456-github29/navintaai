@@ -1,131 +1,74 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export default function OutcomesSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
+const metrics = [
+  { end: 10, suffix: "x", label: "Faster", description: "production speed" },
+  { end: 4, suffix: "hrs", label: "Saved", description: "per week" },
+  { end: 28, suffix: "", label: "Videos", description: "per month" },
+  { end: 0, suffix: "", label: "Skills", description: "needed to edit" },
+];
+
+function AnimatedCounter({ end, suffix, triggered }: { end: number; suffix: string; triggered: boolean }) {
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
+    if (!triggered) return;
+    if (end === 0) { setCount(0); return; }
+    let current = 0;
+    const step = Math.max(1, Math.floor(end / 30));
+    const interval = setInterval(() => {
+      current += step;
+      if (current >= end) { setCount(end); clearInterval(interval); }
+      else setCount(current);
+    }, 40);
+    return () => clearInterval(interval);
+  }, [triggered, end]);
 
+  return <>{count}{suffix}</>;
+}
+
+export default function OutcomesSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [triggered, setTriggered] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setTriggered(true); return; }
     const ctx = gsap.context(() => {
-      gsap.from(headerRef.current, {
-        y: 50,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out",
-        scrollTrigger: { trigger: sectionRef.current, start: "top 78%" },
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: "top 80%",
+        once: true,
+        onEnter: () => setTriggered(true),
       });
-
-      gsap.from(".outcome-card", {
-        y: 50,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.12,
-        ease: "power3.out",
-        scrollTrigger: { trigger: cardsRef.current, start: "top 82%" },
+      gsap.from(".metric-card", {
+        y: 30, opacity: 0, duration: 0.6, stagger: 0.1, ease: "power3.out",
+        scrollTrigger: { trigger: sectionRef.current, start: "top 80%", once: true },
       });
     }, sectionRef);
-
     return () => ctx.revert();
   }, []);
 
-  const outcomes = [
-    {
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-        </svg>
-      ),
-      label: "Speed",
-      title: "10x faster production",
-      description: "What used to take days now takes minutes. From idea to polished video in one sitting.",
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      border: "border-amber-100",
-    },
-    {
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2"/>
-          <line x1="8" y1="21" x2="16" y2="21"/>
-          <line x1="12" y1="17" x2="12" y2="21"/>
-        </svg>
-      ),
-      label: "Reach",
-      title: "Platform-native output",
-      description: "Every video is formatted for TikTok, Instagram, and YouTube — so it looks native, not repurposed.",
-      color: "text-indigo-600",
-      bg: "bg-indigo-50",
-      border: "border-indigo-100",
-    },
-    {
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
-      ),
-      label: "Quality",
-      title: "Agency-grade quality",
-      description: "Smart cuts, B-roll, captions, and color grading — the same techniques agencies charge thousands for.",
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-emerald-100",
-    },
-  ];
-
   return (
-    <section ref={sectionRef} className="py-32 px-6 relative overflow-hidden" style={{ background: "#FFFFFF" }}>
-      {/* Top rule */}
-      <div className="hr-fade absolute top-0 left-0 right-0" />
-
-      {/* Subtle right-side accent */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute -right-40 top-1/4 w-[600px] h-[600px] rounded-full"
-          style={{
-            background: "radial-gradient(circle, rgba(99,102,241,0.04) 0%, transparent 60%)",
-            filter: "blur(80px)",
-          }}
-        />
-      </div>
-
-      <div className="max-w-6xl mx-auto relative z-10">
-        <div ref={headerRef} className="text-center mb-20">
-          <p className="section-label mb-4">Why Navinta</p>
-          <h2
-            className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 mb-5"
-            style={{ textWrap: "balance" }}
-          >
-            Video at the speed
-            <br />
-            of your business.
+    <section ref={sectionRef} className="nv-section" style={{ background: "#111111" }}>
+      <div className="nv-container">
+        <div className="text-center mb-16">
+          <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>Results</p>
+          <h2 className="text-3xl md:text-[2.75rem] font-bold tracking-tight text-white">
+            Built for speed and consistency
           </h2>
-          <p className="text-lg text-gray-500 max-w-xl mx-auto">
-            Ship professional content every week — without a production team, without a learning curve.
-          </p>
         </div>
 
-        <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {outcomes.map((outcome) => (
-            <div
-              key={outcome.title}
-              className="outcome-card group rounded-2xl border bg-white p-8 transition-all duration-400 light-card-hover card-shine"
-              style={{ borderColor: "rgba(0,0,0,0.07)" }}
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className={`w-12 h-12 rounded-2xl ${outcome.bg} border ${outcome.border} flex items-center justify-center ${outcome.color}`}>
-                  {outcome.icon}
-                </div>
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">{outcome.label}</span>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+          {metrics.map((m, i) => (
+            <div key={i} className="metric-card text-center p-7 rounded-xl group" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2 transition-transform duration-500 group-hover:scale-105">
+                <AnimatedCounter end={m.end} suffix={m.suffix} triggered={triggered} />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3">{outcome.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{outcome.description}</p>
+              <div className="text-sm font-semibold text-white/70 mb-0.5">{m.label}</div>
+              <div className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{m.description}</div>
             </div>
           ))}
         </div>

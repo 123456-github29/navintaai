@@ -33,6 +33,7 @@ import BillingCancel from "@/pages/billing-cancel";
 
 import PhoneRecorder from "@/pages/phone-recorder";
 import Contact from "@/pages/contact";
+import HowItWorksPage from "@/pages/how-it-works";
 
 function App() {
   const style = {
@@ -61,25 +62,26 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen" style={{ background: "#000000" }}>
-        <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border-2 border-white/5" />
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-white animate-spin" />
+      <div className="flex flex-col items-center justify-center h-screen" style={{ background: "#0d0d0d" }}>
+        <div className="relative w-10 h-10">
+          <div className="absolute inset-0 rounded-full" style={{ border: "2px solid rgba(255,255,255,0.06)" }} />
+          <div className="absolute inset-0 rounded-full animate-spin" style={{ border: "2px solid transparent", borderTopColor: "rgba(255,255,255,0.6)" }} />
         </div>
-        <p className="text-white/30 mt-6 text-sm font-medium tracking-wide">Loading</p>
+        <p className="mt-6 text-sm font-medium" style={{ color: "rgba(255,255,255,0.3)" }}>Loading</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-center px-4" style={{ background: "#000000" }}>
+      <div className="flex flex-col items-center justify-center h-screen text-center px-4" style={{ background: "#0d0d0d" }}>
         <div className="max-w-md">
           <h1 className="text-2xl font-bold text-white mb-4">Something went wrong</h1>
-          <p className="text-white/40 mb-8 text-sm">{error}</p>
+          <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{error}</p>
           <button
             onClick={retry}
-            className="px-8 py-3 bg-white text-black rounded-full font-semibold text-sm hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] transition-all"
+            className="px-8 py-3 rounded-lg font-semibold text-sm transition-all hover:opacity-90"
+            style={{ background: "#ffffff", color: "#0d0d0d" }}
           >
             Try Again
           </button>
@@ -90,13 +92,13 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
 
   const waitlistApproved = typeof window !== "undefined" && localStorage.getItem("waitlist_approved") === "true";
 
-  // Unauthenticated users always see the landing page (which has waitlist gate built in)
   if (!isAuthenticated) {
     return (
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
         <Route path="/pricing" component={Pricing} />
+        <Route path="/how-it-works" component={HowItWorksPage} />
         <Route path="/record/phone" component={PhoneRecorder} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
@@ -106,11 +108,11 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
     );
   }
 
-  // Authenticated but not waitlist approved - redirect to landing
   if (!waitlistApproved) {
     return (
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/how-it-works" component={HowItWorksPage} />
         <Route path="/record/phone" component={PhoneRecorder} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
@@ -129,15 +131,16 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
         <Route path="/terms" component={TermsOfService} />
         <Route path="/contact" component={Contact} />
         <Route path="/pricing" component={Pricing} />
+        <Route path="/how-it-works" component={HowItWorksPage} />
         <Route path="/billing/success" component={BillingSuccess} />
         <Route path="/billing/cancel" component={BillingCancel} />
 
         <Route>
           <div className="flex h-screen w-full" style={{ fontFamily: "'Inter', sans-serif" }}>
             <AppSidebar />
-            <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "#050505" }}>
-              <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-white/5 bg-black/60 backdrop-blur-2xl sticky top-0 z-40">
-                <SidebarTrigger data-testid="button-sidebar-toggle" className="text-white/40 hover:text-white hover:bg-white/5 rounded-lg transition-colors" />
+            <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "#0d0d0d" }}>
+              <header className="flex items-center justify-between gap-4 px-6 py-3 sticky top-0 z-40" style={{ background: "rgba(13,13,13,0.8)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <SidebarTrigger data-testid="button-sidebar-toggle" className="rounded-lg transition-colors hover:bg-white/5" style={{ color: "rgba(255,255,255,0.3)" }} />
               </header>
               <main className="flex-1 overflow-auto">
                 <Switch>
