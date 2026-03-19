@@ -6,12 +6,11 @@ export default {
   theme: {
     extend: {
       borderRadius: {
-        lg: ".5625rem", /* 9px */
-        md: ".375rem", /* 6px */
-        sm: ".1875rem", /* 3px */
+        lg: ".5625rem",
+        md: ".375rem",
+        sm: ".1875rem",
       },
       colors: {
-        // Flat / base colors (regular buttons)
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
         border: "hsl(var(--border) / <alpha-value>)",
@@ -80,6 +79,24 @@ export default {
           away: "rgb(245 158 11)",
           busy: "rgb(239 68 68)",
           offline: "rgb(156 163 175)",
+        },
+        nv: {
+          accent: "#0fa37e",
+          "accent-hover": "#0d8f6e",
+          dark: "#202123",
+          "dark-hover": "#353740",
+          gray: {
+            50: "#f7f7f8",
+            100: "#ececf1",
+            200: "#d9d9e3",
+            300: "#c5c5d2",
+            400: "#acacbe",
+            500: "#8e8ea0",
+            600: "#6e6e80",
+            700: "#565869",
+            800: "#353740",
+            900: "#202123",
+          },
         },
       },
       fontFamily: {

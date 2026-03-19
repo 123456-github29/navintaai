@@ -33,6 +33,7 @@ import BillingCancel from "@/pages/billing-cancel";
 
 import PhoneRecorder from "@/pages/phone-recorder";
 import Contact from "@/pages/contact";
+import HowItWorksPage from "@/pages/how-it-works";
 
 function App() {
   const style = {
@@ -61,25 +62,26 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen" style={{ background: "#000000" }}>
-        <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border-2 border-white/5" />
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-white animate-spin" />
+      <div className="flex flex-col items-center justify-center h-screen" style={{ background: "#fafafa" }}>
+        <div className="relative w-10 h-10">
+          <div className="absolute inset-0 rounded-full" style={{ border: "2px solid #e5e5e5" }} />
+          <div className="absolute inset-0 rounded-full animate-spin" style={{ border: "2px solid transparent", borderTopColor: "#0fa37e" }} />
         </div>
-        <p className="text-white/30 mt-6 text-sm font-medium tracking-wide">Loading</p>
+        <p className="mt-6 text-sm font-medium" style={{ color: "#acacbe" }}>Loading</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-center px-4" style={{ background: "#000000" }}>
+      <div className="flex flex-col items-center justify-center h-screen text-center px-4" style={{ background: "#fafafa" }}>
         <div className="max-w-md">
-          <h1 className="text-2xl font-bold text-white mb-4">Something went wrong</h1>
-          <p className="text-white/40 mb-8 text-sm">{error}</p>
+          <h1 className="text-2xl font-bold mb-4" style={{ color: "#202123" }}>Something went wrong</h1>
+          <p className="text-sm mb-8" style={{ color: "#6e6e80" }}>{error}</p>
           <button
             onClick={retry}
-            className="px-8 py-3 bg-white text-black rounded-full font-semibold text-sm hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] transition-all"
+            className="px-8 py-3 rounded-lg font-semibold text-sm transition-all hover:opacity-90"
+            style={{ background: "#202123", color: "#fff" }}
           >
             Try Again
           </button>
@@ -97,6 +99,7 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
         <Route path="/pricing" component={Pricing} />
+        <Route path="/how-it-works" component={HowItWorksPage} />
         <Route path="/record/phone" component={PhoneRecorder} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
@@ -111,6 +114,7 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
     return (
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/how-it-works" component={HowItWorksPage} />
         <Route path="/record/phone" component={PhoneRecorder} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
@@ -129,15 +133,16 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
         <Route path="/terms" component={TermsOfService} />
         <Route path="/contact" component={Contact} />
         <Route path="/pricing" component={Pricing} />
+        <Route path="/how-it-works" component={HowItWorksPage} />
         <Route path="/billing/success" component={BillingSuccess} />
         <Route path="/billing/cancel" component={BillingCancel} />
 
         <Route>
           <div className="flex h-screen w-full" style={{ fontFamily: "'Inter', sans-serif" }}>
             <AppSidebar />
-            <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "#050505" }}>
-              <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-white/5 bg-black/60 backdrop-blur-2xl sticky top-0 z-40">
-                <SidebarTrigger data-testid="button-sidebar-toggle" className="text-white/40 hover:text-white hover:bg-white/5 rounded-lg transition-colors" />
+            <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "#fafafa" }}>
+              <header className="flex items-center justify-between gap-4 px-6 py-3 sticky top-0 z-40" style={{ background: "rgba(250,250,250,0.9)", backdropFilter: "blur(12px)", borderBottom: "1px solid #e5e5e5" }}>
+                <SidebarTrigger data-testid="button-sidebar-toggle" className="rounded-lg transition-colors" style={{ color: "#acacbe" }} />
               </header>
               <main className="flex-1 overflow-auto">
                 <Switch>
