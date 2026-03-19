@@ -13,6 +13,8 @@ ALTER TABLE clips ENABLE ROW LEVEL SECURITY;
 ALTER TABLE videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transcriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_edit_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_edit_messages ENABLE ROW LEVEL SECURITY;
 
 -- =====================================================
 -- USERS TABLE POLICIES
@@ -227,6 +229,72 @@ CREATE POLICY "Users can update own luma_generations" ON luma_generations
 DROP POLICY IF EXISTS "Users can delete own luma_generations" ON luma_generations;
 CREATE POLICY "Users can delete own luma_generations" ON luma_generations
   FOR DELETE USING (auth.uid()::text = user_id);
+
+-- =====================================================
+-- AI_EDIT_SESSIONS TABLE POLICIES
+-- Users can only access their own editing sessions
+-- Server (service_role/postgres) gets full access
+-- =====================================================
+
+DROP POLICY IF EXISTS "Service role full access to ai_edit_sessions" ON ai_edit_sessions;
+CREATE POLICY "Service role full access to ai_edit_sessions" ON ai_edit_sessions
+  FOR ALL USING (auth.role() = 'service_role' OR current_user = 'postgres');
+
+DROP POLICY IF EXISTS "Users can view own ai_edit_sessions" ON ai_edit_sessions;
+CREATE POLICY "Users can view own ai_edit_sessions" ON ai_edit_sessions
+  FOR SELECT USING (auth.uid()::text = user_id);
+
+DROP POLICY IF EXISTS "Users can create own ai_edit_sessions" ON ai_edit_sessions;
+CREATE POLICY "Users can create own ai_edit_sessions" ON ai_edit_sessions
+  FOR INSERT WITH CHECK (auth.uid()::text = user_id);
+
+DROP POLICY IF EXISTS "Users can update own ai_edit_sessions" ON ai_edit_sessions;
+CREATE POLICY "Users can update own ai_edit_sessions" ON ai_edit_sessions
+  FOR UPDATE USING (auth.uid()::text = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own ai_edit_sessions" ON ai_edit_sessions;
+CREATE POLICY "Users can delete own ai_edit_sessions" ON ai_edit_sessions
+  FOR DELETE USING (auth.uid()::text = user_id);
+
+-- =====================================================
+-- AI_EDIT_MESSAGES TABLE POLICIES
+-- Ownership determined via parent ai_edit_sessions table
+-- Server (service_role/postgres) gets full access
+-- =====================================================
+
+DROP POLICY IF EXISTS "Service role full access to ai_edit_messages" ON ai_edit_messages;
+CREATE POLICY "Service role full access to ai_edit_messages" ON ai_edit_messages
+  FOR ALL USING (auth.role() = 'service_role' OR current_user = 'postgres');
+
+DROP POLICY IF EXISTS "Users can view own ai_edit_messages" ON ai_edit_messages;
+CREATE POLICY "Users can view own ai_edit_messages" ON ai_edit_messages
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM ai_edit_sessions
+      WHERE ai_edit_sessions.id = ai_edit_messages.session_id
+        AND ai_edit_sessions.user_id = auth.uid()::text
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can create own ai_edit_messages" ON ai_edit_messages;
+CREATE POLICY "Users can create own ai_edit_messages" ON ai_edit_messages
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM ai_edit_sessions
+      WHERE ai_edit_sessions.id = session_id
+        AND ai_edit_sessions.user_id = auth.uid()::text
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can delete own ai_edit_messages" ON ai_edit_messages;
+CREATE POLICY "Users can delete own ai_edit_messages" ON ai_edit_messages
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM ai_edit_sessions
+      WHERE ai_edit_sessions.id = ai_edit_messages.session_id
+        AND ai_edit_sessions.user_id = auth.uid()::text
+    )
+  );
 
 -- =====================================================
 -- VERIFICATION QUERIES
