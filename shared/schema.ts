@@ -494,6 +494,45 @@ export type AiEditSession = typeof aiEditSessions.$inferSelect;
 export type InsertAiEditMessage = z.infer<typeof insertAiEditMessageSchema>;
 export type AiEditMessage = typeof aiEditMessages.$inferSelect;
 
+// Dev Dashboard: Service accounts tracking (Google API, Supabase, etc.)
+export const devAccounts = pgTable("dev_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(), // e.g. "Google Cloud", "Supabase", "Stripe"
+  provider: text("provider").notNull(), // e.g. "google", "supabase", "stripe"
+  monthlyCost: integer("monthly_cost").notNull().default(0), // in cents
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertDevAccountSchema = createInsertSchema(devAccounts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertDevAccount = z.infer<typeof insertDevAccountSchema>;
+export type DevAccount = typeof devAccounts.$inferSelect;
+
+// Dev Dashboard: API usage and spending tracking
+export const apiUsage = pgTable("api_usage", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  accountId: varchar("account_id").notNull().references(() => devAccounts.id, { onDelete: "cascade" }),
+  apiName: text("api_name").notNull(), // e.g. "OpenAI GPT-4", "Google TTS", "Supabase Storage"
+  callCount: integer("call_count").notNull().default(0),
+  costCents: integer("cost_cents").notNull().default(0), // spending in cents
+  period: text("period").notNull(), // e.g. "2026-03" for monthly tracking
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertApiUsageSchema = createInsertSchema(apiUsage).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertApiUsage = z.infer<typeof insertApiUsageSchema>;
+export type ApiUsage = typeof apiUsage.$inferSelect;
+
 // Replit Auth: User types
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,

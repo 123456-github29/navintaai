@@ -637,7 +637,10 @@ function Footer() {
             <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
             <a href="/terms" className="hover:text-white transition-colors">Terms</a>
           </div>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>&copy; 2026 Navinta AI</p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>&copy; 2026 Navinta AI</p>
+            <a href="/dev" className="text-sm transition-colors hover:text-white" style={{ color: "rgba(255,255,255,0.15)" }}>Dev</a>
+          </div>
         </div>
       </div>
     </footer>

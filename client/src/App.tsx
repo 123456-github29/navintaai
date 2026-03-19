@@ -34,6 +34,7 @@ import BillingCancel from "@/pages/billing-cancel";
 import PhoneRecorder from "@/pages/phone-recorder";
 import Contact from "@/pages/contact";
 import HowItWorksPage from "@/pages/how-it-works";
+import DevDashboard from "@/pages/dev-dashboard";
 
 function App() {
   const style = {
@@ -103,6 +104,7 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route path="/contact" component={Contact} />
+        <Route path="/dev" component={DevDashboard} />
         <Route component={Landing} />
       </Switch>
     );
@@ -117,6 +119,7 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route path="/contact" component={Contact} />
+        <Route path="/dev" component={DevDashboard} />
         <Route component={Landing} />
       </Switch>
     );
@@ -125,6 +128,7 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
   return (
     <SidebarProvider style={sidebarStyle as React.CSSProperties}>
       <Switch>
+        <Route path="/dev" component={DevDashboard} />
         <Route path="/record/phone" component={PhoneRecorder} />
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/privacy" component={PrivacyPolicy} />

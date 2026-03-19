@@ -30,6 +30,10 @@ import {
   type InsertAiEditSession,
   type AiEditMessage,
   type InsertAiEditMessage,
+  type DevAccount,
+  type InsertDevAccount,
+  type ApiUsage,
+  type InsertApiUsage,
   brandKits,
   contentPlans,
   posts,
@@ -47,6 +51,8 @@ import {
   waitlist,
   aiEditSessions,
   aiEditMessages,
+  devAccounts,
+  apiUsage,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { deepSanitize } from "./utils/sanitizeText";
@@ -1470,6 +1476,84 @@ export class DbStorage implements IStorage {
       .from(aiEditMessages)
       .where(eq(aiEditMessages.sessionId, sessionId))
       .orderBy(aiEditMessages.createdAt);
+  }
+
+  // Dev Dashboard methods
+  async getAllUsers(): Promise<User[]> {
+    return this.db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllUsersWithEntitlements(): Promise<any[]> {
+    const result = await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        businessName: users.businessName,
+        plan: users.plan,
+        monthlyPayment: users.monthlyPayment,
+        createdAt: users.createdAt,
+        entitlementPlan: userEntitlements.plan,
+        entitlementStatus: userEntitlements.status,
+        billingInterval: userEntitlements.billingInterval,
+      })
+      .from(users)
+      .leftJoin(userEntitlements, eq(users.id, userEntitlements.userId))
+      .orderBy(desc(users.createdAt));
+    return result;
+  }
+
+  async getDevAccounts(): Promise<DevAccount[]> {
+    return this.db.select().from(devAccounts).orderBy(desc(devAccounts.createdAt));
+  }
+
+  async createDevAccount(account: InsertDevAccount): Promise<DevAccount> {
+    const created = await this.db.insert(devAccounts).values(account).returning();
+    return created[0];
+  }
+
+  async updateDevAccount(id: string, updates: Partial<DevAccount>): Promise<DevAccount | undefined> {
+    const result = await this.db
+      .update(devAccounts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(devAccounts.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteDevAccount(id: string): Promise<void> {
+    await this.db.delete(devAccounts).where(eq(devAccounts.id, id));
+  }
+
+  async getApiUsage(): Promise<ApiUsage[]> {
+    return this.db.select().from(apiUsage).orderBy(desc(apiUsage.updatedAt));
+  }
+
+  async getApiUsageByAccount(accountId: string): Promise<ApiUsage[]> {
+    return this.db
+      .select()
+      .from(apiUsage)
+      .where(eq(apiUsage.accountId, accountId))
+      .orderBy(desc(apiUsage.updatedAt));
+  }
+
+  async createApiUsage(usage: InsertApiUsage): Promise<ApiUsage> {
+    const created = await this.db.insert(apiUsage).values(usage).returning();
+    return created[0];
+  }
+
+  async updateApiUsage(id: string, updates: Partial<ApiUsage>): Promise<ApiUsage | undefined> {
+    const result = await this.db
+      .update(apiUsage)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(apiUsage.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteApiUsage(id: string): Promise<void> {
+    await this.db.delete(apiUsage).where(eq(apiUsage.id, id));
   }
 }
 
