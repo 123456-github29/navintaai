@@ -48,13 +48,13 @@
   --nv-text-muted: rgba(255,255,255,0.2);
   --nv-white: #ffffff;
 
-  /* COLOR ACCENTS — subtle hints of life */
-  --nv-accent-1: #7c5cfc;   /* violet */
-  --nv-accent-2: #00d4ff;   /* cyan */
-  --nv-accent-3: #ff6b9d;   /* rose */
-  --nv-accent-gradient: linear-gradient(135deg, var(--nv-accent-1) 0%, var(--nv-accent-2) 50%, var(--nv-accent-3) 100%);
-  --nv-accent-glow: rgba(124, 92, 252, 0.15);
-  --nv-accent-glow-cyan: rgba(0, 212, 255, 0.12);
+  /* COLOR ACCENTS — warm amber, single-family, editorial feel */
+  --nv-accent-1: #c9985a;   /* warm amber gold */
+  --nv-accent-2: #a07d50;   /* deeper warm bronze */
+  --nv-accent-3: #e0b97a;   /* lighter warm gold */
+  --nv-accent-gradient: linear-gradient(135deg, var(--nv-accent-2) 0%, var(--nv-accent-1) 40%, var(--nv-accent-3) 100%);
+  --nv-accent-glow: rgba(201, 152, 90, 0.12);
+  --nv-accent-glow-cyan: rgba(201, 152, 90, 0.08);
 
   /* LIGHT LANDING overrides */
   --nv-landing-bg: #ffffff;
@@ -572,7 +572,7 @@
      PARTICLE DOT GRID
      ============================================ */
   .nv-dot-grid {
-    background-image: radial-gradient(circle, rgba(124,92,252,0.15) 1px, transparent 1px);
+    background-image: radial-gradient(circle, rgba(201,152,90,0.15) 1px, transparent 1px);
     background-size: 40px 40px;
     animation: nvDotDrift 30s linear infinite;
   }
@@ -597,8 +597,8 @@
     transition: box-shadow 0.4s ease, border-color 0.4s ease;
   }
   .nv-hover-glow:hover {
-    box-shadow: 0 0 30px var(--nv-accent-glow), 0 0 60px rgba(124,92,252,0.06);
-    border-color: rgba(124,92,252,0.2) !important;
+    box-shadow: 0 0 30px var(--nv-accent-glow), 0 0 60px rgba(201,152,90,0.06);
+    border-color: rgba(201,152,90,0.2) !important;
   }
 
   /* ============================================
@@ -608,8 +608,8 @@
     transition: all 0.5s var(--ease-spring);
   }
   .group:hover .nv-icon-glow {
-    background: rgba(124,92,252,0.1) !important;
-    border-color: rgba(124,92,252,0.2) !important;
+    background: rgba(201,152,90,0.1) !important;
+    border-color: rgba(201,152,90,0.2) !important;
     color: var(--nv-accent-1) !important;
     box-shadow: 0 0 20px var(--nv-accent-glow);
   }
@@ -621,10 +621,10 @@
     transition: all 0.5s var(--ease-spring);
   }
   .group:hover .nv-step-number {
-    background: rgba(124,92,252,0.15) !important;
-    border-color: rgba(124,92,252,0.3) !important;
+    background: rgba(201,152,90,0.15) !important;
+    border-color: rgba(201,152,90,0.3) !important;
     color: var(--nv-accent-1) !important;
-    box-shadow: 0 0 25px var(--nv-accent-glow), 0 0 50px rgba(124,92,252,0.08);
+    box-shadow: 0 0 25px var(--nv-accent-glow), 0 0 50px rgba(201,152,90,0.08);
   }
 
   /* ============================================
@@ -634,8 +634,8 @@
     transition: all 0.5s var(--ease-spring);
   }
   .nv-metric-glow:hover {
-    background: rgba(124,92,252,0.04) !important;
-    border-color: rgba(124,92,252,0.15) !important;
+    background: rgba(201,152,90,0.04) !important;
+    border-color: rgba(201,152,90,0.15) !important;
     box-shadow: 0 8px 40px var(--nv-accent-glow);
     transform: translateY(-4px) scale(1.02);
   }
@@ -647,17 +647,17 @@
     transition: all 0.3s ease;
   }
   .group:hover .nv-tag-hover {
-    background: rgba(124,92,252,0.08) !important;
-    border-color: rgba(124,92,252,0.15) !important;
-    color: rgba(124,92,252,0.8) !important;
+    background: rgba(201,152,90,0.08) !important;
+    border-color: rgba(201,152,90,0.15) !important;
+    color: rgba(201,152,90,0.8) !important;
   }
 
   /* ============================================
      FAQ ACCORDION GLOW
      ============================================ */
   .nv-faq-active {
-    background: rgba(124,92,252,0.03) !important;
-    border-color: rgba(124,92,252,0.12) !important;
+    background: rgba(201,152,90,0.03) !important;
+    border-color: rgba(201,152,90,0.12) !important;
     box-shadow: 0 4px 20px var(--nv-accent-glow);
   }
 
@@ -665,7 +665,7 @@
      CTA SECTION GLOW
      ============================================ */
   .nv-cta-glow-bg {
-    background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(124,92,252,0.06), transparent 70%);
+    background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(201,152,90,0.06), transparent 70%);
   }
 
   /* ============================================
@@ -740,8 +740,8 @@
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
   }
   .nv-pricing-popular {
-    border-color: rgba(124,92,252,0.4) !important;
-    box-shadow: 0 0 0 1px rgba(124,92,252,0.2), 0 20px 60px rgba(124,92,252,0.1) !important;
+    border-color: rgba(201,152,90,0.4) !important;
+    box-shadow: 0 0 0 1px rgba(201,152,90,0.2), 0 20px 60px rgba(201,152,90,0.1) !important;
   }
 
   /* ============================================

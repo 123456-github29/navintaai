@@ -38,7 +38,7 @@ function Particles() {
         vy: (Math.random() - 0.5) * 0.3,
         size: Math.random() * 1.5 + 0.5,
         opacity: Math.random() * 0.3 + 0.1,
-        hue: Math.random() > 0.5 ? 260 : 190, // violet or cyan
+        hue: Math.random() > 0.5 ? 35 : 30, // warm amber tones
       });
     }
 
@@ -68,7 +68,7 @@ function Particles() {
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(124, 92, 252, ${0.06 * (1 - dist / 120)})`;
+            ctx.strokeStyle = `rgba(201, 152, 90, ${0.06 * (1 - dist / 120)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -178,13 +178,13 @@ export default function HeroSection({ onGetStarted, waitlistApproved }: HeroSect
 
       {/* Ambient gradient */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,92,252,0.06), transparent 60%)",
+        background: "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,152,90,0.06), transparent 60%)",
         zIndex: 2,
       }} />
 
       {/* Subtle grid with color tint */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: `linear-gradient(rgba(124,92,252,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(124,92,252,0.03) 1px, transparent 1px)`,
+        backgroundImage: `linear-gradient(rgba(201,152,90,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(201,152,90,0.03) 1px, transparent 1px)`,
         backgroundSize: "80px 80px",
         maskImage: "radial-gradient(ellipse at 50% 40%, black 30%, transparent 70%)",
         WebkitMaskImage: "radial-gradient(ellipse at 50% 40%, black 30%, transparent 70%)",
@@ -194,8 +194,8 @@ export default function HeroSection({ onGetStarted, waitlistApproved }: HeroSect
       <div className="relative z-10 nv-container text-center" style={{ zIndex: 10 }}>
         {/* Badge with accent */}
         <div ref={badgeRef} className="inline-flex items-center gap-2 mb-10 px-4 py-2 rounded-full nv-float" style={{
-          background: "rgba(124,92,252,0.06)",
-          border: "1px solid rgba(124,92,252,0.15)",
+          background: "rgba(201,152,90,0.06)",
+          border: "1px solid rgba(201,152,90,0.15)",
         }}>
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full nv-live-dot-ping opacity-40" />
@@ -237,7 +237,7 @@ export default function HeroSection({ onGetStarted, waitlistApproved }: HeroSect
           <div ref={mockupInnerRef} className="nv-mockup-3d-inner relative rounded-xl overflow-hidden nv-gradient-border" style={{
             background: "#161616",
             border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 20px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05), 0 0 80px rgba(124,92,252,0.05)",
+            boxShadow: "0 20px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05), 0 0 80px rgba(201,152,90,0.05)",
           }}>
             {/* Browser chrome */}
             <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "#111" }}>
@@ -258,11 +258,11 @@ export default function HeroSection({ onGetStarted, waitlistApproved }: HeroSect
               <div className="flex gap-5">
                 {/* Sidebar */}
                 <div className="hidden md:flex flex-col gap-1.5 w-44 shrink-0">
-                  <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all duration-300" style={{ background: "rgba(124,92,252,0.08)", border: "1px solid rgba(124,92,252,0.15)" }}>
-                    <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: "rgba(124,92,252,0.2)" }}>
-                      <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1.5" fill="#7c5cfc"/><rect x="9" y="2" width="5" height="5" rx="1.5" fill="#7c5cfc" opacity="0.5"/><rect x="2" y="9" width="5" height="5" rx="1.5" fill="#7c5cfc" opacity="0.5"/><rect x="9" y="9" width="5" height="5" rx="1.5" fill="#7c5cfc" opacity="0.3"/></svg>
+                  <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all duration-300" style={{ background: "rgba(201,152,90,0.08)", border: "1px solid rgba(201,152,90,0.15)" }}>
+                    <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: "rgba(201,152,90,0.2)" }}>
+                      <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1.5" fill="#c9985a"/><rect x="9" y="2" width="5" height="5" rx="1.5" fill="#c9985a" opacity="0.5"/><rect x="2" y="9" width="5" height="5" rx="1.5" fill="#c9985a" opacity="0.5"/><rect x="9" y="9" width="5" height="5" rx="1.5" fill="#c9985a" opacity="0.3"/></svg>
                     </div>
-                    <span className="text-xs font-semibold" style={{ color: "rgba(124,92,252,0.9)" }}>Dashboard</span>
+                    <span className="text-xs font-semibold" style={{ color: "rgba(201,152,90,0.9)" }}>Dashboard</span>
                   </div>
                   {["Content Plan", "Record", "Library", "Brand Kit"].map((item) => (
                     <div key={item} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors duration-300 hover:bg-white/[0.03]" style={{ color: "rgba(255,255,255,0.3)" }}>
@@ -300,10 +300,10 @@ export default function HeroSection({ onGetStarted, waitlistApproved }: HeroSect
 
                   <div className="grid grid-cols-2 gap-2.5">
                     {[
-                      { title: "Brand Launch Reel", status: "Recording", pct: 72, color: "#7c5cfc" },
-                      { title: "Product Demo #3", status: "Complete", pct: 100, color: "#00d4ff" },
-                      { title: "Client Testimonial", status: "Planned", pct: 35, color: "#ff6b9d" },
-                      { title: "Weekly Update", status: "Editing", pct: 58, color: "#7c5cfc" },
+                      { title: "Brand Launch Reel", status: "Recording", pct: 72, color: "#c9985a" },
+                      { title: "Product Demo #3", status: "Complete", pct: 100, color: "#a07d50" },
+                      { title: "Client Testimonial", status: "Planned", pct: 35, color: "#e0b97a" },
+                      { title: "Weekly Update", status: "Editing", pct: 58, color: "#c9985a" },
                     ].map((card) => (
                       <div key={card.title} className="rounded-lg p-3.5 space-y-2.5 transition-all duration-300 hover:bg-white/[0.03]" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
                         <div className="flex justify-between items-start gap-1.5">

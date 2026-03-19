@@ -489,7 +489,7 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
         <div className="text-center mb-16">
           <p
             className="text-xs font-semibold tracking-[0.15em] uppercase mb-4"
-            style={{ color: "rgba(124,92,252,0.6)" }}
+            style={{ color: "rgba(201,152,90,0.6)" }}
           >
             Pricing
           </p>
@@ -544,16 +544,16 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
               style={{
                 background: "rgba(255,255,255,0.03)",
                 border: plan.popular
-                  ? "1px solid rgba(124,92,252,0.4)"
+                  ? "1px solid rgba(201,152,90,0.4)"
                   : "1px solid rgba(255,255,255,0.08)",
-                boxShadow: plan.popular ? "0 0 0 1px rgba(124,92,252,0.2), 0 20px 60px rgba(124,92,252,0.08)" : "none",
+                boxShadow: plan.popular ? "0 0 0 1px rgba(201,152,90,0.2), 0 20px 60px rgba(201,152,90,0.08)" : "none",
               }}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ background: "linear-gradient(135deg, #7c5cfc, #00d4ff)", color: "#fff" }}
+                    style={{ background: "linear-gradient(135deg, #c9985a, #a07d50)", color: "#fff" }}
                   >
                     Most Popular
                   </span>
@@ -585,7 +585,7 @@ function LandingPricingSection({ onJoinWaitlist, waitlistApproved }: { onJoinWai
                 disabled={loadingPlan === plan.id}
                 className={`w-full h-11 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 ${plan.popular ? "nv-btn-glow" : ""}`}
                 style={plan.popular
-                  ? { background: "linear-gradient(135deg, #7c5cfc, #00d4ff)", color: "#fff" }
+                  ? { background: "linear-gradient(135deg, #c9985a, #a07d50)", color: "#fff" }
                   : { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,0.08)" }
                 }
               >

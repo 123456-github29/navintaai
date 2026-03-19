@@ -5,10 +5,10 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const metrics = [
-  { end: 10, suffix: "x", label: "Faster", description: "production speed", accent: "#7c5cfc" },
-  { end: 4, suffix: "hrs", label: "Saved", description: "per week", accent: "#00d4ff" },
-  { end: 28, suffix: "", label: "Videos", description: "per month", accent: "#ff6b9d" },
-  { end: 0, suffix: "", label: "Skills", description: "needed to edit", accent: "#7c5cfc" },
+  { end: 10, suffix: "x", label: "Faster", description: "production speed", accent: "#c9985a" },
+  { end: 4, suffix: "hrs", label: "Saved", description: "per week", accent: "#a07d50" },
+  { end: 28, suffix: "", label: "Videos", description: "per month", accent: "#e0b97a" },
+  { end: 0, suffix: "", label: "Skills", description: "needed to edit", accent: "#c9985a" },
 ];
 
 function AnimatedCounter({ end, suffix, triggered }: { end: number; suffix: string; triggered: boolean }) {
@@ -66,7 +66,7 @@ export default function OutcomesSection() {
 
       <div className="nv-container relative z-10">
         <div className="outcomes-heading text-center mb-16">
-          <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-4" style={{ color: "rgba(0,212,255,0.6)" }}>Results</p>
+          <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-4" style={{ color: "rgba(160,125,80,0.6)" }}>Results</p>
           <h2 className="text-3xl md:text-[2.75rem] font-bold tracking-tight text-white">
             Built for speed and consistency
           </h2>

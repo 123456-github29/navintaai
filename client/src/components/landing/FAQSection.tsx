@@ -52,7 +52,7 @@ export default function FAQSection() {
 
       <div className="nv-container-sm relative z-10">
         <div className="faq-heading text-center mb-16">
-          <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-4" style={{ color: "rgba(0,212,255,0.6)" }}>FAQ</p>
+          <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-4" style={{ color: "rgba(160,125,80,0.6)" }}>FAQ</p>
           <h2 className="text-3xl md:text-[2.75rem] font-bold tracking-tight text-white">
             Frequently asked questions
           </h2>
@@ -65,7 +65,7 @@ export default function FAQSection() {
               className={`faq-item rounded-xl overflow-hidden transition-all duration-500 ${openIndex === i ? "nv-faq-active" : ""}`}
               style={{
                 background: openIndex === i ? undefined : "transparent",
-                border: `1px solid ${openIndex === i ? "rgba(124,92,252,0.12)" : "rgba(255,255,255,0.06)"}`,
+                border: `1px solid ${openIndex === i ? "rgba(201,152,90,0.12)" : "rgba(255,255,255,0.06)"}`,
               }}
             >
               <button onClick={() => setOpenIndex(openIndex === i ? null : i)} className="w-full px-6 py-5 text-left flex justify-between items-center gap-4 group">
@@ -74,7 +74,7 @@ export default function FAQSection() {
                   <svg
                     className="w-5 h-5 transition-all duration-500"
                     style={{
-                      color: openIndex === i ? "rgba(124,92,252,0.7)" : "rgba(255,255,255,0.3)",
+                      color: openIndex === i ? "rgba(201,152,90,0.7)" : "rgba(255,255,255,0.3)",
                       transform: openIndex === i ? "rotate(180deg)" : "rotate(0deg)",
                     }}
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"

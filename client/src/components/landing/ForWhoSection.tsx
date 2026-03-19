@@ -5,10 +5,10 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const personas = [
-  { title: "Founders & CEOs", description: "Build thought leadership and attract customers with consistent video content.", tags: ["LinkedIn", "Thought Leadership", "Brand"], accent: "#7c5cfc" },
-  { title: "Coaches & Consultants", description: "Share expertise at scale. Create educational content that builds trust and drives inquiries.", tags: ["Education", "Trust", "Clients"], accent: "#00d4ff" },
-  { title: "Content Creators", description: "Maintain a consistent posting schedule across platforms without the editing grind.", tags: ["Multi-Platform", "Growth", "Consistency"], accent: "#ff6b9d" },
-  { title: "Marketing Teams", description: "Produce high-quality video at the pace social media demands. No agency needed.", tags: ["Social Media", "Speed", "Brand Content"], accent: "#7c5cfc" },
+  { title: "Founders & CEOs", description: "Build thought leadership and attract customers with consistent video content.", tags: ["LinkedIn", "Thought Leadership", "Brand"], accent: "#c9985a" },
+  { title: "Coaches & Consultants", description: "Share expertise at scale. Create educational content that builds trust and drives inquiries.", tags: ["Education", "Trust", "Clients"], accent: "#a07d50" },
+  { title: "Content Creators", description: "Maintain a consistent posting schedule across platforms without the editing grind.", tags: ["Multi-Platform", "Growth", "Consistency"], accent: "#e0b97a" },
+  { title: "Marketing Teams", description: "Produce high-quality video at the pace social media demands. No agency needed.", tags: ["Social Media", "Speed", "Brand Content"], accent: "#c9985a" },
 ];
 
 export default function ForWhoSection() {
@@ -36,7 +36,7 @@ export default function ForWhoSection() {
 
       <div className="nv-container relative z-10">
         <div className="forwho-heading text-center mb-16">
-          <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-4" style={{ color: "rgba(124,92,252,0.6)" }}>Built for</p>
+          <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-4" style={{ color: "rgba(201,152,90,0.6)" }}>Built for</p>
           <h2 className="text-3xl md:text-[2.75rem] font-bold tracking-tight text-white">
             For anyone who needs to show up on camera
           </h2>
