@@ -57,14 +57,14 @@ export default function Dashboard() {
 
   if (!isAuthenticated || planLoading || postsLoading) {
     return (
-      <div className="p-8 lg:p-12 min-h-screen" style={{ background: "#fafafa" }}>
+      <div className="p-8 lg:p-12 min-h-screen" style={{ background: "#0d0d0d" }}>
         <div className="max-w-[1400px] mx-auto space-y-8">
-          <Skeleton className="h-10 w-48 rounded-lg" style={{ background: "#e5e5e5" }} />
+          <Skeleton className="h-10 w-48 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28 rounded-xl" style={{ background: "#e5e5e5" }} />)}
+            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }} />)}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-52 rounded-xl" style={{ background: "#e5e5e5" }} />)}
+            {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-52 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }} />)}
           </div>
         </div>
       </div>
@@ -73,15 +73,15 @@ export default function Dashboard() {
 
   if (!contentPlan) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[85vh] p-8" style={{ background: "#fafafa" }}>
+      <div className="flex flex-col items-center justify-center min-h-[85vh] p-8" style={{ background: "#0d0d0d" }}>
         <div className="text-center space-y-10 max-w-sm">
           <div className="space-y-6">
-            <div className="h-20 w-20 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(15,163,126,0.08)", border: "1px solid rgba(15,163,126,0.15)" }}>
-              <SparklesIcon className="h-9 w-9" style={{ color: "#0fa37e" }} />
+            <div className="h-20 w-20 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <SparklesIcon className="h-9 w-9" style={{ color: "rgba(255,255,255,0.5)" }} />
             </div>
             <div className="space-y-3">
-              <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#202123" }}>Welcome to Navinta AI</h1>
-              <p className="text-sm leading-relaxed" style={{ color: "#6e6e80" }}>
+              <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#ffffff" }}>Welcome to Navinta AI</h1>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
                 Create your personalized content plan to start producing professional videos.
               </p>
             </div>
@@ -89,8 +89,8 @@ export default function Dashboard() {
           <Link href="/onboarding">
             <Button
               size="lg"
-              className="h-12 px-10 text-sm font-semibold rounded-lg transition-all"
-              style={{ background: "#0fa37e", color: "#fff" }}
+              className="h-12 px-10 text-sm font-semibold rounded-lg transition-all hover:opacity-90"
+              style={{ background: "#ffffff", color: "#0d0d0d" }}
               data-testid="button-create-plan"
             >
               Create Content Plan
@@ -111,19 +111,19 @@ export default function Dashboard() {
   const plannedCount = allPosts.filter(p => p.status === "planned").length;
 
   return (
-    <div className="p-6 md:p-8 lg:p-10 min-h-screen" style={{ background: "#fafafa" }}>
+    <div className="p-6 md:p-8 lg:p-10 min-h-screen" style={{ background: "#0d0d0d" }}>
       <div className="max-w-[1400px] mx-auto space-y-8">
 
         {/* Header */}
         <div ref={headerRef} className="flex items-end justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#202123" }}>Your Studio</h1>
-            <p className="text-sm mt-1" style={{ color: "#acacbe" }}>Manage your video content</p>
+            <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#ffffff" }}>Your Studio</h1>
+            <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>Manage your video content</p>
           </div>
           <Link href="/onboarding">
             <button
               className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-lg transition-all hover:opacity-90"
-              style={{ background: "#0fa37e", color: "#fff" }}
+              style={{ background: "#ffffff", color: "#0d0d0d" }}
               data-testid="button-new-plan"
             >
               <PlusIcon className="h-4 w-4" />
@@ -156,10 +156,10 @@ export default function Dashboard() {
           )}
 
           {allPosts.length === 0 && (
-            <div className="border border-dashed rounded-xl py-20 flex flex-col items-center justify-center text-center" style={{ borderColor: "#d9d9e3" }}>
-              <VideoCameraIcon className="h-12 w-12 mb-4" style={{ color: "#d9d9e3" }} />
-              <p className="text-sm mb-1" style={{ color: "#6e6e80" }}>No videos yet</p>
-              <p className="text-xs" style={{ color: "#acacbe" }}>Create a content plan to get started</p>
+            <div className="border border-dashed rounded-xl py-20 flex flex-col items-center justify-center text-center" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+              <VideoCameraIcon className="h-12 w-12 mb-4" style={{ color: "rgba(255,255,255,0.15)" }} />
+              <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.5)" }}>No videos yet</p>
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>Create a content plan to get started</p>
             </div>
           )}
         </div>
@@ -173,8 +173,8 @@ function VideoSection({ title, subtitle, posts }: { title: string; subtitle: str
     <div>
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold" style={{ color: "#202123" }}>{title}</h3>
-          <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: "#f7f7f8", color: "#acacbe", border: "1px solid #e5e5e5" }}>{subtitle}</span>
+          <h3 className="text-lg font-semibold" style={{ color: "#ffffff" }}>{title}</h3>
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.06)" }}>{subtitle}</span>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -197,31 +197,24 @@ function StatCard({
   label: string;
   accent?: "emerald" | "blue" | "amber";
 }) {
-  const styles = {
-    emerald: { iconBg: "rgba(15,163,126,0.08)", iconColor: "#0fa37e", iconBorder: "rgba(15,163,126,0.15)" },
-    blue: { iconBg: "rgba(59,130,246,0.08)", iconColor: "#3b82f6", iconBorder: "rgba(59,130,246,0.15)" },
-    amber: { iconBg: "rgba(245,158,11,0.08)", iconColor: "#f59e0b", iconBorder: "rgba(245,158,11,0.15)" },
-  };
-  const s = accent ? styles[accent] : { iconBg: "#f7f7f8", iconColor: "#6e6e80", iconBorder: "#e5e5e5" };
-
   return (
-    <div className="bg-white rounded-xl p-5 transition-all duration-200 hover:shadow-sm" style={{ border: "1px solid #e5e5e5" }}>
-      <div className="h-8 w-8 rounded-lg flex items-center justify-center mb-3" style={{ background: s.iconBg, color: s.iconColor, border: `1px solid ${s.iconBorder}` }}>
+    <div className="rounded-xl p-5 transition-all duration-200" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="h-8 w-8 rounded-lg flex items-center justify-center mb-3" style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
         {icon}
       </div>
-      <div className="text-2xl font-bold tracking-tight" style={{ color: "#202123" }}>{value}</div>
-      <div className="text-xs font-medium mt-0.5" style={{ color: "#acacbe" }}>{label}</div>
+      <div className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{value}</div>
+      <div className="text-xs font-medium mt-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>{label}</div>
     </div>
   );
 }
 
 function PostCard({ post }: { post: Post }) {
   const statusConfig = {
-    planned: { icon: CalendarIcon, label: "Planned", bg: "rgba(99,102,241,0.06)", color: "#6366f1", border: "rgba(99,102,241,0.12)" },
-    recording: { icon: PlayCircleIcon, label: "Recording", bg: "rgba(245,158,11,0.06)", color: "#f59e0b", border: "rgba(245,158,11,0.12)" },
-    editing: { icon: PencilSquareIcon, label: "Editing", bg: "#f7f7f8", color: "#6e6e80", border: "#e5e5e5" },
-    completed: { icon: CheckCircleIcon, label: "Completed", bg: "rgba(15,163,126,0.06)", color: "#0fa37e", border: "rgba(15,163,126,0.12)" },
-    scheduled: { icon: CalendarIcon, label: "Scheduled", bg: "rgba(59,130,246,0.06)", color: "#3b82f6", border: "rgba(59,130,246,0.12)" },
+    planned: { icon: CalendarIcon, label: "Planned", bg: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.4)", border: "rgba(255,255,255,0.06)" },
+    recording: { icon: PlayCircleIcon, label: "Recording", bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)", border: "rgba(255,255,255,0.1)" },
+    editing: { icon: PencilSquareIcon, label: "Editing", bg: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.35)", border: "rgba(255,255,255,0.06)" },
+    completed: { icon: CheckCircleIcon, label: "Completed", bg: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", border: "rgba(255,255,255,0.12)" },
+    scheduled: { icon: CalendarIcon, label: "Scheduled", bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", border: "rgba(255,255,255,0.08)" },
   };
 
   const config = statusConfig[post.status as keyof typeof statusConfig] || statusConfig.planned;
@@ -230,13 +223,13 @@ function PostCard({ post }: { post: Post }) {
   return (
     <Link href={`/post/${post.id}`}>
       <div
-        className="group cursor-pointer bg-white rounded-xl p-5 h-full transition-all duration-200 hover:shadow-sm"
-        style={{ border: "1px solid #e5e5e5" }}
+        className="group cursor-pointer rounded-xl p-5 h-full transition-all duration-200"
+        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
         data-testid={`card-post-${post.id}`}
       >
         <div className="flex flex-col gap-3.5 h-full">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium" style={{ color: "#acacbe" }}>Day {post.dayNumber}</span>
+            <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.25)" }}>Day {post.dayNumber}</span>
             <span
               className="inline-flex items-center gap-1.5 text-[0.65rem] font-semibold px-2.5 py-1 rounded-full"
               style={{ background: config.bg, color: config.color, border: `1px solid ${config.border}` }}
@@ -245,17 +238,17 @@ function PostCard({ post }: { post: Post }) {
             </span>
           </div>
 
-          <h4 className="text-[0.95rem] font-semibold leading-snug line-clamp-2 group-hover:opacity-80 transition-opacity" style={{ color: "#202123" }}>
+          <h4 className="text-[0.95rem] font-semibold leading-snug line-clamp-2 group-hover:opacity-80 transition-opacity" style={{ color: "#ffffff" }}>
             {post.title}
           </h4>
 
-          <p className="text-xs leading-relaxed line-clamp-2 flex-grow" style={{ color: "#acacbe" }}>
+          <p className="text-xs leading-relaxed line-clamp-2 flex-grow" style={{ color: "rgba(255,255,255,0.5)" }}>
             {post.concept}
           </p>
 
-          <div className="flex items-center justify-between pt-3.5 text-xs font-medium" style={{ borderTop: "1px solid #f0f0f0", color: "#acacbe" }}>
+          <div className="flex items-center justify-between pt-3.5 text-xs font-medium" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.25)" }}>
             <span>{post.shotList.length} shots</span>
-            <span className="font-semibold" style={{ color: "#6e6e80" }}>{post.platform}</span>
+            <span className="font-semibold" style={{ color: "rgba(255,255,255,0.5)" }}>{post.platform}</span>
           </div>
         </div>
       </div>

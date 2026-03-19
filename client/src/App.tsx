@@ -62,26 +62,26 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen" style={{ background: "#fafafa" }}>
+      <div className="flex flex-col items-center justify-center h-screen" style={{ background: "#0d0d0d" }}>
         <div className="relative w-10 h-10">
-          <div className="absolute inset-0 rounded-full" style={{ border: "2px solid #e5e5e5" }} />
-          <div className="absolute inset-0 rounded-full animate-spin" style={{ border: "2px solid transparent", borderTopColor: "#0fa37e" }} />
+          <div className="absolute inset-0 rounded-full" style={{ border: "2px solid rgba(255,255,255,0.06)" }} />
+          <div className="absolute inset-0 rounded-full animate-spin" style={{ border: "2px solid transparent", borderTopColor: "rgba(255,255,255,0.6)" }} />
         </div>
-        <p className="mt-6 text-sm font-medium" style={{ color: "#acacbe" }}>Loading</p>
+        <p className="mt-6 text-sm font-medium" style={{ color: "rgba(255,255,255,0.3)" }}>Loading</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-center px-4" style={{ background: "#fafafa" }}>
+      <div className="flex flex-col items-center justify-center h-screen text-center px-4" style={{ background: "#0d0d0d" }}>
         <div className="max-w-md">
-          <h1 className="text-2xl font-bold mb-4" style={{ color: "#202123" }}>Something went wrong</h1>
-          <p className="text-sm mb-8" style={{ color: "#6e6e80" }}>{error}</p>
+          <h1 className="text-2xl font-bold text-white mb-4">Something went wrong</h1>
+          <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{error}</p>
           <button
             onClick={retry}
             className="px-8 py-3 rounded-lg font-semibold text-sm transition-all hover:opacity-90"
-            style={{ background: "#202123", color: "#fff" }}
+            style={{ background: "#ffffff", color: "#0d0d0d" }}
           >
             Try Again
           </button>
@@ -92,7 +92,6 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
 
   const waitlistApproved = typeof window !== "undefined" && localStorage.getItem("waitlist_approved") === "true";
 
-  // Unauthenticated users always see the landing page (which has waitlist gate built in)
   if (!isAuthenticated) {
     return (
       <Switch>
@@ -109,7 +108,6 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
     );
   }
 
-  // Authenticated but not waitlist approved - redirect to landing
   if (!waitlistApproved) {
     return (
       <Switch>
@@ -140,9 +138,9 @@ function AuthRouter({ sidebarStyle }: { sidebarStyle: any }) {
         <Route>
           <div className="flex h-screen w-full" style={{ fontFamily: "'Inter', sans-serif" }}>
             <AppSidebar />
-            <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "#fafafa" }}>
-              <header className="flex items-center justify-between gap-4 px-6 py-3 sticky top-0 z-40" style={{ background: "rgba(250,250,250,0.9)", backdropFilter: "blur(12px)", borderBottom: "1px solid #e5e5e5" }}>
-                <SidebarTrigger data-testid="button-sidebar-toggle" className="rounded-lg transition-colors" style={{ color: "#acacbe" }} />
+            <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "#0d0d0d" }}>
+              <header className="flex items-center justify-between gap-4 px-6 py-3 sticky top-0 z-40" style={{ background: "rgba(13,13,13,0.8)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <SidebarTrigger data-testid="button-sidebar-toggle" className="rounded-lg transition-colors hover:bg-white/5" style={{ color: "rgba(255,255,255,0.3)" }} />
               </header>
               <main className="flex-1 overflow-auto">
                 <Switch>

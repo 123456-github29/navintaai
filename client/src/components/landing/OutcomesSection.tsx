@@ -1,68 +1,74 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const metrics = [
-  { value: "10x", label: "Faster production", description: "From idea to published video" },
-  { value: "4hrs", label: "Saved per week", description: "Compared to manual workflow" },
-  { value: "28", label: "Videos per month", description: "With one content plan" },
-  { value: "0", label: "Editing skills needed", description: "AI handles post-production" },
+  { end: 10, suffix: "x", label: "Faster", description: "production speed" },
+  { end: 4, suffix: "hrs", label: "Saved", description: "per week" },
+  { end: 28, suffix: "", label: "Videos", description: "per month" },
+  { end: 0, suffix: "", label: "Skills", description: "needed to edit" },
 ];
+
+function AnimatedCounter({ end, suffix, triggered }: { end: number; suffix: string; triggered: boolean }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!triggered) return;
+    if (end === 0) { setCount(0); return; }
+    let current = 0;
+    const step = Math.max(1, Math.floor(end / 30));
+    const interval = setInterval(() => {
+      current += step;
+      if (current >= end) { setCount(end); clearInterval(interval); }
+      else setCount(current);
+    }, 40);
+    return () => clearInterval(interval);
+  }, [triggered, end]);
+
+  return <>{count}{suffix}</>;
+}
 
 export default function OutcomesSection() {
   const sectionRef = useRef<HTMLElement>(null);
+  const [triggered, setTriggered] = useState(false);
 
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
-
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setTriggered(true); return; }
     const ctx = gsap.context(() => {
-      gsap.from(".metric-item", {
-        y: 30,
-        opacity: 0,
-        duration: 0.6,
-        stagger: 0.1,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 80%",
-          once: true,
-        },
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: "top 80%",
+        once: true,
+        onEnter: () => setTriggered(true),
+      });
+      gsap.from(".metric-card", {
+        y: 30, opacity: 0, duration: 0.6, stagger: 0.1, ease: "power3.out",
+        scrollTrigger: { trigger: sectionRef.current, start: "top 80%", once: true },
       });
     }, sectionRef);
-
     return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={sectionRef} className="nv-section" style={{ background: "#fff" }}>
+    <section ref={sectionRef} className="nv-section" style={{ background: "#111111" }}>
       <div className="nv-container">
-        <div className="text-center mb-14">
-          <p className="text-sm font-semibold tracking-wide uppercase mb-3" style={{ color: "#0fa37e" }}>
-            Results
-          </p>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ color: "#202123" }}>
+        <div className="text-center mb-16">
+          <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>Results</p>
+          <h2 className="text-3xl md:text-[2.75rem] font-bold tracking-tight text-white">
             Built for speed and consistency
           </h2>
-          <p className="mt-4 text-lg max-w-2xl mx-auto" style={{ color: "#6e6e80" }}>
-            Navinta users create more content in less time, without sacrificing quality.
-          </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {metrics.map((metric, i) => (
-            <div key={i} className="metric-item text-center p-6 rounded-xl" style={{ background: "#f7f7f8", border: "1px solid #e5e5e5" }}>
-              <div className="text-4xl md:text-5xl font-bold tracking-tight mb-2" style={{ color: "#0fa37e" }}>
-                {metric.value}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+          {metrics.map((m, i) => (
+            <div key={i} className="metric-card text-center p-7 rounded-xl group" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2 transition-transform duration-500 group-hover:scale-105">
+                <AnimatedCounter end={m.end} suffix={m.suffix} triggered={triggered} />
               </div>
-              <div className="text-sm font-semibold mb-1" style={{ color: "#202123" }}>
-                {metric.label}
-              </div>
-              <div className="text-xs" style={{ color: "#acacbe" }}>
-                {metric.description}
-              </div>
+              <div className="text-sm font-semibold text-white/70 mb-0.5">{m.label}</div>
+              <div className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{m.description}</div>
             </div>
           ))}
         </div>
