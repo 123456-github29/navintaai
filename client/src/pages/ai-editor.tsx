@@ -171,10 +171,11 @@ export default function AiEditor() {
         handleTranscribe(data.session.id);
       }
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error("[ai-editor] Failed to start editing session:", error.message);
       toast({
         title: "Failed to start editing session",
-        description: "Please try again.",
+        description: error.message || "Please try again.",
         variant: "destructive",
       });
     },
