@@ -103,15 +103,27 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
     });
   });
 
-  // ---- API Call Logs (for debugging external API usage) ----
+  // ---- OpenAI & Luma API Call Logs ----
 
-  // Get recent API call logs
+  // Get recent OpenAI and Luma API call logs
+  // ?service=openai|openai-whisper|luma to filter, or omit for all
   app.get("/api/logs", requireAuth, asyncHandler(async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const service = req.query.service as string | undefined;
-    const logs = getRecentLogs(limit, service);
+    const allowedServices = ["openai", "openai-whisper", "luma"];
+    const filterService = service && allowedServices.includes(service) ? service : undefined;
+
+    // Only return OpenAI and Luma logs
+    let logs = filterService
+      ? getRecentLogs(limit, filterService)
+      : getRecentLogs(200).filter((l) => allowedServices.includes(l.service)).slice(-limit);
     const stats = getLogStats();
-    res.json({ logs, stats, total: logs.length });
+    // Filter stats to only OpenAI and Luma
+    const filteredStats: Record<string, any> = {};
+    for (const svc of allowedServices) {
+      if (stats[svc]) filteredStats[svc] = stats[svc];
+    }
+    res.json({ logs, stats: filteredStats, total: logs.length });
   }));
 
   // Clear API logs
