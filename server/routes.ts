@@ -41,6 +41,7 @@ import {
 import { z } from "zod";
 import { deepSanitize, ensureByteSafe } from "./utils/sanitizeText";
 import { utf8Safe } from "./utils/utf8Safe";
+import { getRecentLogs, getLogStats, clearLogs } from "./lib/apiLogger";
 
 import * as supabaseStorage from "./lib/supabaseStorage";
 import multer from "multer";
@@ -101,6 +102,23 @@ export async function registerRoutes(app: Express, existingServer?: Server): Pro
       timestamp: new Date().toISOString(),
     });
   });
+
+  // ---- API Call Logs (for debugging external API usage) ----
+
+  // Get recent API call logs
+  app.get("/api/logs", requireAuth, asyncHandler(async (req, res) => {
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    const service = req.query.service as string | undefined;
+    const logs = getRecentLogs(limit, service);
+    const stats = getLogStats();
+    res.json({ logs, stats, total: logs.length });
+  }));
+
+  // Clear API logs
+  app.delete("/api/logs", requireAuth, asyncHandler(async (_req, res) => {
+    clearLogs();
+    res.json({ ok: true, message: "API logs cleared" });
+  }));
 
   // Stripe health check endpoint (admin only)
   app.get("/api/stripe/health", requireAuth, asyncHandler(async (req, res) => {

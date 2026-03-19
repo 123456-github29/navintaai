@@ -55,6 +55,8 @@ export interface MediaItem {
   alt?: string;
 }
 
+import { logApiCall } from "./apiLogger";
+
 const PEXELS_API_KEY = process.env.PEXELS_API_KEY || "";
 const PEXELS_BASE_URL = "https://api.pexels.com";
 
@@ -67,17 +69,24 @@ async function fetchFromPexels<T>(endpoint: string): Promise<T> {
     throw new Error("Pexels API key not configured");
   }
 
-  const response = await fetch(`${PEXELS_BASE_URL}${endpoint}`, {
-    headers: {
-      Authorization: PEXELS_API_KEY,
+  return logApiCall({
+    service: "pexels",
+    method: "GET",
+    endpoint,
+    fn: async () => {
+      const response = await fetch(`${PEXELS_BASE_URL}${endpoint}`, {
+        headers: {
+          Authorization: PEXELS_API_KEY,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Pexels API error: ${response.status} ${response.statusText}`);
+      }
+
+      return response.json() as Promise<T>;
     },
   });
-
-  if (!response.ok) {
-    throw new Error(`Pexels API error: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
 }
 
 export async function getCuratedVideos(count: number = 6): Promise<MediaItem[]> {

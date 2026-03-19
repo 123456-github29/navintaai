@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { promises as fs } from "fs";
 import path from "path";
 import { utf8Safe } from "../utils/utf8Safe";
+import { logApiCall } from "./apiLogger";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -30,11 +31,18 @@ export async function transcribeVideo(filePath: string): Promise<TranscriptionRe
 
   let response;
   try {
-    response = await openai.audio.transcriptions.create({
-      file,
-      model: "whisper-1",
-      response_format: "verbose_json",
-      timestamp_granularities: ["segment"],
+    response = await logApiCall({
+      service: "openai-whisper",
+      method: "POST",
+      endpoint: "audio.transcriptions (whisper-1)",
+      requestSummary: `file: ${path.basename(filePath)}`,
+      fn: () =>
+        openai.audio.transcriptions.create({
+          file,
+          model: "whisper-1",
+          response_format: "verbose_json",
+          timestamp_granularities: ["segment"],
+        }),
     });
   } catch (err: any) {
     console.error("[transcribe] OpenAI Whisper API error:", err?.message || err);
@@ -219,14 +227,21 @@ User request: ${userMessage}`;
 
   messages.push({ role: "user", content: contextMessage });
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages,
-    response_format: { type: "json_object" },
-    temperature: 0.7,
+  const chatResponse = await logApiCall({
+    service: "openai",
+    method: "POST",
+    endpoint: "chat.completions (gpt-4o, edit-planning)",
+    requestSummary: `user request: ${userMessage.slice(0, 100)}`,
+    fn: () =>
+      openai.chat.completions.create({
+        model: "gpt-4o",
+        messages,
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+      }),
   });
 
-  const content = response.choices[0]?.message?.content || "{}";
+  const content = chatResponse.choices[0]?.message?.content || "{}";
   let parsed: any;
   try {
     parsed = JSON.parse(content);
@@ -267,31 +282,39 @@ export async function generateLumaVideo(
     };
   }
 
-  const response = await fetch("https://api.lumalabs.ai/dream-machine/v1/generations", {
+  return logApiCall({
+    service: "luma",
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${LUMA_API_KEY}`,
-      "Content-Type": "application/json",
+    endpoint: "dream-machine/v1/generations",
+    requestSummary: `prompt: ${prompt.slice(0, 100)} | aspect: ${aspectRatio}`,
+    fn: async () => {
+      const response = await fetch("https://api.lumalabs.ai/dream-machine/v1/generations", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LUMA_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt,
+          aspect_ratio: aspectRatio,
+          loop: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error("[luma] Generation failed:", error);
+        return { id: "error", status: "failed" } as LumaGenerationResult;
+      }
+
+      const data = await response.json();
+      return {
+        id: data.id,
+        status: data.state || "queued",
+        videoUrl: data.assets?.video,
+      } as LumaGenerationResult;
     },
-    body: JSON.stringify({
-      prompt,
-      aspect_ratio: aspectRatio,
-      loop: false,
-    }),
   });
-
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("[luma] Generation failed:", error);
-    return { id: "error", status: "failed" };
-  }
-
-  const data = await response.json();
-  return {
-    id: data.id,
-    status: data.state || "queued",
-    videoUrl: data.assets?.video,
-  };
 }
 
 export async function checkLumaStatus(generationId: string): Promise<LumaGenerationResult> {
@@ -299,25 +322,33 @@ export async function checkLumaStatus(generationId: string): Promise<LumaGenerat
     return { id: generationId, status: "failed" };
   }
 
-  const response = await fetch(
-    `https://api.lumalabs.ai/dream-machine/v1/generations/${generationId}`,
-    {
-      headers: {
-        "Authorization": `Bearer ${LUMA_API_KEY}`,
-      },
+  return logApiCall({
+    service: "luma",
+    method: "GET",
+    endpoint: `dream-machine/v1/generations/${generationId}`,
+    requestSummary: `check status: ${generationId}`,
+    fn: async () => {
+      const response = await fetch(
+        `https://api.lumalabs.ai/dream-machine/v1/generations/${generationId}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${LUMA_API_KEY}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        return { id: generationId, status: "failed" } as LumaGenerationResult;
+      }
+
+      const data = await response.json();
+      return {
+        id: data.id,
+        status: data.state || "unknown",
+        videoUrl: data.assets?.video,
+      } as LumaGenerationResult;
     },
-  );
-
-  if (!response.ok) {
-    return { id: generationId, status: "failed" };
-  }
-
-  const data = await response.json();
-  return {
-    id: data.id,
-    status: data.state || "unknown",
-    videoUrl: data.assets?.video,
-  };
+  });
 }
 
 // ---- Edit Presets ----
