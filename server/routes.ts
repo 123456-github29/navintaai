@@ -2851,6 +2851,103 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     }
   }));
 
+  // ========== DEV DASHBOARD ENDPOINTS ==========
+  // Password-protected admin endpoints (no JWT auth - uses dashboard password)
+  const DEV_DASHBOARD_PASSWORD = "rushil";
+
+  const requireDevAuth = (req: any, res: any, next: any) => {
+    const password = req.headers["x-dev-password"];
+    if (password !== DEV_DASHBOARD_PASSWORD) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    next();
+  };
+
+  // Get all users with entitlements
+  app.get("/api/dev/users", requireDevAuth, asyncHandler(async (_req, res) => {
+    const usersData = await storage.getAllUsersWithEntitlements();
+    res.json(usersData);
+  }));
+
+  // Get all dev accounts (services like Google API, Supabase, etc.)
+  app.get("/api/dev/accounts", requireDevAuth, asyncHandler(async (_req, res) => {
+    const accounts = await storage.getDevAccounts();
+    res.json(accounts);
+  }));
+
+  // Create a new dev account
+  app.post("/api/dev/accounts", requireDevAuth, asyncHandler(async (req, res) => {
+    const { name, provider, monthlyCost, notes } = req.body;
+    const account = await storage.createDevAccount({ name, provider, monthlyCost: monthlyCost || 0, notes });
+    res.json(account);
+  }));
+
+  // Update a dev account
+  app.patch("/api/dev/accounts/:id", requireDevAuth, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+    const account = await storage.updateDevAccount(id, updates);
+    if (!account) return res.status(404).json({ error: "Account not found" });
+    res.json(account);
+  }));
+
+  // Delete a dev account
+  app.delete("/api/dev/accounts/:id", requireDevAuth, asyncHandler(async (req, res) => {
+    await storage.deleteDevAccount(req.params.id);
+    res.json({ ok: true });
+  }));
+
+  // Get all API usage
+  app.get("/api/dev/api-usage", requireDevAuth, asyncHandler(async (_req, res) => {
+    const usage = await storage.getApiUsage();
+    res.json(usage);
+  }));
+
+  // Create API usage entry
+  app.post("/api/dev/api-usage", requireDevAuth, asyncHandler(async (req, res) => {
+    const { accountId, apiName, callCount, costCents, period } = req.body;
+    const usage = await storage.createApiUsage({ accountId, apiName, callCount: callCount || 0, costCents: costCents || 0, period });
+    res.json(usage);
+  }));
+
+  // Update API usage entry
+  app.patch("/api/dev/api-usage/:id", requireDevAuth, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+    const usage = await storage.updateApiUsage(id, updates);
+    if (!usage) return res.status(404).json({ error: "Usage entry not found" });
+    res.json(usage);
+  }));
+
+  // Delete API usage entry
+  app.delete("/api/dev/api-usage/:id", requireDevAuth, asyncHandler(async (req, res) => {
+    await storage.deleteApiUsage(req.params.id);
+    res.json({ ok: true });
+  }));
+
+  // Get total earnings (sum of all user payments)
+  app.get("/api/dev/totals", requireDevAuth, asyncHandler(async (_req, res) => {
+    const usersData = await storage.getAllUsersWithEntitlements();
+    const totalEarned = usersData.reduce((sum: number, u: any) => sum + (u.monthlyPayment || 0), 0);
+
+    const accounts = await storage.getDevAccounts();
+    const totalAccountCosts = accounts.reduce((sum: number, a: any) => sum + (a.monthlyCost || 0), 0);
+
+    const apiUsageData = await storage.getApiUsage();
+    const totalApiSpend = apiUsageData.reduce((sum: number, a: any) => sum + (a.costCents || 0), 0);
+
+    const totalSpent = totalAccountCosts + totalApiSpend;
+
+    res.json({
+      totalEarned, // in cents
+      totalSpent,  // in cents
+      totalAccountCosts,
+      totalApiSpend,
+      userCount: usersData.length,
+      accountCount: accounts.length,
+    });
+  }));
+
   const httpServer = existingServer || createServer(app);
   return httpServer;
 }
