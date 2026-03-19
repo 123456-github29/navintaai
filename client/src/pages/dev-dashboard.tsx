@@ -153,7 +153,7 @@ function UsersTab() {
   useEffect(() => {
     fetch(`${API_BASE}/users`, { headers: { "x-dev-password": "rushil" } })
       .then((r) => r.json())
-      .then((data) => { setUsers(data); setLoading(false); })
+      .then((data) => { setUsers(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
@@ -211,7 +211,7 @@ function AccountsTab({ onUpdate }: { onUpdate: () => void }) {
 
   const fetchAccounts = useCallback(async () => {
     const res = await fetch(`${API_BASE}/accounts`, { headers: { "x-dev-password": "rushil" } });
-    if (res.ok) setAccounts(await res.json());
+    if (res.ok) { const data = await res.json(); setAccounts(Array.isArray(data) ? data : []); }
     setLoading(false);
   }, []);
 
@@ -318,8 +318,8 @@ function ApiUsageTab({ onUpdate }: { onUpdate: () => void }) {
       fetch(`${API_BASE}/api-usage`, { headers: { "x-dev-password": "rushil" } }),
       fetch(`${API_BASE}/accounts`, { headers: { "x-dev-password": "rushil" } }),
     ]);
-    if (usageRes.ok) setUsage(await usageRes.json());
-    if (accountsRes.ok) setAccounts(await accountsRes.json());
+    if (usageRes.ok) { const d = await usageRes.json(); setUsage(Array.isArray(d) ? d : []); }
+    if (accountsRes.ok) { const d = await accountsRes.json(); setAccounts(Array.isArray(d) ? d : []); }
     setLoading(false);
   }, []);
 

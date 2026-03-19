@@ -39,6 +39,7 @@ import {
   sanitizeString,
 } from "./middleware/validation";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
 import { deepSanitize, ensureByteSafe } from "./utils/sanitizeText";
 import { utf8Safe } from "./utils/utf8Safe";
 
@@ -2863,15 +2864,53 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     next();
   };
 
+  // Helper: safely call storage methods that may fail if tables don't exist yet
+  async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+    try { return await fn(); } catch { return fallback; }
+  }
+
+  // Auto-create dev tables if they don't exist
+  app.use("/api/dev", async (_req, _res, next) => {
+    try {
+      await (storage as any).db.execute(
+        sql`CREATE TABLE IF NOT EXISTS dev_accounts (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          name TEXT NOT NULL,
+          provider TEXT NOT NULL,
+          monthly_cost INTEGER NOT NULL DEFAULT 0,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        )`
+      );
+      await (storage as any).db.execute(
+        sql`CREATE TABLE IF NOT EXISTS api_usage (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          account_id VARCHAR NOT NULL REFERENCES dev_accounts(id) ON DELETE CASCADE,
+          api_name TEXT NOT NULL,
+          call_count INTEGER NOT NULL DEFAULT 0,
+          cost_cents INTEGER NOT NULL DEFAULT 0,
+          period TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        )`
+      );
+    } catch (e) {
+      // Tables may already exist or DB not available - continue anyway
+      console.log("[dev-dashboard] Table auto-create note:", (e as any)?.message?.slice(0, 80));
+    }
+    next();
+  });
+
   // Get all users with entitlements
   app.get("/api/dev/users", requireDevAuth, asyncHandler(async (_req, res) => {
-    const usersData = await storage.getAllUsersWithEntitlements();
+    const usersData = await safeQuery(() => storage.getAllUsersWithEntitlements(), []);
     res.json(usersData);
   }));
 
   // Get all dev accounts (services like Google API, Supabase, etc.)
   app.get("/api/dev/accounts", requireDevAuth, asyncHandler(async (_req, res) => {
-    const accounts = await storage.getDevAccounts();
+    const accounts = await safeQuery(() => storage.getDevAccounts(), []);
     res.json(accounts);
   }));
 
@@ -2899,7 +2938,7 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
 
   // Get all API usage
   app.get("/api/dev/api-usage", requireDevAuth, asyncHandler(async (_req, res) => {
-    const usage = await storage.getApiUsage();
+    const usage = await safeQuery(() => storage.getApiUsage(), []);
     res.json(usage);
   }));
 
@@ -2927,13 +2966,13 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
 
   // Get total earnings (sum of all user payments)
   app.get("/api/dev/totals", requireDevAuth, asyncHandler(async (_req, res) => {
-    const usersData = await storage.getAllUsersWithEntitlements();
+    const usersData = await safeQuery(() => storage.getAllUsersWithEntitlements(), []);
     const totalEarned = usersData.reduce((sum: number, u: any) => sum + (u.monthlyPayment || 0), 0);
 
-    const accounts = await storage.getDevAccounts();
+    const accounts = await safeQuery(() => storage.getDevAccounts(), []);
     const totalAccountCosts = accounts.reduce((sum: number, a: any) => sum + (a.monthlyCost || 0), 0);
 
-    const apiUsageData = await storage.getApiUsage();
+    const apiUsageData = await safeQuery(() => storage.getApiUsage(), []);
     const totalApiSpend = apiUsageData.reduce((sum: number, a: any) => sum + (a.costCents || 0), 0);
 
     const totalSpent = totalAccountCosts + totalApiSpend;
