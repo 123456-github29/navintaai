@@ -32,6 +32,7 @@ export function setupSecurity(app: Express) {
             "https://*.supabase.co",
             "https://*.supabase.in",
             "https://api.openai.com",
+            "https://api.lumalabs.ai",
             "https://generativelanguage.googleapis.com",
             ...(isProduction ? [] : ["ws:", "wss:"]),
           ],

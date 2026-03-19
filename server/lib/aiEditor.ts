@@ -6,7 +6,9 @@ import { logApiCall } from "./apiLogger";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const LUMA_API_KEY = process.env.LUMA_API_KEY || "";
+// Luma client is now in lumaClient.ts with full config/retry/validation support
+export { generateLumaVideo, checkLumaStatus } from "./lumaClient";
+export type { LumaGenerationResult } from "./lumaClient";
 
 // ---- Whisper Transcription ----
 
@@ -262,94 +264,7 @@ User request: ${userMessage}`;
   };
 }
 
-// ---- Luma AI Video Generation ----
-
-export interface LumaGenerationResult {
-  id: string;
-  status: string;
-  videoUrl?: string;
-}
-
-export async function generateLumaVideo(
-  prompt: string,
-  duration: number = 5,
-  aspectRatio: string = "9:16",
-): Promise<LumaGenerationResult> {
-  if (!LUMA_API_KEY) {
-    return {
-      id: "luma_disabled",
-      status: "failed",
-    };
-  }
-
-  return logApiCall({
-    service: "luma",
-    method: "POST",
-    endpoint: "dream-machine/v1/generations",
-    requestSummary: `prompt: ${prompt.slice(0, 100)} | aspect: ${aspectRatio}`,
-    fn: async () => {
-      const response = await fetch("https://api.lumalabs.ai/dream-machine/v1/generations", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${LUMA_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt,
-          aspect_ratio: aspectRatio,
-          loop: false,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        console.error("[luma] Generation failed:", error);
-        return { id: "error", status: "failed" } as LumaGenerationResult;
-      }
-
-      const data = await response.json();
-      return {
-        id: data.id,
-        status: data.state || "queued",
-        videoUrl: data.assets?.video,
-      } as LumaGenerationResult;
-    },
-  });
-}
-
-export async function checkLumaStatus(generationId: string): Promise<LumaGenerationResult> {
-  if (!LUMA_API_KEY) {
-    return { id: generationId, status: "failed" };
-  }
-
-  return logApiCall({
-    service: "luma",
-    method: "GET",
-    endpoint: `dream-machine/v1/generations/${generationId}`,
-    requestSummary: `check status: ${generationId}`,
-    fn: async () => {
-      const response = await fetch(
-        `https://api.lumalabs.ai/dream-machine/v1/generations/${generationId}`,
-        {
-          headers: {
-            "Authorization": `Bearer ${LUMA_API_KEY}`,
-          },
-        },
-      );
-
-      if (!response.ok) {
-        return { id: generationId, status: "failed" } as LumaGenerationResult;
-      }
-
-      const data = await response.json();
-      return {
-        id: data.id,
-        status: data.state || "unknown",
-        videoUrl: data.assets?.video,
-      } as LumaGenerationResult;
-    },
-  });
-}
+// Luma AI functions moved to lumaClient.ts
 
 // ---- Edit Presets ----
 // Pre-configured edit packages that apply multiple operations at once.

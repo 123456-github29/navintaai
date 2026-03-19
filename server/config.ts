@@ -24,6 +24,7 @@ interface Config {
   ai: {
     googleApiKey?: string;
     openaiApiKey?: string;
+    lumaApiKey?: string;
     disabled: boolean;
   };
   server: {
@@ -147,6 +148,7 @@ export function validateConfig(): Config {
     ai: {
       googleApiKey: getOptionalEnv("GOOGLE_API_KEY"),
       openaiApiKey: getOptionalEnv("OPENAI_API_KEY"),
+      lumaApiKey: getOptionalEnv("LUMA_API_KEY"),
       disabled: aiDisabled,
     },
     server: {
@@ -198,6 +200,19 @@ export function validateConfig(): Config {
     console.warn(
       "⚠️  OPENAI_API_KEY not set. Content plan generation will fail.\n" +
       "   Set OPENAI_API_KEY to enable AI-powered content generation."
+    );
+  }
+
+  if (!config.ai.lumaApiKey && !config.ai.disabled) {
+    if (isProduction) {
+      throw new Error(
+        "[SECURITY] LUMA_API_KEY required in production (unless DISABLE_AI=true).\n" +
+        "Set LUMA_API_KEY to enable AI B-roll generation, or set DISABLE_AI=true to disable AI features."
+      );
+    }
+    console.warn(
+      "⚠️  LUMA_API_KEY not set. AI B-roll generation will be disabled.\n" +
+      "   Set LUMA_API_KEY to enable Luma AI video generation for B-roll."
     );
   }
 
