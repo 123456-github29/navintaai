@@ -277,6 +277,8 @@ export async function generateLumaVideo(
       prompt,
       aspect_ratio: aspectRatio,
       loop: false,
+      duration: `${duration}s`,
+      model: "ray-2",
     }),
   });
 

@@ -34,6 +34,7 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { RemotionPreview } from "@/components/RemotionPreview";
+import { VideoPreview } from "@/components/VideoPreview";
 import type { Post, Clip } from "@shared/schema";
 
 interface AiEditMessage {
@@ -795,49 +796,12 @@ export default function AiEditor() {
         {/* Video Preview Area */}
         <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
           <div className="relative w-full max-w-sm aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/[0.06]">
-            {firstClipUrl && hasEdits && videoDuration > 0 ? (
-              /* Remotion Player - renders all edits in real-time */
-              <RemotionPreview
-                videoUrl={firstClipUrl}
+            {firstClipUrl ? (
+              <VideoPreview
+                videoSrc={firstClipUrl}
                 editState={editState}
-                videoDuration={videoDuration}
+                transcriptSegments={editState?.transcriptSegments || []}
               />
-            ) : firstClipUrl ? (
-              <>
-                <video
-                  ref={videoRef}
-                  src={firstClipUrl}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  playsInline
-                  loop
-                  onClick={() => {
-                    if (videoRef.current) {
-                      if (videoRef.current.paused) {
-                        videoRef.current.play();
-                        setIsPlaying(true);
-                      } else {
-                        videoRef.current.pause();
-                        setIsPlaying(false);
-                      }
-                    }
-                  }}
-                />
-                {!isPlaying && (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer"
-                    onClick={() => {
-                      if (videoRef.current) {
-                        videoRef.current.play();
-                        setIsPlaying(true);
-                      }
-                    }}
-                  >
-                    <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-                      <Play className="h-7 w-7 text-black ml-1" />
-                    </div>
-                  </div>
-                )}
-              </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center space-y-3 px-8">

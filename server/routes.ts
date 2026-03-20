@@ -2531,19 +2531,48 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
       videoDuration = 60; // safe fallback
     }
 
-    // Generate video editing JSON using OpenAI
-    const { generateRemotionJSON } = await import("./lib/aiEditor");
+    // Resolve video URL for the session
+    const userVideos = await storage.getVideos(userId, session.postId);
+    const sessionVideo = userVideos[0];
+    let videoUrl = "";
+    if (sessionVideo?.videoPath) {
+      videoUrl = await getVideoSignedUrl(sessionVideo.videoPath);
+    }
+
+    // Generate video editing operations using OpenAI
+    const { planEdits, generateLumaVideo, applyOperationsToState } = await import("./lib/aiEditor");
 
     const currentEditState = (session.currentEditState as any) || {};
     const transcriptSegments = currentEditState.transcriptSegments || [];
 
-    const { json: generatedJSON, message: aiMessage } = await generateRemotionJSON(
+    const { operations, message: aiMessage } = await planEdits(
       message.trim(),
       session.transcript || "",
-      transcriptSegments,
-      videoUrl || "",
+      currentEditState,
+      chatHistory,
       videoDuration,
     );
+
+    // Intercept add_broll / luma_generate operations and call Luma AI
+    for (const op of operations) {
+      if (op.type === "add_broll" || op.type === "luma_generate") {
+        try {
+          const lumaResult = await generateLumaVideo(
+            op.params.prompt || op.params.query || "cinematic b-roll footage",
+            op.params.duration || 5,
+          );
+          op.params.generationId = lumaResult.id;
+          op.params.videoUrl = lumaResult.videoUrl;
+          op.status = lumaResult.status === "failed" ? "failed" : "pending";
+        } catch (err) {
+          console.error("[luma] Failed to generate b-roll:", err);
+          op.status = "failed";
+        }
+      }
+    }
+
+    // Apply operations to current edit state
+    const generatedJSON = applyOperationsToState(currentEditState, operations);
 
     // Merge generated JSON with existing state to preserve transcriptSegments and other fields
     const newState = {
