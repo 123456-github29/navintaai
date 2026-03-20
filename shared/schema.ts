@@ -499,6 +499,7 @@ export const devAccounts = pgTable("dev_accounts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(), // e.g. "Google Cloud", "Supabase", "Stripe"
   provider: text("provider").notNull(), // e.g. "google", "supabase", "stripe"
+  email: text("email"), // email the account is registered under
   monthlyCost: integer("monthly_cost").notNull().default(0), // in cents
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

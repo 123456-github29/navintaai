@@ -2877,12 +2877,17 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
           id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
           name TEXT NOT NULL,
           provider TEXT NOT NULL,
+          email TEXT,
           monthly_cost INTEGER NOT NULL DEFAULT 0,
           notes TEXT,
           created_at TIMESTAMP DEFAULT NOW() NOT NULL,
           updated_at TIMESTAMP DEFAULT NOW() NOT NULL
         )`
       );
+      // Add email column if table already existed without it
+      await (storage as any).db.execute(
+        sql`ALTER TABLE dev_accounts ADD COLUMN IF NOT EXISTS email TEXT`
+      ).catch(() => {});
       await (storage as any).db.execute(
         sql`CREATE TABLE IF NOT EXISTS api_usage (
           id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2902,9 +2907,13 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
     next();
   });
 
-  // Get all users with entitlements
+  // Get all users with entitlements (falls back to plain users if join fails)
   app.get("/api/dev/users", requireDevAuth, asyncHandler(async (_req, res) => {
-    const usersData = await safeQuery(() => storage.getAllUsersWithEntitlements(), []);
+    let usersData = await safeQuery(() => storage.getAllUsersWithEntitlements(), []);
+    // Fallback: if join query fails (e.g. user_entitlements table missing), get plain users
+    if (usersData.length === 0) {
+      usersData = await safeQuery(() => storage.getAllUsers(), []);
+    }
     res.json(usersData);
   }));
 
@@ -2916,8 +2925,8 @@ Make each video unique. This is Week ${week}, Post ${day} of a 4-week plan.`,
 
   // Create a new dev account
   app.post("/api/dev/accounts", requireDevAuth, asyncHandler(async (req, res) => {
-    const { name, provider, monthlyCost, notes } = req.body;
-    const account = await storage.createDevAccount({ name, provider, monthlyCost: monthlyCost || 0, notes });
+    const { name, provider, email, monthlyCost, notes } = req.body;
+    const account = await storage.createDevAccount({ name, provider, email: email || null, monthlyCost: monthlyCost || 0, notes });
     res.json(account);
   }));
 

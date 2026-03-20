@@ -205,7 +205,7 @@ function AccountsTab({ onUpdate }: { onUpdate: () => void }) {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: "", provider: "", monthlyCost: "", notes: "" });
+  const [form, setForm] = useState({ name: "", provider: "", email: "", monthlyCost: "", notes: "" });
 
   const headers = { "x-dev-password": "rushil", "Content-Type": "application/json" };
 
@@ -225,11 +225,12 @@ function AccountsTab({ onUpdate }: { onUpdate: () => void }) {
       body: JSON.stringify({
         name: form.name,
         provider: form.provider,
+        email: form.email || null,
         monthlyCost: Math.round(parseFloat(form.monthlyCost || "0") * 100),
         notes: form.notes || null,
       }),
     });
-    setForm({ name: "", provider: "", monthlyCost: "", notes: "" });
+    setForm({ name: "", provider: "", email: "", monthlyCost: "", notes: "" });
     setShowAdd(false);
     fetchAccounts();
     onUpdate();
@@ -263,6 +264,7 @@ function AccountsTab({ onUpdate }: { onUpdate: () => void }) {
         <form onSubmit={handleAdd} className="p-5 rounded-xl mb-4 grid grid-cols-1 md:grid-cols-2 gap-4" style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
           <FormInput label="Account Name" placeholder="e.g. Google Cloud" value={form.name} onChange={(v) => setForm({ ...form, name: v })} required />
           <FormInput label="Provider" placeholder="e.g. google, supabase, stripe" value={form.provider} onChange={(v) => setForm({ ...form, provider: v })} required />
+          <FormInput label="Email" placeholder="e.g. rushil@gmail.com" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
           <FormInput label="Monthly Cost ($)" placeholder="0.00" value={form.monthlyCost} onChange={(v) => setForm({ ...form, monthlyCost: v })} type="number" />
           <FormInput label="Notes" placeholder="Optional notes" value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} />
           <div className="md:col-span-2 flex gap-3 justify-end">
@@ -284,6 +286,7 @@ function AccountsTab({ onUpdate }: { onUpdate: () => void }) {
               <div>
                 <h3 className="text-white font-semibold text-sm">{a.name}</h3>
                 <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{a.provider}</p>
+                {a.email && <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>{a.email}</p>}
               </div>
               <ProviderIcon provider={a.provider} />
             </div>
